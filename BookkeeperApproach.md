@@ -90,3 +90,22 @@ While trying to catalog the `view` functions I also made note of the events that
   * SmartContractDenied
   * ForceGreylistExited
   * SmartContractRecorded
+
+## Design Guidelines and Requirements
+
+### General
+
+* Split functionality between files. We don't want one huge file that represents the entire contract.
+* Main contract should have an owner who manages info and relations
+  * Owner should be able to add and remove info and relations
+* Underlying tokens should have a link to LP where we can buy/sell
+  * like uni/sushi/curve
+* All functionality should be unit tested
+
+### Relationship/Information Details
+
+* startOnBlock - is this the date that a strategy started? TODO: ask belbix
+
+### Contract Metadata
+
+* createdOnBlock should be stored for all contracts (accessible via Registry?)
