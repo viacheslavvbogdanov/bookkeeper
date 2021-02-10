@@ -43,6 +43,11 @@ contract BookkeeperRegistry is Governable {
         require(isActive[_vault], "contract is not active");
         _;
     }
+    modifier isVault(address _vault){
+      require(keccak256(abi.encodePacked(contractType[_vault])) ==
+      keccak256(abi.encodePacked("vault")), "vault does not exist");
+      _;
+    }
     modifier validStrategy(address _strategy){
         require(keccak256(abi.encodePacked(contractType[_strategy])) ==
         keccak256(abi.encodePacked("strategy")), "strategy does not exist");
@@ -125,7 +130,7 @@ contract BookkeeperRegistry is Governable {
     }
 
     //Change Reward Pool for existing vault.
-    function changeRewardPool(address _rewardPool) external onlyGovernance validVault(IRewardPool(_rewardPool).lpToken()) {
+    function changeRewardPool(address _rewardPool) external onlyGovernance isVault(IRewardPool(_rewardPool).lpToken()) {
       require(_rewardPool != address(0), "new reward pool should not be empty");
 
       address rewardPool = _rewardPool;
@@ -143,15 +148,29 @@ contract BookkeeperRegistry is Governable {
 
       rewardPoolList.push(rewardPool);
 
+      uint256 i;
+      for ( i=0;i<rewardPoolList.length;i++) {
+        if (oldRewardPool == rewardPoolList[i]){
+          break;
+        }
+      }
+      while (i<rewardPoolList.length-1) {
+        rewardPoolList[i] = rewardPoolList[i+1];
+        i++;
+      }
+      rewardPoolList.length--;
+
+
       emit RewardPoolChanged(vault, rewardPool, oldRewardPool);
     }
 
     //Change strategy for existing vault.
-    function changeStrategy(address _strategy) external onlyGovernance validVault(IStrategy(_strategy).vault()) {
+    function changeStrategy(address _strategy) external onlyGovernance isVault(IStrategy(_strategy).vault()) {
       require(_strategy != address(0), "new strategy should not be empty");
 
       address strategy = _strategy;
       address vault = IStrategy(strategy).vault();
+      strategyList.push(strategy);
 
       isActive[vault] = true;
       address oldStrategy;
@@ -163,14 +182,24 @@ contract BookkeeperRegistry is Governable {
         oldStrategy = vaultStrategy[vault];
         isActive[oldStrategy] = false;
         vaultStrategy[vault] = strategy;
+
+        uint256 i;
+        for ( i=0;i<strategyList.length;i++) {
+          if (oldStrategy == strategyList[i]){
+            break;
+          }
+        }
+        while (i<strategyList.length-1) {
+          strategyList[i] = strategyList[i+1];
+          i++;
+        }
+        strategyList.length--;
       }
 
       isActive[strategy] = true;
       addedOnBlock[strategy] = block.number;
       contractType[strategy] = "strategy";
       strategyVault[strategy] = vault;
-
-      strategyList.push(strategy);
 
       emit StrategyChanged(vault, strategy, oldStrategy);
     }
@@ -278,10 +307,9 @@ contract BookkeeperRegistry is Governable {
     }
 
     function getUnderlyingInfo(address _underlying) external view validUnderlying(_underlying) returns(
-      uint256, address[] memory, uint256[] memory, address[] memory, uint256[] memory) {
+      address[] memory, uint256[] memory, address[] memory, uint256[] memory) {
 
       address underlying = _underlying;
-      uint256 underlyingAdded = addedOnBlock[underlying];
       address[] memory vaults = underlyingVaults[underlying];
       uint256[] memory vaultsAdded = new uint256[](vaults.length);
       address[] memory rewardPools = new address[](vaults.length);
@@ -294,36 +322,33 @@ contract BookkeeperRegistry is Governable {
         rewardPoolsAdded[i] = addedOnBlock[rewardPools[i]];
       }
 
-      return(underlyingAdded, vaults, vaultsAdded, rewardPools, rewardPoolsAdded);
+      return(vaults, vaultsAdded, rewardPools, rewardPoolsAdded);
     }
 
     //This will deactivate all strategies and reward pool associated to vault.
     //If it is only vault for underlying this will be deactivated too.
-    function removeVault(address _vault) public onlyGovernance validVault(_vault) {
-
+    function removeVault(address _vault) external onlyGovernance validVault(_vault) {
       address vault = _vault;
-      address strategy = vaultStrategy[vault];
-      address rewardPool = vaultRewardPool[vault];
       address underlying = vaultUnderlying[vault];
+      uint256 i;
+
 
       isActive[vault] = false;
-      isActive[strategy] = false;
-      isActive[rewardPool] = false;
       if (underlyingVaults[underlying].length<=1) {
         isActive[underlying] = false;
-      } else {
-        for (uint256 i=0;i<underlyingVaults[underlying].length;i++) {
-          if (underlyingVaults[underlying][i]==vault){
-            continue;
-          } else {
-            underlyingVaultsTemp.push(underlyingVaults[underlying][i]);
-          }
-        }
-        underlyingVaults[underlying] = underlyingVaultsTemp;
-        underlyingVaultsTemp.length = 0;
       }
 
-      uint256 i;
+      for ( i=0;i<underlyingVaults[underlying].length;i++) {
+        if (vault == underlyingVaults[underlying][i]){
+          break;
+        }
+      }
+      while (i<underlyingVaults[underlying].length-1) {
+        underlyingVaults[underlying][i] = underlyingVaults[underlying][i+1];
+        i++;
+      }
+      underlyingVaults[underlying].length--;
+
       for ( i=0;i<vaultList.length;i++) {
         if (vault == vaultList[i]){
           break;
@@ -335,6 +360,44 @@ contract BookkeeperRegistry is Governable {
       }
       vaultList.length--;
 
+      if (vaultMultipleStrategies[vault]){
+        for(i=0;i<vaultStrategies[vault].length;i++){
+          removeStrategy(vaultStrategies[vault][i]);
+        }
+      } else {
+        if(vaultStrategy[vault]!=address(0)){
+          removeStrategy(vaultStrategy[vault]);
+        }
+      }
+
+      address rewardPool = vaultRewardPool[vault];
+      if (rewardPool != address(0)) {
+        removeRewardPool(rewardPool);
+      }
+    }
+
+    //Deactivate strategy.
+    function removeStrategy(address _strategy) public onlyGovernance validStrategy(_strategy) {
+      address strategy = _strategy;
+      address vault = strategyVault[strategy];
+      isActive[strategy] = false;
+      uint256 i;
+
+      if (!vaultMultipleStrategies[vault]) {
+        vaultStrategy[vault] = address(0);
+      } else {
+        for ( i=0;i<vaultStrategies[vault].length;i++) {
+          if (strategy == vaultStrategies[vault][i]){
+            break;
+          }
+        }
+        while (i<vaultStrategies[vault].length-1) {
+          vaultStrategies[vault][i] = vaultStrategies[vault][i+1];
+          i++;
+        }
+        vaultStrategies[vault].length--;
+      }
+
       for ( i=0;i<strategyList.length;i++) {
         if (strategy == strategyList[i]){
           break;
@@ -345,55 +408,10 @@ contract BookkeeperRegistry is Governable {
         i++;
       }
       strategyList.length--;
-
-      for ( i=0;i<rewardPoolList.length;i++) {
-        if (rewardPool == rewardPoolList[i]){
-          break;
-        }
-      }
-      while (i<rewardPoolList.length-1) {
-        rewardPoolList[i] = rewardPoolList[i+1];
-        i++;
-      }
-      rewardPoolList.length--;
-    }
-
-    //Deactivate strategy. If it is the only strategy for a vault, vault will be deactivated.
-    function removeStrategy(address _strategy) external onlyGovernance validStrategy(_strategy) {
-
-      address strategy = _strategy;
-      address vault = strategyVault[strategy];
-      if (!vaultMultipleStrategies[vault] || vaultStrategies[vault].length<=1) {
-        deactivateVault(vault);
-      } else {
-        isActive[strategy] = false;
-        for (uint256 i=0;i<vaultStrategies[vault].length;i++) {
-          if (vaultStrategies[vault][i]==vault){
-            continue;
-          } else {
-            vaultStrategiesTemp.push(vaultStrategies[vault][i]);
-          }
-        }
-        vaultStrategies[vault] = vaultStrategiesTemp;
-        vaultStrategiesTemp.length = 0;
-
-        uint256 i;
-        for ( i=0;i<strategyList.length;i++) {
-          if (strategy == strategyList[i]){
-            break;
-          }
-        }
-        while (i<strategyList.length-1) {
-          strategyList[i] = strategyList[i+1];
-          i++;
-        }
-        strategyList.length--;
-      }
     }
 
     //Deactivate reward pool. This does not deactivate the vault.
-    function removeRewardPool(address _rewardPool) external onlyGovernance validRewardPool(_rewardPool) {
-
+    function removeRewardPool(address _rewardPool) public onlyGovernance validRewardPool(_rewardPool) {
       address rewardPool = _rewardPool;
       address vault = rewardPoolVault[rewardPool];
       vaultRewardPool[vault] = address(0);
