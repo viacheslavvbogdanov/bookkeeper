@@ -7,4 +7,5 @@ Bookkeeper is a contract that provides a convenient interface for retrieving imp
 ## Important Links
 
 * [Terrastruct diagram](https://app.terrastruct.com/diagrams/630052376)
+* [Data Available via Bookkeeper](BookkeeperData.md)
 * [Bookkeeper Approach](BookkeeperApproach.md)
