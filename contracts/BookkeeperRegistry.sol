@@ -75,9 +75,12 @@ contract BookkeeperRegistry is Governable {
       _;
     }
 
-    event VaultAdded(address vault, address strategy, address rewardPool);
+    event VaultAdded(address vault, address strategy, address rewardPool, address underlying);
     event RewardPoolChanged(address vault, address newRewardPool, address oldRewardPool);
     event StrategyChanged(address vault, address newStrategy, address oldStrategy);
+    event VaultRemoved(address vault, address strategy, address rewardPool);
+    event StrategyRemoved(address strategy, address vault);
+    event RewardPoolRemoved(address rewardPool, address vault);
 
     constructor(address _storage)
     Governable(_storage) public {}
@@ -126,7 +129,7 @@ contract BookkeeperRegistry is Governable {
         strategyList.push(strategy);
         rewardPoolList.push(rewardPool);
 
-        emit VaultAdded(vault, strategy, rewardPool);
+        emit VaultAdded(vault, strategy, rewardPool, underlying);
     }
 
     //Change Reward Pool for existing vault.
@@ -374,6 +377,8 @@ contract BookkeeperRegistry is Governable {
       if (rewardPool != address(0)) {
         removeRewardPool(rewardPool);
       }
+
+      emit VaultRemoved(vault,strategy,rewardPool);
     }
 
     //Deactivate strategy.
@@ -408,6 +413,8 @@ contract BookkeeperRegistry is Governable {
         i++;
       }
       strategyList.length--;
+
+      emit StrategyRemoved(strategy,vault)
     }
 
     //Deactivate reward pool. This does not deactivate the vault.
@@ -428,6 +435,8 @@ contract BookkeeperRegistry is Governable {
         i++;
       }
       rewardPoolList.length--;
+
+      emit RewardPoolRemoved(rewardPool,vault)
     }
 
     function getAllVaults() external view returns (address[] memory) {
