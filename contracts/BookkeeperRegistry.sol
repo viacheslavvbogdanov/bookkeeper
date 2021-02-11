@@ -13,319 +13,447 @@ import "./Controllable.sol";
 
 pragma solidity 0.5.16;
 
-contract Viewer is Governable {
+contract BookkeeperRegistry is Governable {
 
     using SafeERC20 for IERC20;
     using Address for address;
     using SafeMath for uint256;
 
-    // Keeping track of all added contracts. Lists are made so they can be returned by functions.
-    mapping (address => bool) public vaultCheck;
-    mapping (address => bool) public strategyCheck;
-    mapping (address => bool) public rewardPoolCheck;
-    mapping (address => bool) public coreContractCheck;
+    // Keeping track of links between all added contracts.
+    mapping (address => bool) public isActive;
+    mapping (address => uint256) public addedOnBlock;
+    mapping (address => string) public contractType;
+    mapping (address => address) public vaultStrategy;
+    mapping (address => address[]) public vaultStrategies;
+    mapping (address => address) public strategyVault;
     mapping (address => address) public vaultRewardPool;
     mapping (address => address) public rewardPoolVault;
+    mapping (address => address) public vaultUnderlying;
+    mapping (address => address[]) public underlyingVaults;
+    mapping (address => bool) public vaultMultipleStrategies;
+    address[] underlyingVaultsTemp;
+    address[] vaultStrategiesTemp;
     address[] vaultList;
     address[] strategyList;
     address[] rewardPoolList;
-    address[] coreContractList;
 
     modifier validVault(address _vault){
-        require(vaultCheck[_vault], "vault does not exist");
+        require(keccak256(abi.encodePacked(contractType[_vault])) ==
+        keccak256(abi.encodePacked("vault")), "vault does not exist");
+        require(isActive[_vault], "contract is not active");
         _;
     }
+    modifier isVault(address _vault){
+      require(keccak256(abi.encodePacked(contractType[_vault])) ==
+      keccak256(abi.encodePacked("vault")), "vault does not exist");
+      _;
+    }
     modifier validStrategy(address _strategy){
-        require(strategyCheck[_strategy], "strategy does not exist");
+        require(keccak256(abi.encodePacked(contractType[_strategy])) ==
+        keccak256(abi.encodePacked("strategy")), "strategy does not exist");
+        require(isActive[_strategy], "contract is not active");
         _;
     }
     modifier validRewardPool(address _rewardPool){
-        require(rewardPoolCheck[_rewardPool], "reward pool does not exist");
+        require(keccak256(abi.encodePacked(contractType[_rewardPool])) ==
+        keccak256(abi.encodePacked("rewardPool")), "reward pool does not exist");
+        require(isActive[_rewardPool], "contract is not active");
         _;
     }
-    modifier validCoreContract(address _coreContract){
-        require(coreContractCheck[_coreContract], "core contract does not exist");
+    modifier validUnderlying(address _underlying){
+        require(keccak256(abi.encodePacked(contractType[_underlying])) ==
+        keccak256(abi.encodePacked("underlying")), "underlying does not exist");
+        require(isActive[_underlying], "contract is not active");
         _;
+    }
+    modifier singleStrategy(address _vault){
+      require(!vaultMultipleStrategies[_vault], "Method does not allow multiple strategy vault");
+      _;
+    }
+    modifier multipleStrategies(address _vault){
+      require(vaultMultipleStrategies[_vault], "Method only allows multiple strategy vault");
+      _;
     }
 
-    event VaultAdded(address vault, address strategy, address rewardPool);
+    event VaultAdded(address vault, address strategy, address rewardPool, address underlying);
     event RewardPoolChanged(address vault, address newRewardPool, address oldRewardPool);
     event StrategyChanged(address vault, address newStrategy, address oldStrategy);
+    event VaultRemoved(address vault, address strategy, address rewardPool);
+    event StrategyRemoved(address strategy, address vault);
+    event RewardPoolRemoved(address rewardPool, address vault);
 
     constructor(address _storage)
     Governable(_storage) public {}
 
-    //I did not find a consistent on-chain link between Vaults and Reward Pools, so it seems they would have to be added in pairs to keep track of the linkage.
-    function addVaultAndRewardPool(address _vault, address _rewardPool) external onlyGovernance {
-        require(_vault != address(0), "new vault shouldn't be empty");
-        require(!vaultCheck[_vault], "vault already exists");
-        require(_rewardPool != address(0), "new reward pool shouldn't be empty");
+    //Add a vault. RewardPool can be address(0).
+    function addVault(address _vault, address _rewardPool, bool _multipleStrategies) external onlyGovernance {
+        require(_vault != address(0), "new vault should not be empty");
+        require(keccak256(abi.encodePacked(contractType[_vault])) != keccak256(abi.encodePacked("vault")), "vault already exists");
 
-        vaultCheck[_vault] = true;
-        strategyCheck[IVault(_vault).strategy()] = true;
-        rewardPoolCheck[_rewardPool] = true;
-        vaultList.push(_vault);
-        strategyList.push(IVault(_vault).strategy());
-        rewardPoolList.push(_rewardPool);
-        vaultRewardPool[_vault] = _rewardPool;
-        rewardPoolVault[_rewardPool] = _vault;
+        address vault = _vault;
+        address strategy = IVault(_vault).strategy();
+        address rewardPool = _rewardPool;
+        address underlying = IVault(_vault).underlying();
 
-        emit VaultAdded(_vault, IVault(_vault).strategy(), _rewardPool);
+        isActive[vault] = true;
+        addedOnBlock[vault] = block.number;
+        contractType[vault] = "vault";
+        vaultUnderlying[vault] = underlying;
+        vaultMultipleStrategies[vault] = _multipleStrategies;
+
+        if (vaultMultipleStrategies[vault]) {
+          vaultStrategies[vault].push(strategy);
+        } else {
+          vaultStrategy[vault] = strategy;
+        }
+
+        isActive[strategy] = true;
+        addedOnBlock[strategy] = block.number;
+        contractType[strategy] = "strategy";
+        strategyVault[strategy] = vault;
+
+        if (rewardPool != address(0)){
+          vaultRewardPool[vault] = rewardPool;
+          isActive[rewardPool] = true;
+          addedOnBlock[rewardPool] = block.number;
+          contractType[rewardPool] = "rewardPool";
+          rewardPoolVault[rewardPool] = vault;
+        }
+
+        isActive[underlying] = true;
+        addedOnBlock[underlying] = block.number;
+        contractType[underlying] = "underlying";
+        underlyingVaults[underlying].push(vault);
+
+        vaultList.push(vault);
+        strategyList.push(strategy);
+        rewardPoolList.push(rewardPool);
+
+        emit VaultAdded(vault, strategy, rewardPool, underlying);
     }
 
-    //Change Reward Pool for existing vault. Again vault is needed as input, as no on-chain link.
-    function changeRewardPool(address _rewardPool, address _vault) external onlyGovernance validVault(_vault) {
-      require(_vault != address(0), "vault shouldn't be empty");
-      require(!rewardPoolCheck[_rewardPool], "reward pool already exists");
-      require(_rewardPool != address(0), "new reward pool shouldn't be empty");
+    //Change Reward Pool for existing vault.
+    function changeRewardPool(address _rewardPool) external onlyGovernance isVault(IRewardPool(_rewardPool).lpToken()) {
+      require(_rewardPool != address(0), "new reward pool should not be empty");
 
-      uint i = 0;
-      while (vaultList[i] != _vault) {
-        i++;
-        require(i<vaultList.length, "Vault not in vaultList");
-      }
-      address oldRewardPool = rewardPoolList[i];
+      address rewardPool = _rewardPool;
+      address vault = IRewardPool(rewardPool).lpToken();
 
-      rewardPoolCheck[_rewardPool] = true;
-      rewardPoolCheck[oldRewardPool] = false;
-      rewardPoolList[i] = _rewardPool;
-      vaultRewardPool[_vault] = _rewardPool;
-      rewardPoolVault[_rewardPool] = _vault;
+      isActive[vault] = true;
+      address oldRewardPool = vaultRewardPool[vault];
+      isActive[oldRewardPool] = false;
+      vaultRewardPool[vault] = rewardPool;
 
-      emit RewardPoolChanged(_vault, _rewardPool, oldRewardPool);
-    }
+      isActive[rewardPool] = true;
+      addedOnBlock[rewardPool] = block.number;
+      contractType[rewardPool] = "rewardPool";
+      rewardPoolVault[rewardPool] = vault;
 
-    //Change strategy for existing vault. No vault input needed as it is contained in the strategy. If the strategy is for a vault that was not yet added the vault should be added first.
-    function changeStrategy(address _strategy) external onlyGovernance {
-      require(_strategy != address(0), "new strategy shouldn't be empty");
-      require(!strategyCheck[_strategy], "strategy already exists");
-      address vault = IStrategy(_strategy).vault();
-      require(vaultCheck[vault], "Unknown vault. Add vault first.");
+      rewardPoolList.push(rewardPool);
 
-      uint i = 0;
-      while (vaultList[i] != vault) {
-        i++;
-        require(i<vaultList.length, "Vault not in vaultList");
-      }
-      address oldStrategy = strategyList[i];
-
-      strategyCheck[_strategy] = true;
-      strategyCheck[oldStrategy] = false;
-      strategyList[i] = _strategy;
-
-      emit StrategyChanged(vault, _strategy, oldStrategy);
-    }
-
-    //Possibility to add core contracts, just for registry.
-    function addCoreContract(address _coreContract) external onlyGovernance {
-      require(_coreContract != address(0), "new contract shouldn't be empty");
-      coreContractCheck[_coreContract] = true;
-      coreContractList.push(_coreContract);
-    }
-
-    function removeVault(address _vault) external onlyGovernance validVault(_vault) {
-      uint i = 0;
-      while (vaultList[i] != _vault) {
-        i++;
-        require(i<vaultList.length, "Vault not in vaultList");
-      }
-      while (i<vaultList.length-1) {
-        vaultList[i] = vaultList[i+1];
-        i++;
-      }
-      vaultList.length--;
-      vaultCheck[_vault] = false;
-      rewardPoolVault[vaultRewardPool[_vault]] = address(0);
-    }
-
-    function removeStrategy(address _strategy) external onlyGovernance validStrategy(_strategy) {
-      uint i = 0;
-      while (strategyList[i] != _strategy) {
-        i++;
-        require(i<strategyList.length, "Strategy not in strategyList");
-      }
-      while (i<strategyList.length-1) {
-        strategyList[i] = strategyList[i+1];
-        i++;
-      }
-      strategyList.length--;
-      strategyCheck[_strategy] = false;
-    }
-
-    function removeRewardPool(address _rewardPool) external onlyGovernance validRewardPool(_rewardPool) {
-      uint i = 0;
-      while (rewardPoolList[i] != _rewardPool) {
-        i++;
-        require(i<rewardPoolList.length, "Reward Pool not in rewardPoolList");
-
+      uint256 i;
+      for ( i=0;i<rewardPoolList.length;i++) {
+        if (oldRewardPool == rewardPoolList[i]){
+          break;
+        }
       }
       while (i<rewardPoolList.length-1) {
         rewardPoolList[i] = rewardPoolList[i+1];
         i++;
       }
       rewardPoolList.length--;
-      rewardPoolCheck[_rewardPool] = false;
-      vaultRewardPool[rewardPoolVault[_rewardPool]] = address(0);
+
+
+      emit RewardPoolChanged(vault, rewardPool, oldRewardPool);
     }
 
-    function removeCoreContract(address _coreContract) external onlyGovernance validCoreContract(_coreContract) {
-      uint i = 0;
-      while (coreContractList[i] != _coreContract) {
-        i++;
-        require(i<coreContractList.length, "Contract not in coreContractList");
+    //Change strategy for existing vault.
+    function changeStrategy(address _strategy) external onlyGovernance isVault(IStrategy(_strategy).vault()) {
+      require(_strategy != address(0), "new strategy should not be empty");
 
+      address strategy = _strategy;
+      address vault = IStrategy(strategy).vault();
+      strategyList.push(strategy);
+
+      isActive[vault] = true;
+      address oldStrategy;
+      if (vaultMultipleStrategies[vault]){
+        oldStrategy = address(0);
+        vaultStrategies[vault].push(strategy);
       }
-      while (i<coreContractList.length-1) {
-        coreContractList[i] = coreContractList[i+1];
+      else{
+        oldStrategy = vaultStrategy[vault];
+        isActive[oldStrategy] = false;
+        vaultStrategy[vault] = strategy;
+
+        uint256 i;
+        for ( i=0;i<strategyList.length;i++) {
+          if (oldStrategy == strategyList[i]){
+            break;
+          }
+        }
+        while (i<strategyList.length-1) {
+          strategyList[i] = strategyList[i+1];
+          i++;
+        }
+        strategyList.length--;
+      }
+
+      isActive[strategy] = true;
+      addedOnBlock[strategy] = block.number;
+      contractType[strategy] = "strategy";
+      strategyVault[strategy] = vault;
+
+      emit StrategyChanged(vault, strategy, oldStrategy);
+    }
+
+    function getVaultInfoSingleStrategy(address _vault) internal view validVault(_vault) singleStrategy(_vault) returns(
+      uint256, address[] memory, uint256[] memory, address, uint256, address) {
+
+      address vault = _vault;
+      uint256 vaultAdded = addedOnBlock[vault];
+      address[] memory strategy = new address[](1);
+      uint256[] memory strategyAdded = new uint256[](1);
+      strategy[0] = vaultStrategy[vault];
+      strategyAdded[0] = addedOnBlock[strategy[0]];
+      address rewardPool = vaultRewardPool[vault];
+      uint256 rewardPoolAdded = addedOnBlock[rewardPool];
+      address underlying = vaultUnderlying[vault];
+
+      return (vaultAdded, strategy, strategyAdded, rewardPool, rewardPoolAdded, underlying);
+    }
+
+    function getVaultInfoMultipleStrategies(address _vault) internal view validVault(_vault) multipleStrategies(_vault) returns(
+      uint256, address[] memory, uint256[] memory, address, uint256, address) {
+
+      address vault = _vault;
+      uint256 vaultAdded = addedOnBlock[vault];
+      address[] memory strategies = vaultStrategies[vault];
+      uint256[] memory strategiesAdded = new uint256[](strategies.length);
+      for (uint256 i=0;i<strategies.length;i++) {
+        strategiesAdded[i] = addedOnBlock[strategies[i]];
+      }
+      address rewardPool = vaultRewardPool[vault];
+      uint256 rewardPoolAdded = addedOnBlock[rewardPool];
+      address underlying = vaultUnderlying[vault];
+
+      return (vaultAdded, strategies, strategiesAdded, rewardPool, rewardPoolAdded, underlying);
+    }
+
+    function getVaultInfo(address _vault) external view validVault(_vault) returns(
+      uint256, address[] memory, uint256[] memory, address, uint256, address) {
+
+      if (vaultMultipleStrategies[_vault]) {
+        return getVaultInfoMultipleStrategies(_vault);
+      } else {
+        return getVaultInfoSingleStrategy(_vault);
+      }
+    }
+
+    function getStrategyInfo(address _strategy) external view validStrategy(_strategy) returns(
+      uint256, address, uint256, address, uint256, address) {
+
+      address strategy = _strategy;
+      uint256 strategyAdded = addedOnBlock[strategy];
+      address vault = strategyVault[strategy];
+      uint256 vaultAdded = addedOnBlock[vault];
+      address rewardPool = vaultRewardPool[vault];
+      uint256 rewardPoolAdded = addedOnBlock[rewardPool];
+      address underlying = vaultUnderlying[vault];
+
+      return (strategyAdded, vault, vaultAdded, rewardPool, rewardPoolAdded, underlying);
+    }
+
+    function getRewardPoolInfoSingleStrategy(address _vault) internal view validVault(_vault) singleStrategy(_vault) returns(
+      uint256, address, uint256, address[] memory, uint256[] memory, address) {
+
+      address vault = _vault;
+      uint256 vaultAdded = addedOnBlock[vault];
+      address[] memory strategy = new address[](1);
+      uint256[] memory strategyAdded = new uint256[](1);
+      strategy[0] = vaultStrategy[vault];
+      strategyAdded[0] = addedOnBlock[strategy[0]];
+      address rewardPool = vaultRewardPool[vault];
+      uint256 rewardPoolAdded = addedOnBlock[rewardPool];
+      address underlying = vaultUnderlying[vault];
+
+      return (rewardPoolAdded, vault, vaultAdded, strategy, strategyAdded, underlying);
+    }
+
+    function getRewardPoolInfoMultipleStrategies(address _vault) internal view validVault(_vault) multipleStrategies(_vault) returns(
+      uint256, address, uint256, address[] memory, uint256[] memory, address) {
+
+      address vault = _vault;
+      uint256 vaultAdded = addedOnBlock[vault];
+      address[] memory strategies = vaultStrategies[vault];
+      uint256[] memory strategiesAdded = new uint256[](strategies.length);
+      for (uint256 i=0;i<strategies.length;i++) {
+        strategiesAdded[i] = addedOnBlock[strategies[i]];
+      }
+      address rewardPool = vaultRewardPool[vault];
+      uint256 rewardPoolAdded = addedOnBlock[rewardPool];
+      address underlying = vaultUnderlying[vault];
+
+      return (rewardPoolAdded, vault, vaultAdded, strategies, strategiesAdded, underlying);
+    }
+
+    function getRewardPoolInfo(address _rewardPool) external view validRewardPool(_rewardPool) returns(
+      uint256, address, uint256, address[] memory, uint256[] memory, address) {
+
+      address rewardPool = _rewardPool;
+      address vault = rewardPoolVault[rewardPool];
+      if (vaultMultipleStrategies[vault]) {
+        return getRewardPoolInfoMultipleStrategies(vault);
+      } else {
+        return getRewardPoolInfoSingleStrategy(vault);
+      }
+    }
+
+    function getUnderlyingInfo(address _underlying) external view validUnderlying(_underlying) returns(
+      address[] memory, uint256[] memory, address[] memory, uint256[] memory) {
+
+      address underlying = _underlying;
+      address[] memory vaults = underlyingVaults[underlying];
+      uint256[] memory vaultsAdded = new uint256[](vaults.length);
+      address[] memory rewardPools = new address[](vaults.length);
+      uint256[] memory rewardPoolsAdded = new uint256[](vaults.length);
+
+
+      for (uint256 i = 0; i<vaults.length;i++) {
+        vaultsAdded[i] = addedOnBlock[vaults[i]];
+        rewardPools[i] = vaultRewardPool[vaults[i]];
+        rewardPoolsAdded[i] = addedOnBlock[rewardPools[i]];
+      }
+
+      return(vaults, vaultsAdded, rewardPools, rewardPoolsAdded);
+    }
+
+    //This will deactivate all strategies and reward pool associated to vault.
+    //If it is only vault for underlying this will be deactivated too.
+    function removeVault(address _vault) external onlyGovernance validVault(_vault) {
+      address vault = _vault;
+      address underlying = vaultUnderlying[vault];
+      uint256 i;
+
+
+      isActive[vault] = false;
+      if (underlyingVaults[underlying].length<=1) {
+        isActive[underlying] = false;
+      }
+
+      for ( i=0;i<underlyingVaults[underlying].length;i++) {
+        if (vault == underlyingVaults[underlying][i]){
+          break;
+        }
+      }
+      while (i<underlyingVaults[underlying].length-1) {
+        underlyingVaults[underlying][i] = underlyingVaults[underlying][i+1];
         i++;
       }
-      coreContractList.length--;
-      coreContractCheck[_coreContract] = false;
+      underlyingVaults[underlying].length--;
+
+      for ( i=0;i<vaultList.length;i++) {
+        if (vault == vaultList[i]){
+          break;
+        }
+      }
+      while (i<vaultList.length-1) {
+        vaultList[i] = vaultList[i+1];
+        i++;
+      }
+      vaultList.length--;
+
+      if (vaultMultipleStrategies[vault]){
+        for(i=0;i<vaultStrategies[vault].length;i++){
+          removeStrategy(vaultStrategies[vault][i]);
+        }
+      } else {
+        if(vaultStrategy[vault]!=address(0)){
+          removeStrategy(vaultStrategy[vault]);
+        }
+      }
+
+      address rewardPool = vaultRewardPool[vault];
+      if (rewardPool != address(0)) {
+        removeRewardPool(rewardPool);
+      }
+
+      emit VaultRemoved(vault,strategy,rewardPool);
     }
 
-    function getVaultList() public view returns (address[] memory){
-      return vaultList;
+    //Deactivate strategy.
+    function removeStrategy(address _strategy) public onlyGovernance validStrategy(_strategy) {
+      address strategy = _strategy;
+      address vault = strategyVault[strategy];
+      isActive[strategy] = false;
+      uint256 i;
+
+      if (!vaultMultipleStrategies[vault]) {
+        vaultStrategy[vault] = address(0);
+      } else {
+        for ( i=0;i<vaultStrategies[vault].length;i++) {
+          if (strategy == vaultStrategies[vault][i]){
+            break;
+          }
+        }
+        while (i<vaultStrategies[vault].length-1) {
+          vaultStrategies[vault][i] = vaultStrategies[vault][i+1];
+          i++;
+        }
+        vaultStrategies[vault].length--;
+      }
+
+      for ( i=0;i<strategyList.length;i++) {
+        if (strategy == strategyList[i]){
+          break;
+        }
+      }
+      while (i<strategyList.length-1) {
+        strategyList[i] = strategyList[i+1];
+        i++;
+      }
+      strategyList.length--;
+
+      emit StrategyRemoved(strategy,vault)
     }
 
-    function getStrategyList() public view returns (address[] memory){
-      return strategyList;
+    //Deactivate reward pool. This does not deactivate the vault.
+    function removeRewardPool(address _rewardPool) public onlyGovernance validRewardPool(_rewardPool) {
+      address rewardPool = _rewardPool;
+      address vault = rewardPoolVault[rewardPool];
+      vaultRewardPool[vault] = address(0);
+      isActive[rewardPool] = false;
+
+      uint256 i;
+      for ( i=0;i<rewardPoolList.length;i++) {
+        if (rewardPool == rewardPoolList[i]){
+          break;
+        }
+      }
+      while (i<rewardPoolList.length-1) {
+        rewardPoolList[i] = rewardPoolList[i+1];
+        i++;
+      }
+      rewardPoolList.length--;
+
+      emit RewardPoolRemoved(rewardPool,vault)
     }
 
-    function getRewardPoolList() public view returns (address[] memory){
-      return rewardPoolList;
+    function getAllVaults() external view returns (address[] memory) {
+      return (vaultList);
     }
 
-    function getCoreContractList() public view returns (address[] memory){
-      return coreContractList;
+    function getAllStrategies() external view returns (address[] memory) {
+      return (strategyList);
     }
 
-    function isHarvestContract(address _contract) public view returns (bool){
-      bool check = vaultCheck[_contract] || strategyCheck[_contract] || rewardPoolCheck[_contract] || coreContractCheck[_contract];
-      return check;
-    }
-
-    function isVault(address _vault) public view returns (bool){
-      return vaultCheck[_vault];
-    }
-
-    function isStrategy(address _strategy) public view returns (bool){
-      return strategyCheck[_strategy];
-    }
-
-    function isRewardPool(address _rewardPool) public view returns (bool){
-      return rewardPoolCheck[_rewardPool];
-    }
-
-    function isCoreContract(address _coreContract) public view returns (bool){
-      return coreContractCheck[_coreContract];
-    }
-
-    function getVaultStrategy(address _vault) public view returns (address) {
-      IVault vault = IVault(_vault);
-      address strategy = vault.strategy();
-      return strategy;
-    }
-
-    function getVaultRewardPool(address _vault) public view validVault(_vault) returns (address) {
-      address rewardPool = vaultRewardPool[_vault];
-      return rewardPool;
-    }
-
-    function getVaultUnderlying(address _vault) public view validVault(_vault) returns (address) {
-      IVault vault = IVault(_vault);
-      address underlying = vault.underlying();
-      return underlying;
-    }
-
-    function getVaultSharePrice(address _vault) public view validVault(_vault) returns (uint256) {
-      IVault vault = IVault(_vault);
-      uint256 sharePrice = vault.getPricePerFullShare();
-      return sharePrice;
-    }
-
-    /* function getVaultUnderlyingBalanceInVault(address _vault) public view validVault(_vault) returns (uint256) {
-      IVault vault = IVault(_vault);
-      uint256 underlyingBalanceInVault = vault.underlyingBalanceInVault();
-      return underlyingBalanceInVault;
-    }
-
-    function getVaultUnderlyingBalanceWithInvestment(address _vault) public view validVault(_vault) returns (uint256) {
-      IVault vault = IVault(_vault);
-      uint256 underlyingBalanceWithInvestment = vault.underlyingBalanceWithInvestment();
-      return underlyingBalanceWithInvestment;
-    }
-
-    function getVaultTotalSupply(address _vault) public view validVault(_vault) returns (uint256) {
-      IERC20 vault = IERC20(_vault);
-      uint256 totalSupply = vault.totalSupply();
-      return totalSupply;
-    }
-
-    function getVaultFractionToInvest(address _vault) public view validVault(_vault) returns (uint256[2] memory) {
-      IVault vault = IVault(_vault);
-      uint256 vaultFractionToInvestNumerator = vault.vaultFractionToInvestNumerator();
-      uint256 vaultFractionToInvestDenominator = vault.vaultFractionToInvestDenominator();
-      return [vaultFractionToInvestNumerator, vaultFractionToInvestDenominator];
-    } */
-
-    function getVaultInfo(address _vault) public view validVault(_vault) returns (address,address,address,address,uint256) {
-      address strategy = getVaultStrategy(_vault);
-      address rewardPool = getVaultRewardPool(_vault);
-      address underlying = getVaultUnderlying(_vault);
-      uint256 sharePrice = getVaultSharePrice(_vault);
-      return (_vault, strategy, rewardPool, underlying, sharePrice);
-    }
-
-    /* function getStrategyInvestedUnderlyingBalance(address _strategy) public view validStrategy(_strategy) returns (uint256) {
-      IStrategy strategy = IStrategy(_strategy);
-      uint256 investedUnderlyingBalance = strategy.investedUnderlyingBalance();
-      return investedUnderlyingBalance;
-    } */
-
-    function getStrategyUnderlying(address _strategy) public view validStrategy(_strategy) returns (address) {
-      IStrategy strategy = IStrategy(_strategy);
-      address underlying = strategy.underlying();
-      return underlying;
-    }
-
-    function getStrategyVault(address _strategy) public view validStrategy(_strategy) returns (address) {
-      IStrategy strategy = IStrategy(_strategy);
-      address vault = strategy.vault();
-      return vault;
-    }
-
-    function getStrategyInfo(address _strategy) public view validStrategy(_strategy) returns (address,address,address) {
-      address vault = getStrategyVault(_strategy);
-      address underlying = getStrategyUnderlying(_strategy);
-      return(_strategy, vault, underlying);
-    }
-
-    function getRewardPoolRewardPerTokenStored(address _rewardPool) public view validRewardPool(_rewardPool) returns (uint256) {
-      IRewardPool rewardPool = IRewardPool(_rewardPool);
-      uint256 rewardPerTokenStored = rewardPool.rewardPerTokenStored();
-      return rewardPerTokenStored;
-    }
-
-    function getRewardPoolRewardRate(address _rewardPool) public view validRewardPool(_rewardPool) returns (uint256) {
-      IRewardPool rewardPool = IRewardPool(_rewardPool);
-      uint256 rewardRate = rewardPool.rewardRate();
-      return rewardRate;
-    }
-
-    function getRewardPoolVault(address _rewardPool) public view validRewardPool(_rewardPool) returns (address) {
-      address vault = rewardPoolVault[_rewardPool];
-      return vault;
-    }
-
-    function getRewardPoolInfo(address _rewardPool) public view validRewardPool(_rewardPool) returns (address,address,uint256,uint256) {
-      address vault = getRewardPoolVault(_rewardPool);
-      uint256 rewardRate = getRewardPoolRewardRate(_rewardPool);
-      uint256 rewardPerTokenStored = getRewardPoolRewardPerTokenStored(_rewardPool);
-      return (_rewardPool,vault,rewardRate,rewardPerTokenStored);
+    function getAllRewardPools() external view returns (address[] memory) {
+      return (rewardPoolList);
     }
 
     // transfers token in the controller contract to the governance
     function salvage(address _token, uint256 _amount) external onlyGovernance {
         IERC20(_token).safeTransfer(governance(), _amount);
     }
+
 }
