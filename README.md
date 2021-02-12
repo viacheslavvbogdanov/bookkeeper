@@ -8,3 +8,13 @@ Bookkeeper is a contract that provides a convenient interface for retrieving imp
 
 * [Terrastruct diagram](https://app.terrastruct.com/diagrams/630052376)
 * [Bookkeeper Approach](BookkeeperApproach.md)
+
+
+## Oracle
+
+Oracle will be a universal price oracle, providing price data for any asset using DEX LPs
+
+
+## Important Links
+
+* [Oracle Approach](Oracle Approach.md)
