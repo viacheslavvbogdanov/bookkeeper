@@ -5,7 +5,8 @@
   "main": "null",
   "scripts": {
     "test": "npx truffle test",
-    "test-bookkeeper": "truffle build && set MAINNET_FORK=True && npx truffle test ./test/mainnet-fork-test-BookkeeperRegistry.js"
+    "test-bookkeeper": "truffle build && set MAINNET_FORK=True && npx truffle test ./test/mainnet-fork-test-BookkeeperRegistry.js",
+    "test-oracle": "truffle build && set MAINNET_FORK=True && npx truffle test ./test/mainnet-fork-test-Oracle.js"
   },
   "repository": {
     "type": "git",
