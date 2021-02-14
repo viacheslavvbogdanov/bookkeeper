@@ -26,11 +26,6 @@ contract BookkeeperCalculation {
       return rewardRate;
     }
 
-    function getRewardPoolVault(address _rewardPool) public view validRewardPool(_rewardPool) returns (address) {
-      address vault = rewardPoolVault[_rewardPool];
-      return vault;
-    }
-
     function getRewardPoolInfo(address _rewardPool) public view validRewardPool(_rewardPool) returns (address,address,uint256,uint256) {
       address vault = getRewardPoolVault(_rewardPool);
       uint256 rewardRate = getRewardPoolRewardRate(_rewardPool);

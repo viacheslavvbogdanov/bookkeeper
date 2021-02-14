@@ -78,15 +78,18 @@ contract Viewer is Governable {
         IVault vault = IVault(_vault);
         address strategyAddress = vault.strategy();
 
+        // Update vault details
         vaultName[_vault] = _vaultName;
         vaultList.push(_vault);
         vaultRewardPoolLink[_vault] = _rewardPool;
         vaultStrategyLink[_vault] = strategyAddress;
 
+        // Update rewardPool details
         rewardPoolName[_rewardPool] = rewardPoolName;
         rewardPoolList.push(_rewardPool);
         rewardPoolVaultLink[_rewardPool] = _vault;
 
+        // Update strategy details
         strategyName[strategyAddress] = _strategyName;
         strategyList.push(strategyAddress);
         strategyVaultLink[strategyAddress] = _vault;
