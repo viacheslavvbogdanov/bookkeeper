@@ -19,32 +19,43 @@ contract Viewer is Governable {
     using Address for address;
     using SafeMath for uint256;
 
-    // Keeping track of all added contracts. Lists are made so they can be returned by functions.
-    mapping (address => bool) public vaultCheck;
-    mapping (address => bool) public strategyCheck;
-    mapping (address => bool) public rewardPoolCheck;
-    mapping (address => bool) public coreContractCheck;
-    mapping (address => address) public vaultRewardPool;
-    mapping (address => address) public rewardPoolVault;
-    address[] vaultList;
-    address[] strategyList;
-    address[] rewardPoolList;
-    address[] coreContractList;
+    
+    // Names for all contracts, also used for valid check (check for non-empty string)
+    mapping (address => string) private vaultName;
+    mapping (address => string) private rewardPoolName;
+    mapping (address => string) private strategyName;
+    mapping (address => string) private coreContractName;
+
+    // Contract relationship mappings
+    mapping (address => address) private vaultRewardPoolLink;
+    mapping (address => address) private rewardPoolVaultLink;
+    mapping (address => address) private vaultStrategyLink;
+    mapping (address => address) private strategyVaultLink;
+
+    // MetaData mappings for all tracked contracts
+    mapping (address => uint256) private createdOnBlock;
+    mapping (address => uint256) private startOnBlock;
+
+    // Arrays for iteration of tracked contracts
+    address[] private vaultList;
+    address[] private strategyList;
+    address[] private rewardPoolList;
+    address[] private coreContractList;
 
     modifier validVault(address _vault){
-        require(vaultCheck[_vault], "vault does not exist");
+        require(isValidVault(_vault), "vault does not exist");
         _;
     }
     modifier validStrategy(address _strategy){
-        require(strategyCheck[_strategy], "strategy does not exist");
+        require(isValidStrategy(_strategy), "strategy does not exist");
         _;
     }
     modifier validRewardPool(address _rewardPool){
-        require(rewardPoolCheck[_rewardPool], "reward pool does not exist");
+        require(isValidRewardPool(_rewardPool), "reward pool does not exist");
         _;
     }
     modifier validCoreContract(address _coreContract){
-        require(coreContractCheck[_coreContract], "core contract does not exist");
+        require(isValidCoreContract(_coreContract), "core contract does not exist");
         _;
     }
 
@@ -52,25 +63,35 @@ contract Viewer is Governable {
     event RewardPoolChanged(address vault, address newRewardPool, address oldRewardPool);
     event StrategyChanged(address vault, address newStrategy, address oldStrategy);
 
+    // TODO: Decide if we want this contract to be upgradeable, if so get rid of ctor
     constructor(address _storage)
     Governable(_storage) public {}
 
     //I did not find a consistent on-chain link between Vaults and Reward Pools, so it seems they would have to be added in pairs to keep track of the linkage.
-    function addVaultAndRewardPool(address _vault, address _rewardPool) external onlyGovernance {
+    function addVaultAndRewardPool(address _vault, string _vaultName, address _rewardPool, string _rewardPoolName, string _strategyName) external onlyGovernance {
         require(_vault != address(0), "new vault shouldn't be empty");
         require(!vaultCheck[_vault], "vault already exists");
         require(_rewardPool != address(0), "new reward pool shouldn't be empty");
+        require(_vaultName != "" && _rewardPoolName != "", "vault and rewardPool names must not be empty");
+        require(IVault(_vault).strategy() != address(0), "vault strategy must be set");
 
-        vaultCheck[_vault] = true;
-        strategyCheck[IVault(_vault).strategy()] = true;
-        rewardPoolCheck[_rewardPool] = true;
+        IVault vault = IVault(_vault);
+        address strategyAddress = vault.strategy();
+
+        vaultName[_vault] = _vaultName;
         vaultList.push(_vault);
-        strategyList.push(IVault(_vault).strategy());
-        rewardPoolList.push(_rewardPool);
-        vaultRewardPool[_vault] = _rewardPool;
-        rewardPoolVault[_rewardPool] = _vault;
+        vaultRewardPoolLink[_vault] = _rewardPool;
+        vaultStrategyLink[_vault] = strategyAddress;
 
-        emit VaultAdded(_vault, IVault(_vault).strategy(), _rewardPool);
+        rewardPoolName[_rewardPool] = rewardPoolName;
+        rewardPoolList.push(_rewardPool);
+        rewardPoolVaultLink[_rewardPool] = _vault;
+
+        strategyName[strategyAddress] = _strategyName;
+        strategyList.push(strategyAddress);
+        strategyVaultLink[strategyAddress] = _vault;
+
+        emit VaultAdded(_vault, strategyAddress, _rewardPool);
     }
 
     //Change Reward Pool for existing vault. Again vault is needed as input, as no on-chain link.
@@ -205,19 +226,19 @@ contract Viewer is Governable {
     }
 
     function isVault(address _vault) public view returns (bool){
-      return vaultCheck[_vault];
+      return vaultName[_vault] != "";
     }
 
     function isStrategy(address _strategy) public view returns (bool){
-      return strategyCheck[_strategy];
+      return strategyName[_strategy] != "";
     }
 
     function isRewardPool(address _rewardPool) public view returns (bool){
-      return rewardPoolCheck[_rewardPool];
+      return rewardPoolName[_rewardPool] != "";
     }
 
     function isCoreContract(address _coreContract) public view returns (bool){
-      return coreContractCheck[_coreContract];
+      return coreContractName[_coreContract] != "";
     }
 
     function getVaultStrategy(address _vault) public view returns (address) {
@@ -231,42 +252,16 @@ contract Viewer is Governable {
       return rewardPool;
     }
 
+    function getRewardPoolVault(address _rewardPool) public view validRewardPool(_rewardPool) returns (address) {
+      address vault = rewardPoolVault[_rewardPool];
+      return vault;
+    }
+
     function getVaultUnderlying(address _vault) public view validVault(_vault) returns (address) {
       IVault vault = IVault(_vault);
       address underlying = vault.underlying();
       return underlying;
     }
-
-    function getVaultSharePrice(address _vault) public view validVault(_vault) returns (uint256) {
-      IVault vault = IVault(_vault);
-      uint256 sharePrice = vault.getPricePerFullShare();
-      return sharePrice;
-    }
-
-    /* function getVaultUnderlyingBalanceInVault(address _vault) public view validVault(_vault) returns (uint256) {
-      IVault vault = IVault(_vault);
-      uint256 underlyingBalanceInVault = vault.underlyingBalanceInVault();
-      return underlyingBalanceInVault;
-    }
-
-    function getVaultUnderlyingBalanceWithInvestment(address _vault) public view validVault(_vault) returns (uint256) {
-      IVault vault = IVault(_vault);
-      uint256 underlyingBalanceWithInvestment = vault.underlyingBalanceWithInvestment();
-      return underlyingBalanceWithInvestment;
-    }
-
-    function getVaultTotalSupply(address _vault) public view validVault(_vault) returns (uint256) {
-      IERC20 vault = IERC20(_vault);
-      uint256 totalSupply = vault.totalSupply();
-      return totalSupply;
-    }
-
-    function getVaultFractionToInvest(address _vault) public view validVault(_vault) returns (uint256[2] memory) {
-      IVault vault = IVault(_vault);
-      uint256 vaultFractionToInvestNumerator = vault.vaultFractionToInvestNumerator();
-      uint256 vaultFractionToInvestDenominator = vault.vaultFractionToInvestDenominator();
-      return [vaultFractionToInvestNumerator, vaultFractionToInvestDenominator];
-    } */
 
     function getVaultInfo(address _vault) public view validVault(_vault) returns (address,address,address,address,uint256) {
       address strategy = getVaultStrategy(_vault);
@@ -275,12 +270,6 @@ contract Viewer is Governable {
       uint256 sharePrice = getVaultSharePrice(_vault);
       return (_vault, strategy, rewardPool, underlying, sharePrice);
     }
-
-    /* function getStrategyInvestedUnderlyingBalance(address _strategy) public view validStrategy(_strategy) returns (uint256) {
-      IStrategy strategy = IStrategy(_strategy);
-      uint256 investedUnderlyingBalance = strategy.investedUnderlyingBalance();
-      return investedUnderlyingBalance;
-    } */
 
     function getStrategyUnderlying(address _strategy) public view validStrategy(_strategy) returns (address) {
       IStrategy strategy = IStrategy(_strategy);
@@ -298,34 +287,5 @@ contract Viewer is Governable {
       address vault = getStrategyVault(_strategy);
       address underlying = getStrategyUnderlying(_strategy);
       return(_strategy, vault, underlying);
-    }
-
-    function getRewardPoolRewardPerTokenStored(address _rewardPool) public view validRewardPool(_rewardPool) returns (uint256) {
-      IRewardPool rewardPool = IRewardPool(_rewardPool);
-      uint256 rewardPerTokenStored = rewardPool.rewardPerTokenStored();
-      return rewardPerTokenStored;
-    }
-
-    function getRewardPoolRewardRate(address _rewardPool) public view validRewardPool(_rewardPool) returns (uint256) {
-      IRewardPool rewardPool = IRewardPool(_rewardPool);
-      uint256 rewardRate = rewardPool.rewardRate();
-      return rewardRate;
-    }
-
-    function getRewardPoolVault(address _rewardPool) public view validRewardPool(_rewardPool) returns (address) {
-      address vault = rewardPoolVault[_rewardPool];
-      return vault;
-    }
-
-    function getRewardPoolInfo(address _rewardPool) public view validRewardPool(_rewardPool) returns (address,address,uint256,uint256) {
-      address vault = getRewardPoolVault(_rewardPool);
-      uint256 rewardRate = getRewardPoolRewardRate(_rewardPool);
-      uint256 rewardPerTokenStored = getRewardPoolRewardPerTokenStored(_rewardPool);
-      return (_rewardPool,vault,rewardRate,rewardPerTokenStored);
-    }
-
-    // transfers token in the controller contract to the governance
-    function salvage(address _token, uint256 _amount) external onlyGovernance {
-        IERC20(_token).safeTransfer(governance(), _amount);
     }
 }
