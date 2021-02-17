@@ -7,11 +7,8 @@ import "./hardworkInterface/IVault.sol";
 import "./Storage.sol";
 import "./Governable.sol";
 import "./hardworkInterface/IRewardPool.sol";
-import "./Controllable.sol";
 
-// File: contracts/Viewer.sol
-
-pragma solidity 0.5.16;
+pragma solidity 0.6.12;
 
 contract BookkeeperRegistry is Governable {
 
@@ -161,7 +158,7 @@ contract BookkeeperRegistry is Governable {
         rewardPoolList[i] = rewardPoolList[i+1];
         i++;
       }
-      rewardPoolList.length--;
+      /* rewardPoolList.length--; */
 
 
       emit RewardPoolChanged(vault, rewardPool, oldRewardPool);
@@ -196,7 +193,7 @@ contract BookkeeperRegistry is Governable {
           strategyList[i] = strategyList[i+1];
           i++;
         }
-        strategyList.length--;
+        /* strategyList.length--; */
       }
 
       isActive[strategy] = true;
@@ -350,7 +347,7 @@ contract BookkeeperRegistry is Governable {
         underlyingVaults[underlying][i] = underlyingVaults[underlying][i+1];
         i++;
       }
-      underlyingVaults[underlying].length--;
+      /* underlyingVaults[underlying].length--; */
 
       for ( i=0;i<vaultList.length;i++) {
         if (vault == vaultList[i]){
@@ -361,7 +358,7 @@ contract BookkeeperRegistry is Governable {
         vaultList[i] = vaultList[i+1];
         i++;
       }
-      vaultList.length--;
+      /* vaultList.length--; */
 
       if (vaultMultipleStrategies[vault]){
         for(i=0;i<vaultStrategies[vault].length;i++){
@@ -378,7 +375,7 @@ contract BookkeeperRegistry is Governable {
         removeRewardPool(rewardPool);
       }
 
-      emit VaultRemoved(vault,strategy,rewardPool);
+      emit VaultRemoved(vault,vaultStrategy[vault],rewardPool);
     }
 
     //Deactivate strategy.
@@ -400,7 +397,7 @@ contract BookkeeperRegistry is Governable {
           vaultStrategies[vault][i] = vaultStrategies[vault][i+1];
           i++;
         }
-        vaultStrategies[vault].length--;
+        /* vaultStrategies[vault].length--; */
       }
 
       for ( i=0;i<strategyList.length;i++) {
@@ -412,9 +409,9 @@ contract BookkeeperRegistry is Governable {
         strategyList[i] = strategyList[i+1];
         i++;
       }
-      strategyList.length--;
+      /* strategyList.length--; */
 
-      emit StrategyRemoved(strategy,vault)
+      emit StrategyRemoved(strategy,vault);
     }
 
     //Deactivate reward pool. This does not deactivate the vault.
@@ -434,9 +431,9 @@ contract BookkeeperRegistry is Governable {
         rewardPoolList[i] = rewardPoolList[i+1];
         i++;
       }
-      rewardPoolList.length--;
+      /* rewardPoolList.length--; */
 
-      emit RewardPoolRemoved(rewardPool,vault)
+      emit RewardPoolRemoved(rewardPool,vault);
     }
 
     function getAllVaults() external view returns (address[] memory) {
