@@ -1,6 +1,6 @@
 pragma solidity >=0.5.0;
 
-interface IRegistry {
+interface ICurveRegistry {
   function get_n_coins(address _pool) external view returns (uint256[2] memory);
   function get_coins(address _pool) external view returns (address[8] memory);
   function get_underlying_coins(address _pool) external view returns (address[8] memory);

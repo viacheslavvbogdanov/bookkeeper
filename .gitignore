@@ -1,7 +1,7 @@
 build/
 node_modules/
+migragtions/
 coverage/
 coverage.json
 secret.json
 .DS_Store
-
