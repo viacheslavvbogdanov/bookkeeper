@@ -39,11 +39,16 @@ if ( process.env.MAINNET_FORK ) {
       let curveRegistryAddress = "0x7D86446dDb609eD0F5f8684AcF30380a356b2B4c";
       let oneInchFactoryAddress = "0xbAF9A5d4b0052359326A6CDAb54BABAa3a3A9643";
 
-      let normalTokens = [];
-      let uniLPs = [];
-      let sushiLPs = [];
+      let normalTokens = [MFC.FARM_ADDRESS, MFC.renBTC_ADDRESS, MFC.BAC_ADDRESS, MFC.MAAPL_ADDRESS, MFC.UNI_ADDRESS, MFC.MIS_ADDRESS, MFC.SEUR_ADDRESS, MFC.SBTC_ADDRESS, MFC.GRAIN_ADDRESS];
+      let uniLPs = ["0xbb2b8038a1640196fbe3e38816f3e67cba72d940","0xb4e16d0168e52d35cacd2c6185b44281ec28c9dc","0xd3d2e2692501a5c9ca623199d38826e513033a17","0x21b8065d10f73ee2e260e5b47d3344d3ced7596e",
+                    "0x0d4a11d5eeaac28ec3f61d100daf4d40471f1852","0xa478c2975ab1ea89e8196811f51a7b7ade33eb11","0xf52f433b79d21023af94251958bed3b64a2b7930","0xa2107fa5b38d9bbd2c461d6edf11b11a50f6b974",
+                    "0x97c4adc5d28a86f9470c70dd91dc6cc2f20d2d4d","0x32ce7e48debdccbfe0cd037cc89526e4382cb81b"];
+      let sushiLPs = ["0xceff51756c56ceffca006cd410b03ffc46dd3a58","0x795065dcc9f64b5614c407a6efdc400da6221fb0","0xc3d03e4f041fd4cd388c549ee2a29a9e5075882f","0x06da0fd433c1a5d7a4faa01111c044910a184553",
+                      "0x397ff1542f962076d0bfe58ea045ffa2d347aca0","0x088ee5007c98a9677165d78dd2109ae4a3d04d0c","0xc40d16476380e4037e6b1a2594caf6a6cc8da967","0xd75ea151a61d06868e31f8988d28dfe5e9df57b4",
+                      "0xa1d7b2d891e3a1f9ef4bbc5be20630c2feb1c470","0x110492b31c59716ac47337e616804e3e3adc0b4a"];
       let curveLPs = [];
-      let oneInchLPs = [MFC.ONEINCH_ETH_USDC_LP_ADDRESS, MFC.ONEINCH_ONEINCH_ETH_LP_ADDRESS, MFC.ONEINCH_ETH_FET_LP_ADDRESS];
+      let oneInchLPs = ["0x6a11F3E5a01D129e566d783A7b6E8862bFD66CcA","0x7566126f2fD0f2Dddae01Bb8A6EA49b760383D5A","0xbBa17b81aB4193455Be10741512d0E71520F43cB","0xb4dB55a20E0624eDD82A0Cf356e3488B4669BD27",
+                        "0x0EF1B8a0E726Fc3948E15b23993015eB1627f210","0x9696D4999a25766719D0e80294F93bB62A5a3178","0x822E00A929f5A92F3565A16f92581e54af2b90Ea","0x1f629794B34FFb3B29FF206Be5478A52678b47ae"];
 
       let keyTokens = [
       "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", //USDC
@@ -75,160 +80,291 @@ if ( process.env.MAINNET_FORK ) {
         sushiswapFactory = await IUniswapV2Factory.at(sushiswapFactoryAddress);
         curveRegistry = await ICurveRegistry.at(curveRegistryAddress);
         oneInchFactory = await IMooniFactory.at(oneInchFactoryAddress);
-
-
-        // nSushiPools = await sushiswapFactory.allPairsLength();
-        // console.log("Sushi pools:", BigNumber(nSushiPools).toFixed());
-        // for (i=0;i<nSushiPools;i++) {
-        //   pool = await sushiswapFactory.allPairs(i);
-        //   sushiLPs.push(pool);
-        // }
-        // console.log("Sushi done");
-
-        nUniPools = await uniswapFactory.allPairsLength();
-        nUniPools = 500;
-        console.log("Uni pools:", BigNumber(nUniPools).toFixed());
-        for (i=20000;i<(20000+nUniPools);i++) {
-          pool = await uniswapFactory.allPairs(i);
-          uniLPs.push(pool);
-        }
-        console.log("Uni done");
-
-        // nCurvePools = await curveRegistry.pool_count();
-        // console.log("Curve pools:", BigNumber(nCurvePools).toFixed());
-        // for (i=0;i<nCurvePools;i++) {
-        //   pool = await curveRegistry.pool_list(i);
-        //   lpToken = await curveRegistry.get_lp_token(pool);
-        //   curveLPs.push(lpToken);
-        // }
-        // console.log("Curve done");
-        // console.log("");
-        //
-        // oneInchLPs = await oneInchFactory.getAllPools();
-        // nOneInchPools = oneInchLPs.length;
-        // console.log("1Inch pools:", nOneInchPools);
-
-        for (i=0;i<nUniPools;i++) {
-          pair = await IUniswapV2Pair.at(uniLPs[i]);
-          token0 = await pair.token0();
-          token1 = await pair.token1();
-          check0 = 0;
-          check1 = 0;
-          for (j=0;j<normalTokens.length;j++) {
-            if (token0 == normalTokens[j]) {
-              check0 = 1;
-            }
-            if (token1 == normalTokens[j]) {
-              check1 = 1;
-            }
-          }
-          if (check0 == 0) {
-            normalTokens.push(token0);
-          }
-          if (check1 == 0) {
-            normalTokens.push(token1);
-          }
-        }
-        console.log("Normal tokens:", normalTokens.length)
-
       });
 
-      it("Test", async function () {
+      it("Normal Tokens", async function () {
         checkTokens = [
-          '0x4997310AC1E1537A452b0ECBACb1989d3a579AC1',
-          '0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2'
-        ];
+        ]
 
         for (i=0;i<checkTokens.length;i++) {
-          console.log("Token",i,checkTokens[i]);
+          console.log("Check Token",i,checkTokens[i]);
           try {
             console.time("getPrice");
-            price2 = await oracle.getPrice(checkTokens[i]);
+            price = await oracle.getPrice(checkTokens[i]);
             console.timeEnd("getPrice");
-            console.log("price:", BigNumber(price2).toFixed()/10**precisionDecimals);
+            console.log("price:", BigNumber(price).toFixed()/10**precisionDecimals);
           } catch (error) {
-            console.log("Token", i, checkTokens[i]);
-            console.error(error);
+            price = 0;
+            console.log("Error at Token", i, checkTokens[i]);
           }
+          refPriceRaw = await CoinGeckoClient.simple.fetchTokenPrice({
+            contract_addresses: checkTokens[i],
+            vs_currencies: "usd",
+          })
+          address = checkTokens[i].toLowerCase();
+          try {
+            refPrice = refPriceRaw["data"][address]["usd"];
+          } catch (error) {
+            refPrice = 0;
+          }
+          console.log("Coingecko price:", refPrice);
+          if (refPrice != 0 && price != 0){
+            console.log("Diff:", (price/10**precisionDecimals-refPrice)/refPrice*100, "%");
+          }
+          console.log("");
+        }
+
+        for (i=0;i<keyTokens.length;i++) {
+          console.log("Key Token",i,keyTokens[i]);
+          try {
+            console.time("getPrice");
+            price = await oracle.getPrice(keyTokens[i]);
+            console.timeEnd("getPrice");
+            console.log("price:", BigNumber(price).toFixed()/10**precisionDecimals);
+          } catch (error) {
+            price = 0;
+            console.log("Error at Token", i, keyTokens[i]);
+          }
+          refPriceRaw = await CoinGeckoClient.simple.fetchTokenPrice({
+            contract_addresses: keyTokens[i],
+            vs_currencies: "usd",
+          })
+          address = keyTokens[i].toLowerCase();
+          try {
+            refPrice = refPriceRaw["data"][address]["usd"];
+          } catch (error) {
+            refPrice = 0;
+          }
+          console.log("Coingecko price:", refPrice);
+          if (refPrice != 0 && price != 0){
+            console.log("Diff:", (price/10**precisionDecimals-refPrice)/refPrice*100, "%");
+          }
+          console.log("");
         }
 
         for (i=0;i<normalTokens.length;i++) {
-          // console.log("Token",i,normalTokens[i]);
+          console.log("Token",i,normalTokens[i]);
           try {
-            // console.time("getPrice");
-            price2 = await oracle.getPrice(normalTokens[i]);
-            // console.timeEnd("getPrice");
-            // console.log("price:", BigNumber(price2).toFixed()/10**precisionDecimals);
+            console.time("getPrice");
+            price = await oracle.getPrice(normalTokens[i]);
+            console.timeEnd("getPrice");
+            console.log("price:", BigNumber(price).toFixed()/10**precisionDecimals);
           } catch (error) {
-            checkTokens.push(normalTokens[i]);
-            console.log("Token", i, normalTokens[i], checkTokens.length);
+            price = 0;
+            console.log("Error at Token", i, normalTokens[i]);
           }
-          // refPrice = await CoinGeckoClient.simple.fetchTokenPrice({
-          //   contract_addresses: normalTokens[i],
-          //   vs_currencies: "usd",
-          // })
-          // console.log("Reference price:", refPrice)
-          // console.log("");
+          refPriceRaw = await CoinGeckoClient.simple.fetchTokenPrice({
+            contract_addresses: normalTokens[i],
+            vs_currencies: "usd",
+          })
+          address = normalTokens[i].toLowerCase();
+          try {
+            refPrice = refPriceRaw["data"][address]["usd"];
+          } catch (error) {
+            refPrice = 0;
+          }
+          console.log("Coingecko price:", refPrice);
+          if (refPrice != 0 && price != 0){
+            console.log("Diff:", (price/10**precisionDecimals-refPrice)/refPrice*100, "%");
+          }
+          console.log("");
         }
-        console.log(checkTokens)
-
-        // for (i=0;i<uniLPs.length;i++) {
-        //   console.log("Uni token",i,uniLPs[i]);
-        //   try {
-        //     console.time("getPrice");
-        //     price2 = await oracle.getPrice(uniLPs[i]);
-        //     console.timeEnd("getPrice");
-        //     console.log("price:", BigNumber(price2).toFixed()/10**precisionDecimals);
-        //     console.log("");
-        //   } catch {
-        //     console.log("Uni", i, uniLPs[i]);
-        //     console.log("")
-        //   }
-        // }
-        //
-        // for (i=0;i<nSushiPools-1;i++) {
-        //   console.log("Sushi token",i,sushiLPs[i]);
-        //   try {
-        //     console.time("getPrice");
-        //     price2 = await oracle.getPrice(sushiLPs[i]);
-        //     console.timeEnd("getPrice");
-        //     console.log("price:", BigNumber(price2).toFixed()/10**precisionDecimals);
-        //     console.log("");
-        //   } catch {
-        //     console.log("Uni", i, sushiLPs[i]);
-        //     console.log("")
-        //   }
-        // }
-        //
-        // for (i=0;i<curveLPs.length;i++) {
-        //   console.log("Curve token",i, curveLPs[i]);
-        //   try {
-        //     console.time("getPrice");
-        //     price2 = await oracle.getPrice(curveLPs[i]);
-        //     console.timeEnd("getPrice");
-        //     console.log("price:", BigNumber(price2).toFixed()/10**precisionDecimals);
-        //     console.log("");
-        //   } catch {
-        //     console.log("Uni", i, curveLPs[i]);
-        //     console.log("")
-        //   }
-        // }
-        //
-        // for (i=0;i<oneInchLPs.length;i++) {
-        //   console.log("OneInch token",i,oneInchLPs[i]);
-        //   try {
-        //     console.time("getPrice");
-        //     price2 = await oracle.getPrice(oneInchLPs[i]);
-        //     console.timeEnd("getPrice");
-        //     console.log("price:", BigNumber(price2).toFixed()/10**precisionDecimals);
-        //     console.log("");
-        //   } catch {
-        //     console.log("Uni", i, oneInchLPs[i]);
-        //     console.log("")
-        //   }
-        // }
-
       });
+
+      it("Uni LPs Repeatable", async function() {
+        for (i=0;i<uniLPs.length;i++) {
+          console.log("Uni token",i,uniLPs[i]);
+          try {
+            console.time("getPrice");
+            price = await oracle.getPrice(uniLPs[i]);
+            console.timeEnd("getPrice");
+            console.log("price:", BigNumber(price).toFixed()/10**precisionDecimals);
+          } catch {
+            console.log("Uni", i, uniLPs[i]);
+          }
+
+          underlying = await oracle.getUniUnderlying(uniLPs[i]);
+          token0 = underlying[0][0].toLowerCase();
+          token1 = underlying[0][1].toLowerCase();
+          amount0 = BigNumber(underlying[1][0]).toFixed();
+          amount1 = BigNumber(underlying[1][1]).toFixed();
+
+          refPriceRaw0 = await CoinGeckoClient.simple.fetchTokenPrice({
+            contract_addresses: token0,
+            vs_currencies: "usd",
+          })
+          try {
+            refPrice0 = refPriceRaw0["data"][token0]["usd"];
+          } catch (error) {
+            refPrice0 = 0;
+          }
+          refPriceRaw1 = await CoinGeckoClient.simple.fetchTokenPrice({
+            contract_addresses: token1,
+            vs_currencies: "usd",
+          })
+          try {
+            refPrice1 = refPriceRaw1["data"][token1]["usd"];
+          } catch (error) {
+            refPrice1 = 0;
+          }
+          refPrice = amount0*refPrice0/10**precisionDecimals + amount1*refPrice1/10**precisionDecimals;
+          if (refPrice0 == 0 || refPrice1 == 0) {
+            refPrice = 0;
+          }
+          console.log("Coingecko price:", refPrice);
+          if (refPrice != 0 && price != 0){
+            console.log("Diff:", (price/10**precisionDecimals-refPrice)/refPrice*100, "%");
+          }
+          console.log("")
+        }
+      });
+
+      it("Sushi LPs Repeatable", async function() {
+        for (i=0;i<sushiLPs.length;i++) {
+          console.log("Sushi token",i,sushiLPs[i]);
+          try {
+            console.time("getPrice");
+            price = await oracle.getPrice(sushiLPs[i]);
+            console.timeEnd("getPrice");
+            console.log("price:", BigNumber(price).toFixed()/10**precisionDecimals);
+          } catch {
+            console.log("Uni", i, sushiLPs[i]);
+          }
+
+          underlying = await oracle.getUniUnderlying(sushiLPs[i]);
+          token0 = underlying[0][0].toLowerCase();
+          token1 = underlying[0][1].toLowerCase();
+          amount0 = BigNumber(underlying[1][0]).toFixed();
+          amount1 = BigNumber(underlying[1][1]).toFixed();
+
+          refPriceRaw0 = await CoinGeckoClient.simple.fetchTokenPrice({
+            contract_addresses: token0,
+            vs_currencies: "usd",
+          })
+          try {
+            refPrice0 = refPriceRaw0["data"][token0]["usd"];
+          } catch (error) {
+            refPrice0 = 0;
+          }
+          refPriceRaw1 = await CoinGeckoClient.simple.fetchTokenPrice({
+            contract_addresses: token1,
+            vs_currencies: "usd",
+          })
+          try {
+            refPrice1 = refPriceRaw1["data"][token1]["usd"];
+          } catch (error) {
+            refPrice1 = 0;
+          }
+          refPrice = amount0*refPrice0/10**precisionDecimals + amount1*refPrice1/10**precisionDecimals;
+          if (refPrice0 == 0 || refPrice1 == 0) {
+            refPrice = 0;
+          }
+          console.log("Coingecko price:", refPrice);
+          if (refPrice != 0 && price != 0){
+            console.log("Diff:", (price/10**precisionDecimals-refPrice)/refPrice*100, "%");
+          }
+          console.log("")
+
+        }
+      });
+
+      it("Curve LPs All", async function() {
+        nCurvePools = await curveRegistry.pool_count();
+        console.log("Curve pools:", BigNumber(nCurvePools).toFixed());
+        for (i=0;i<nCurvePools;i++) {
+          pool = await curveRegistry.pool_list(i);
+          lpToken = await curveRegistry.get_lp_token(pool);
+          curveLPs.push(lpToken);
+        }
+        console.log("Curve setup done");
+
+        for (i=0;i<curveLPs.length;i++) {
+          console.log("Curve token",i, curveLPs[i]);
+          try {
+            console.time("getPrice");
+            price = await oracle.getPrice(curveLPs[i]);
+            console.timeEnd("getPrice");
+            console.log("price:", BigNumber(price).toFixed()/10**precisionDecimals);
+          } catch {
+            console.log("Uni", i, curveLPs[i]);
+          }
+
+          underlying = await oracle.getCurveUnderlying(curveLPs[i]);
+          refPrice = 0;
+          for (j=0;j<8;j++) {
+            token = underlying[0][j].toLowerCase();
+            if (token == MFC.ZERO_ADDRESS) {
+              break;
+            }
+            amount = underlying[1][j];
+            refPriceRaw = await CoinGeckoClient.simple.fetchTokenPrice({
+              contract_addresses: token,
+              vs_currencies: "usd",
+            })
+            try {
+              refPriceUnderlying = refPriceRaw["data"][token]["usd"];
+            } catch (error) {
+              refPrice = 0;
+              break;
+            }
+            refPrice = refPrice + refPriceUnderlying*amount/10**precisionDecimals;
+          }
+          console.log("Coingecko price:", refPrice);
+          if (refPrice != 0 && price != 0){
+            console.log("Diff:", (price/10**precisionDecimals-refPrice)/refPrice*100, "%");
+          }
+          console.log("")
+        }
+      });
+
+      it("1Inch LPs Repeatable", async function() {
+        for (i=0;i<oneInchLPs.length;i++) {
+          console.log("OneInch token",i,oneInchLPs[i]);
+          try {
+            console.time("getPrice");
+            price = await oracle.getPrice(oneInchLPs[i]);
+            console.timeEnd("getPrice");
+            console.log("price:", BigNumber(price).toFixed()/10**precisionDecimals);
+          } catch {
+            console.log("Uni", i, oneInchLPs[i]);
+          }
+
+          underlying = await oracle.getOneInchUnderlying(oneInchLPs[i]);
+          token0 = underlying[0][0].toLowerCase();
+          token1 = underlying[0][1].toLowerCase();
+          amount0 = BigNumber(underlying[1][0]).toFixed();
+          amount1 = BigNumber(underlying[1][1]).toFixed();
+
+          refPriceRaw0 = await CoinGeckoClient.simple.fetchTokenPrice({
+            contract_addresses: token0,
+            vs_currencies: "usd",
+          })
+          try {
+            refPrice0 = refPriceRaw0["data"][token0]["usd"];
+          } catch (error) {
+            refPrice0 = 0;
+          }
+          refPriceRaw1 = await CoinGeckoClient.simple.fetchTokenPrice({
+            contract_addresses: token1,
+            vs_currencies: "usd",
+          })
+          try {
+            refPrice1 = refPriceRaw1["data"][token1]["usd"];
+          } catch (error) {
+            refPrice1 = 0;
+          }
+          refPrice = amount0*refPrice0/10**precisionDecimals + amount1*refPrice1/10**precisionDecimals;
+          if (refPrice0 == 0 || refPrice1 == 0) {
+            refPrice = 0;
+          }
+          console.log("Coingecko price:", refPrice);
+          if (refPrice != 0 && price != 0){
+            console.log("Diff:", (price/10**precisionDecimals-refPrice)/refPrice*100, "%");
+          }
+          console.log("")
+        }
+      });
+
     });
   });
 }

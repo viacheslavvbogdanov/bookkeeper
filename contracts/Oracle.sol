@@ -20,6 +20,7 @@ contract Oracle is Governable {
   using Address for address;
   using SafeMath for uint256;
 
+  //Addresses for factories and registries for different DEX platforms. Functions will be added to allow to alter these when needed.
   address public uniswapFactoryAddress = 0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f;
   address public sushiswapFactoryAddress = 0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac;
   address public curveRegistryAddress = 0x7D86446dDb609eD0F5f8684AcF30380a356b2B4c;
@@ -31,6 +32,7 @@ contract Oracle is Governable {
   ICurveRegistry curveRegistry = ICurveRegistry(curveRegistryAddress);
   IMooniFactory oneInchFactory = IMooniFactory(oneInchFactoryAddress);
 
+  //Key tokens are used to find liquidity for any given token on Uni, Sushi and Curve.
   address[] public keyTokens = [
   0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48, //USDC
   0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2, //WETH
@@ -40,6 +42,7 @@ contract Oracle is Governable {
   0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599, //WBTC
   0xdB25f211AB05b1c97D595516F45794528a807ad8  //EURS
   ];
+  //Pricing tokens are Key tokens with good liquidity with the defined output token on Uniswap.
   address[] public pricingTokens = [
   0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48, //USDC
   0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2, //WETH
@@ -48,9 +51,10 @@ contract Oracle is Governable {
   0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599, //WBTC
   0xdB25f211AB05b1c97D595516F45794528a807ad8  //EURS
   ];
+  //The defined output token is the unit in which prices of input tokens are given.
   address public definedOutputToken = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48; //USDC
 
-  //Below are addresses of LP tokens for which it is known that the get_underlying functions of Curve Registry do not work.
+  //Below are addresses of LP tokens for which it is known that the get_underlying functions of Curve Registry do not work because of errors in the Curve contract.
   //The exceptions are split. In the first exception the get_underlying_coins is called with get_balances.
   //In the second exception get_coins and get_balances are called.
   address[] public curveExceptionList0 = [
@@ -68,8 +72,10 @@ contract Oracle is Governable {
   constructor(address _storage)
   Governable(_storage) public {}
 
+  //Main function of the contract. Gives the price of a given token in the defined output token.
+  //The contract allows for input tokens to be LP tokens from Uniswap, Sushiswap, Curve and 1Inch.
+  //In case of LP token, the underlying tokens will be found and valued to get the price.
   function getPrice(address token) external view returns (uint256) {
-    /* emit Check("Check"); */
     if (token == definedOutputToken) {
       return (10**precisionDecimals);
     }
@@ -134,15 +140,17 @@ contract Oracle is Governable {
     return (isUniSushi, isCurve, isOneInch);
   }
 
+  //Checks if address is 1Inch LP
   function isOneInchCheck(address token) public view returns (bool) {
     bool oneInchLP = oneInchFactory.isPool(token);
     return oneInchLP;
   }
 
+  //Checks if address is Uni LP. This is done in two steps, because the second step seems to cause errors for some tokens.
+  //Only the first step is not deemed accurate enough, as any token could be caalled UNI-V2.
   function isUniCheck(address token) public view returns (bool) {
     IUniswapV2Pair pair = IUniswapV2Pair(token);
     string memory uniSymbol = "UNI-V2";
-    /* string memory symbol = pair.symbol(); */
     try pair.symbol() returns (string memory symbol) {
       if (keccak256(abi.encodePacked(symbol)) != keccak256(abi.encodePacked(uniSymbol))) {
         return false;
@@ -161,10 +169,10 @@ contract Oracle is Governable {
     }
   }
 
+  //Checks if address is Sushi LP.
   function isSushiCheck(address token) public view returns (bool) {
     IUniswapV2Pair pair = IUniswapV2Pair(token);
     string memory sushiSymbol = "SLP";
-    /* string memory symbol = pair.symbol(); */
     try pair.symbol() returns (string memory symbol) {
       if (keccak256(abi.encodePacked(symbol)) != keccak256(abi.encodePacked(sushiSymbol))) {
         return false;
@@ -183,6 +191,7 @@ contract Oracle is Governable {
     }
   }
 
+  //Checks if address is Curve LP
   function isCurveCheck(address token) public view returns (bool) {
     address pool = curveRegistry.get_pool_from_lp_token(token);
     if (pool != address(0)) {
@@ -192,6 +201,7 @@ contract Oracle is Governable {
     }
   }
 
+  //Get underlying tokens and amounts for Uni/Sushi LPs
   function getUniUnderlying(address token) public view returns (address[2] memory, uint256[2] memory) {
     IUniswapV2Pair pair = IUniswapV2Pair(token);
     address[2] memory tokens;
@@ -213,6 +223,7 @@ contract Oracle is Governable {
     return (tokens, amounts);
   }
 
+  //Get underlying tokens and amounts for 1Inch LPs
   function getOneInchUnderlying(address token) public view returns (address[2] memory, uint256[2] memory) {
     IMooniswap pair = IMooniswap(token);
     address[2] memory tokens;
@@ -246,6 +257,7 @@ contract Oracle is Governable {
     return (tokens, amounts);
   }
 
+  //Get underlying tokens and amounts for Curve LPs. Curve gives responses in arrays with length 8. There is no need to change their size.
   function getCurveUnderlying(address token) public view returns (address[8] memory, uint256[8] memory) {
     address pool = curveRegistry.get_pool_from_lp_token(token);
     (bool exception0, bool exception1) = checkCurveException(token);
@@ -261,6 +273,8 @@ contract Oracle is Governable {
       tokens = curveRegistry.get_underlying_coins(pool);
       reserves = curveRegistry.get_underlying_balances(pool);
     }
+
+    //Some pools work with ETH instead of WETH. For further calculations and functionality this is changed to WETH address.
     uint256[8] memory decimals;
     uint256 i;
     for (i=0;i<tokens.length;i++){
@@ -288,6 +302,7 @@ contract Oracle is Governable {
     return (tokens, amounts);
   }
 
+  //Check address for the Curve exception lists.
   function checkCurveException(address token) public view returns (bool, bool) {
     uint256 i;
     for (i=0;i<curveExceptionList0.length;i++) {
@@ -303,6 +318,7 @@ contract Oracle is Governable {
     return (false, false);
   }
 
+  //General function to compute the price of a token vs the defined output token.
   function computePrice(address token) public view returns (uint256) {
     uint256 price;
     if (token == definedOutputToken) {
@@ -330,6 +346,7 @@ contract Oracle is Governable {
     return (price);
   }
 
+  //Checks the results of the different largest pool functions and returns the largest.
   function getLargestPool(address token, address[] memory tokenList) public view returns (address, address, bool, bool, bool) {
     (address uniKeyToken, uint256 uniLiquidity) = getUniLargestPool(token, tokenList);
     (address sushiKeyToken, uint256 sushiLiquidity) = getSushiLargestPool(token, tokenList);
@@ -343,6 +360,7 @@ contract Oracle is Governable {
     }
   }
 
+  //Gives the Uniswap pool with largest liquidity for a given token and a given tokenset (either keyTokens or pricingTokens)
   function getUniLargestPool(address token, address[] memory tokenList) public view returns (address, uint256) {
     uint256 largestPoolSize = 0;
     address largestPoolAddress;
@@ -376,6 +394,7 @@ contract Oracle is Governable {
     return (largestKeyToken, largestPoolSize);
   }
 
+  //Gives the Sushiswap pool with largest liquidity for a given token and a given tokenset (either keyTokens or pricingTokens)
   function getSushiLargestPool(address token, address[] memory tokenList) public view returns (address, uint256) {
     uint256 largestPoolSize = 0;
     address largestPoolAddress;
@@ -409,6 +428,10 @@ contract Oracle is Governable {
     return (largestKeyToken, largestPoolSize);
   }
 
+  //Gives the Curve pool with largest liquidity for a given token and a given tokenset (either keyTokens or pricingTokens)
+  //Curve can have multiple pools for a given pair. Research showed that the largest pool is always given as first instance, so only the first needs to be called.
+  //In Curve USD based tokens are often pooled with 3Pool. In this case liquidity is the same with USDC, DAI and USDT. When liquidity is found with USDC
+  //the loop is stopped, as no larger liquidity will be found with any other asset and this reduces calls.
   function getCurveLargestPool(address token, address[] memory tokenList) public view returns (address, address, uint256) {
     uint256 largestPoolSize = 0;
     address largestPoolAddress;
@@ -439,6 +462,7 @@ contract Oracle is Governable {
     return (largestKeyToken, largestPoolAddress, largestPoolSize);
   }
 
+  //Gives the balance of a given token in a given pool.
   function getCurveBalance(address tokenFrom, address tokenTo, address pool) public view returns (uint256) {
     uint256 balance;
     (int128 indexFrom, int128 indexTo, bool underlying) = curveRegistry.get_coin_indices(pool, tokenFrom, tokenTo);
@@ -456,6 +480,7 @@ contract Oracle is Governable {
     return balance;
   }
 
+  //Generic function giving the price of a given token vs another given token on Uniswap.
   function getPriceVsTokenUni(address token0, address token1) public view returns (uint256) {
     address pairAddress = uniswapFactory.getPair(token0,token1);
     IUniswapV2Pair pair = IUniswapV2Pair(pairAddress);
@@ -471,6 +496,7 @@ contract Oracle is Governable {
     return price;
   }
 
+  //Generic function giving the price of a given token vs another given token on Sushiswap.
   function getPriceVsTokenSushi(address token0, address token1) public view returns (uint256) {
     address pairAddress = sushiswapFactory.getPair(token0,token1);
     IUniswapV2Pair pair = IUniswapV2Pair(pairAddress);
@@ -486,11 +512,14 @@ contract Oracle is Governable {
     return price;
   }
 
+  //Generic function giving the price of a given token vs another given token on Curve.
   function getPriceVsTokenCurve(address token0, address token1, address poolAddress) public view returns (uint256) {
     ICurvePool pool = ICurvePool(poolAddress);
     (int128 indexFrom, int128 indexTo, bool underlying) = curveRegistry.get_coin_indices(poolAddress, token0, token1);
     uint256 decimals0 = ERC20(token0).decimals();
     uint256 decimals1 = ERC20(token1).decimals();
+    //Accuracy is impacted when one of the tokens has low decimals.
+    //This addition does not impact the outcome of computation, other than increased accuracy.
     if (decimals0 < 4 || decimals1 < 4) {
       decimals0 = decimals0 + 4;
       decimals1 = decimals1 + 4;
@@ -507,15 +536,17 @@ contract Oracle is Governable {
     return price;
   }
 
+  //Gives the price of a given keyToken.
   function getKeyTokenPrice(address token) public view returns (uint256) {
     bool isPricingToken = checkPricingToken(token);
     uint256 price;
     uint256 priceVsPricingToken;
     if (token == definedOutputToken) {
-      price = 1*10**precisionDecimals;
+      price = 10**precisionDecimals;
     } else if (isPricingToken) {
       price = getPriceVsTokenUni(token,definedOutputToken);
     } else {
+      uint256 pricingTokenPrice;
       (address pricingToken, address pricingPool, bool uni, bool sushi, bool curve) = getLargestPool(token,pricingTokens);
       if (uni) {
         priceVsPricingToken = getPriceVsTokenUni(token,pricingToken);
@@ -524,12 +555,17 @@ contract Oracle is Governable {
       } else {
         priceVsPricingToken = getPriceVsTokenCurve(token,pricingToken,pricingPool);
       }
-      uint256 pricingTokenPrice = getPriceVsTokenUni(pricingToken,definedOutputToken);
+      if (pricingToken == definedOutputToken) {
+        pricingTokenPrice = 10**precisionDecimals;
+      } else {
+        pricingTokenPrice = getPriceVsTokenUni(pricingToken,definedOutputToken);
+      }
       price = priceVsPricingToken*pricingTokenPrice/10**precisionDecimals;
     }
     return price;
   }
 
+  //Checks if a given token is in the pricingTokens list.
   function checkPricingToken(address token) public view returns (bool) {
     uint256 i;
     for (i=0;i<pricingTokens.length;i++) {
