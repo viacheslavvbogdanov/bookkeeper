@@ -1,6 +1,6 @@
 build/
 node_modules/
-migragtions/
+migrations/
 coverage/
 coverage.json
 secret.json
