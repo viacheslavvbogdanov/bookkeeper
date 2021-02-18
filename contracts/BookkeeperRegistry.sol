@@ -2,7 +2,7 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "@openzeppenin/contracts-ethereum-package/contracts/token/ERC20/ERC20Detailed.sol"
+import "@openzeppelin/contracts/token/ERC20/ERC20Detailed.sol";
 import "./hardworkInterface/IStrategy.sol";
 import "./hardworkInterface/IVault.sol";
 import "./Storage.sol";
@@ -99,8 +99,8 @@ contract BookkeeperRegistry is Governable {
         address rewardPool = _rewardPool;
         address underlying = IVault(_vault).underlying();
 
-        string vaultSymbol = ERC20Detailed(vault).symbol();
-        string underlyingSymbol = ERC20Detailed(underlying).symbol();
+        string memory vaultSymbol = ERC20Detailed(vault).symbol();
+        string memory underlyingSymbol = ERC20Detailed(underlying).symbol();
 
         isActive[vault] = true;
         addedOnBlock[vault] = block.number;
