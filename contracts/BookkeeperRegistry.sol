@@ -2,6 +2,7 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "@openzeppenin/contracts-ethereum-package/contracts/token/ERC20/ERC20Detailed.sol"
 import "./hardworkInterface/IStrategy.sol";
 import "./hardworkInterface/IVault.sol";
 import "./Storage.sol";
@@ -21,71 +22,56 @@ contract BookkeeperRegistry is Governable {
     // Keeping track of links between all added contracts.
     mapping(address => bool) public isActive;
     mapping(address => uint256) public addedOnBlock;
-    mapping(address => string) public contractType;
+
+    mapping(address => string) public vaultName;
+    mapping(address => string) public rewardPoolName;
+    mapping(address => string) public strategyName;
+    mapping(address => string) public underlyingName;
+
     mapping(address => address) public vaultStrategy;
     mapping(address => address[]) public vaultStrategies;
     mapping(address => address) public strategyVault;
+    mapping(address => bool) public vaultMultipleStrategies;
+
     mapping(address => address) public vaultRewardPool;
     mapping(address => address) public rewardPoolVault;
+
     mapping(address => address) public vaultUnderlying;
     mapping(address => address[]) public underlyingVaults;
-    mapping(address => bool) public vaultMultipleStrategies;
-    address[] underlyingVaultsTemp;
-    address[] vaultStrategiesTemp;
-    address[] vaultList;
-    address[] strategyList;
-    address[] rewardPoolList;
+
+    address[] public vaultList;
+    address[] public strategyList;
+    address[] public rewardPoolList;
 
     modifier validVault(address _vault) {
-        require(
-            keccak256(abi.encodePacked(contractType[_vault])) ==
-                keccak256(abi.encodePacked("vault")),
-            "vault does not exist"
-        );
+        require(isVault(_vault), "vault does not exist");
         require(isActive[_vault], "contract is not active");
         _;
     }
-    modifier isVault(address _vault) {
-        require(
-            keccak256(abi.encodePacked(contractType[_vault])) ==
-                keccak256(abi.encodePacked("vault")),
-            "vault does not exist"
-        );
-        _;
-    }
+
     modifier validStrategy(address _strategy) {
-        require(
-            keccak256(abi.encodePacked(contractType[_strategy])) ==
-                keccak256(abi.encodePacked("strategy")),
-            "strategy does not exist"
-        );
+        require(isStrategy(_strategy), "strategy does not exist");
         require(isActive[_strategy], "contract is not active");
         _;
     }
+
     modifier validRewardPool(address _rewardPool) {
-        require(
-            keccak256(abi.encodePacked(contractType[_rewardPool])) ==
-                keccak256(abi.encodePacked("rewardPool")),
-            "reward pool does not exist"
-        );
+        require(isRewardPool(_rewardPool), "reward pool does not exist");
         require(isActive[_rewardPool], "contract is not active");
         _;
     }
     modifier validUnderlying(address _underlying) {
-        require(
-            keccak256(abi.encodePacked(contractType[_underlying])) ==
-                keccak256(abi.encodePacked("underlying")),
-            "underlying does not exist"
-        );
+        require(isUnderlying(_underlying), "underlying does not exist");
         require(isActive[_underlying], "contract is not active");
         _;
     }
+
     modifier singleStrategy(address _vault) {
-        require(!vaultMultipleStrategies[_vault], "Method does not allow multiple strategy vault");
+        require(!vaultMultipleStrategies[_vault], "single strategy only");
         _;
     }
     modifier multipleStrategies(address _vault) {
-        require(vaultMultipleStrategies[_vault], "Method only allows multiple strategy vault");
+        require(vaultMultipleStrategies[_vault], "multiple strategy only");
         _;
     }
 
@@ -106,20 +92,19 @@ contract BookkeeperRegistry is Governable {
         bool _multipleStrategies
     ) external onlyGovernance {
         require(_vault != address(0), "new vault should not be empty");
-        require(
-            keccak256(abi.encodePacked(contractType[_vault])) !=
-                keccak256(abi.encodePacked("vault")),
-            "vault already exists"
-        );
+        require(!isVault(_vault), "vault already exists");
 
         address vault = _vault;
         address strategy = IVault(_vault).strategy();
         address rewardPool = _rewardPool;
         address underlying = IVault(_vault).underlying();
 
+        string vaultSymbol = ERC20Detailed(vault).symbol();
+        string underlyingSymbol = ERC20Detailed(underlying).symbol();
+
         isActive[vault] = true;
         addedOnBlock[vault] = block.number;
-        contractType[vault] = "vault";
+        vaultName[vault] = "v_" + vaultSymbol;
         vaultUnderlying[vault] = underlying;
         vaultMultipleStrategies[vault] = _multipleStrategies;
 
@@ -131,20 +116,20 @@ contract BookkeeperRegistry is Governable {
 
         isActive[strategy] = true;
         addedOnBlock[strategy] = block.number;
-        contractType[strategy] = "strategy";
+        strategyName[strategy] = "s_" + vaultSymbol;
         strategyVault[strategy] = vault;
 
         if (rewardPool != address(0)) {
             vaultRewardPool[vault] = rewardPool;
             isActive[rewardPool] = true;
             addedOnBlock[rewardPool] = block.number;
-            contractType[rewardPool] = "rewardPool";
+            rewardPoolName[rewardPool] = "rp_" + vaultSymbol;
             rewardPoolVault[rewardPool] = vault;
         }
 
         isActive[underlying] = true;
         addedOnBlock[underlying] = block.number;
-        contractType[underlying] = "underlying";
+        underlyingName[underlying] = underlyingSymbol;
         underlyingVaults[underlying].push(vault);
 
         vaultList.push(vault);
@@ -155,11 +140,7 @@ contract BookkeeperRegistry is Governable {
     }
 
     //Change Reward Pool for existing vault.
-    function changeRewardPool(address _rewardPool)
-        external
-        onlyGovernance
-        isVault(IRewardPool(_rewardPool).lpToken())
-    {
+    function changeRewardPool(address _rewardPool) external onlyGovernance isVault(IRewardPool(_rewardPool).lpToken()) {
         require(_rewardPool != address(0), "new reward pool should not be empty");
 
         address rewardPool = _rewardPool;
@@ -193,11 +174,7 @@ contract BookkeeperRegistry is Governable {
     }
 
     //Change strategy for existing vault.
-    function changeStrategy(address _strategy)
-        external
-        onlyGovernance
-        isVault(IStrategy(_strategy).vault())
-    {
+    function changeStrategy(address _strategy) external onlyGovernance isVault(IStrategy(_strategy).vault()) {
         require(_strategy != address(0), "new strategy should not be empty");
 
         address strategy = _strategy;
@@ -527,11 +504,7 @@ contract BookkeeperRegistry is Governable {
     }
 
     //Deactivate reward pool. This does not deactivate the vault.
-    function removeRewardPool(address _rewardPool)
-        public
-        onlyGovernance
-        validRewardPool(_rewardPool)
-    {
+    function removeRewardPool(address _rewardPool) public onlyGovernance validRewardPool(_rewardPool) {
         address rewardPool = _rewardPool;
         address vault = rewardPoolVault[rewardPool];
         vaultRewardPool[vault] = address(0);
@@ -567,5 +540,21 @@ contract BookkeeperRegistry is Governable {
     // transfers token in the controller contract to the governance
     function salvage(address _token, uint256 _amount) external onlyGovernance {
         IERC20(_token).safeTransfer(governance(), _amount);
+    }
+
+    function isVault(address _vault) public view returns (bool) {
+        return vaultName[_vault] != "";
+    }
+
+    function isStrategy(address _strategy) public view returns (bool) {
+        return strategyName[_strategy] != "";
+    }
+
+    function isRewardPool(address _rewardPool) public view returns (bool) {
+        return rewardPoolName[_rewardPool] != "";
+    }
+
+    function isUnderlying(address _underlying) public view returns (bool) {
+        return rewardPoolName[_underlying] != "";
     }
 }
