@@ -1,6 +1,13 @@
-build/
-node_modules/
-migragtions/
+node_modules
+
+#Hardhat files
+cache
+artifacts
+deployments
+
+dev-keys.json
+package-lock.json
+
 coverage/
 coverage.json
 secret.json

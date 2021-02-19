@@ -31,6 +31,14 @@ async function advanceNBlock (n) {
 }
 async function waitHours (n) {
   await time.increase(n * 3600 + 1);
+  let startingBlock = await time.latestBlock();
+  await time.advanceBlockTo(startingBlock.addn(1));
+};
+
+async function waitTime (n) {
+  await time.increase(n);
+  let startingBlock = await time.latestBlock();
+  await time.advanceBlockTo(startingBlock.addn(1));
 };
 
 function assertBNEq(a, b){
@@ -83,5 +91,6 @@ module.exports = {
   assertNEqBN,
   inBNfixed,
   waitHours,
+  waitTime,
   assertBNGte,
 };

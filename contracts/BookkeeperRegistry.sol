@@ -2,11 +2,11 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "./hardworkInterface/IStrategy.sol";
-import "./hardworkInterface/IVault.sol";
+import "./interface/IStrategy.sol";
+import "./interface/IVault.sol";
 import "./Storage.sol";
 import "./Governable.sol";
-import "./hardworkInterface/IRewardPool.sol";
+import "./interface/IRewardPool.sol";
 
 pragma solidity 0.6.12;
 
