@@ -10,11 +10,30 @@ Bookkeeper is a contract that provides a convenient interface for retrieving imp
 * [Bookkeeper Approach](BookkeeperApproach.md)
 
 
-## Oracle
+# Oracle
 
 Oracle will be a universal price oracle, providing price data for any asset using DEX LPs
 
 
 ## Important Links
 
-* [Oracle Approach](Oracle Approach.md)
+* [Oracle Approach](OracleApproach.md)
+
+
+# Hardhat environment
+
+The project uses Hardhat to compile, test and deploy solidity smart contracts.
+
+## Installation
+
+1. To use Hardhat install all dependencies from `package.json` using `npm install`.
+2. Create a `dev-keys.json` file with your Alchemy API key:
+```
+  {
+    "alchemyKey": "<your-alchemy-key>"
+  }
+```
+
+## Run
+
+To run use the commands available in [Hardhat](https://hardhat.org/). You can compile the contracts using `npx hardhat compile` and run tests using `npx hardhat test [test file]`. 
