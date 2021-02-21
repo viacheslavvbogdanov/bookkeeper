@@ -1,7 +1,17 @@
-build/
-node_modules/
+node_modules
+
+#Hardhat files
+cache
+artifacts
+deployments
+
+dev-keys.json
+package-lock.json
+
 coverage/
 coverage.json
 secret.json
 .DS_Store
 .devcontainer/
+bin/
+.vscode/

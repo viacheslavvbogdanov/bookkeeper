@@ -4,8 +4,7 @@
   "description": "",
   "main": "null",
   "scripts": {
-    "test": "npx truffle test",
-    "test-bookkeeper": "truffle build && set MAINNET_FORK=True && npx truffle test ./test/mainnet-fork-test-BookkeeperRegistry.js"
+    "test": "echo \"Error: please run tests individually\" && exit 1"
   },
   "repository": {
     "type": "git",
@@ -17,20 +16,19 @@
     "url": "https://github.com/harvestfi/bookkeeper/issues"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^2.5.0",
-    "@openzeppelin/contracts-ethereum-package": "^2.5.0",
-    "@openzeppelin/upgrades": "^2.8.0",
-    "@studydefi/money-legos": "^2.3.7",
-    "@truffle/hdwallet-provider": "1.0.42",
-    "dotenv": "^8.2.0",
-    "ganache-cli": "^6.10.1",
-    "prettier": "^2.0.5",
-    "solidity-coverage": "0.7.0",
-    "truffle": "5.1.31",
-    "truffle-flattener": "^1.4.4"
+    "@nomiclabs/hardhat-truffle5": "^2.0.0",
+    "@nomiclabs/hardhat-web3": "^2.0.0",
+    "@openzeppelin/contracts": "^3.4.0",
+    "@openzeppelin/contracts-ethereum-package": "^3.0.0",
+    "coingecko-api": "^1.0.10"
   },
   "homepage": "https://github.com/harvestfi/bookkeeper#readme",
   "devDependencies": {
-    "@openzeppelin/test-helpers": "^0.5.6"
-  }
+    "@nomiclabs/hardhat-ethers": "^2.0.1",
+    "@nomiclabs/hardhat-etherscan": "^2.1.1",
+    "@nomiclabs/hardhat-waffle": "^2.0.1",
+    "@openzeppelin/test-helpers": "^0.5.10",
+    "hardhat": "^2.0.10",
+    "hardhat-gas-reporter": "^1.0.4"
+  } 
 }

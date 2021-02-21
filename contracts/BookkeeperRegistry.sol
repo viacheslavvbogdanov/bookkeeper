@@ -3,16 +3,13 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20Detailed.sol";
-import "./hardworkInterface/IStrategy.sol";
-import "./hardworkInterface/IVault.sol";
+import "./interface/IStrategy.sol";
+import "./interface/IVault.sol";
 import "./Storage.sol";
 import "./Governable.sol";
-import "./hardworkInterface/IRewardPool.sol";
-import "./Controllable.sol";
+import "./interface/IRewardPool.sol";
 
-// File: contracts/Viewer.sol
-
-pragma solidity 0.5.16;
+pragma solidity 0.6.12;
 
 contract BookkeeperRegistry is Governable {
     using SafeERC20 for IERC20;
@@ -164,11 +161,13 @@ contract BookkeeperRegistry is Governable {
                 break;
             }
         }
-        while (i < rewardPoolList.length - 1) {
-            rewardPoolList[i] = rewardPoolList[i + 1];
-            i++;
-        }
-        rewardPoolList.length--;
+      }
+      while (i<rewardPoolList.length-1) {
+        rewardPoolList[i] = rewardPoolList[i+1];
+        i++;
+      }
+      /* rewardPoolList.length--; */
+
 
         emit RewardPoolChanged(vault, rewardPool, oldRewardPool);
     }
