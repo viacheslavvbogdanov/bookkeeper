@@ -15,21 +15,36 @@ module.exports = {
       allowUnlimitedContractSize: true,
       forking: {
         //url: "https://mainnet.infura.io/v3/" + keys.infuraKey,
-        url: "https://eth-mainnet.alchemyapi.io/v2/" + keys.alchemyKey,
-        blockNumber: 11883110, // <-- edit here
+        url: "https://eth-mainnet.alchemyapi.io/v2/" + keys.alchemyKeyMainnet,
+        blockNumber: 11900760
       }
+    },
+    ropsten: {
+      allowUnlimitedContractSize: true,
+      url: "https://eth-ropsten.alchemyapi.io/v2/" + keys.alchemyKeyRopsten,
+      accounts: ["0x" + keys.ropstenPrivateKey]
     }
+  },
+  etherscan: {
+    apiKey: keys.etherscanAPI
   },
   solidity: {
     compilers: [
-      {version: "0.6.12"},
+      {version: "0.6.12",
+       settings: {
+         optimizer: {
+           enabled: true,
+           runs: 150
+         }
+       }},
     ]
   },
   mocha: {
     timeout: 2000000
   },
   gasReporter: {
-    enabled: (process.env.REPORT_GAS) ? true : false,
-    currency: 'USD'
+    enabled: true,
+    currency: 'USD',
+    gasPrice: 100,
   }
 };
