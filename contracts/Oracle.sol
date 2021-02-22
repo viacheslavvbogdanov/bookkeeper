@@ -3,12 +3,12 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "./uniswap/interfaces/IUniswapV2Factory.sol";
-import "./uniswap/interfaces/IUniswapV2Pair.sol";
-import "./curve/interfaces/ICurvePool.sol";
-import "./curve/interfaces/ICurveRegistry.sol";
-import "./mooniswap/interfaces/IMooniFactory.sol";
-import "./mooniswap/interfaces/IMooniswap.sol";
+import "./interface/uniswap/IUniswapV2Factory.sol";
+import "./interface/uniswap/IUniswapV2Pair.sol";
+import "./interface/curve/ICurvePool.sol";
+import "./interface/curve/ICurveRegistry.sol";
+import "./interface/mooniswap/IMooniFactory.sol";
+import "./interface/mooniswap/IMooniswap.sol";
 import "./Storage.sol";
 import "./Governable.sol";
 

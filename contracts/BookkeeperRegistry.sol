@@ -1,13 +1,13 @@
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20Detailed.sol";
 import "./interface/IStrategy.sol";
 import "./interface/IVault.sol";
 import "./Storage.sol";
 import "./Governable.sol";
 import "./interface/IRewardPool.sol";
+import "../libraries/StringUtil.sol";
 
 pragma solidity 0.6.12;
 
@@ -15,6 +15,7 @@ contract BookkeeperRegistry is Governable {
     using SafeERC20 for IERC20;
     using Address for address;
     using SafeMath for uint256;
+    using StringUtil for string;
 
     // Keeping track of links between all added contracts.
     mapping(address => bool) public isActive;
@@ -96,12 +97,12 @@ contract BookkeeperRegistry is Governable {
         address rewardPool = _rewardPool;
         address underlying = IVault(_vault).underlying();
 
-        string memory vaultSymbol = ERC20Detailed(vault).symbol();
-        string memory underlyingSymbol = ERC20Detailed(underlying).symbol();
+        string memory vaultSymbol = ERC20(vault).symbol();
+        string memory underlyingSymbol = ERC20(underlying).symbol();
 
         isActive[vault] = true;
         addedOnBlock[vault] = block.number;
-        vaultName[vault] = "v_" + vaultSymbol;
+        // vaultName[vault] = "v_" + vaultSymbol;
         vaultUnderlying[vault] = underlying;
         vaultMultipleStrategies[vault] = _multipleStrategies;
 
@@ -113,14 +114,14 @@ contract BookkeeperRegistry is Governable {
 
         isActive[strategy] = true;
         addedOnBlock[strategy] = block.number;
-        strategyName[strategy] = "s_" + vaultSymbol;
+        // strategyName[strategy] = "s_" + vaultSymbol;
         strategyVault[strategy] = vault;
 
         if (rewardPool != address(0)) {
             vaultRewardPool[vault] = rewardPool;
             isActive[rewardPool] = true;
             addedOnBlock[rewardPool] = block.number;
-            rewardPoolName[rewardPool] = "rp_" + vaultSymbol;
+            // rewardPoolName[rewardPool] = "rp_" + vaultSymbol;
             rewardPoolVault[rewardPool] = vault;
         }
 
@@ -137,79 +138,78 @@ contract BookkeeperRegistry is Governable {
     }
 
     //Change Reward Pool for existing vault.
-    function changeRewardPool(address _rewardPool) external onlyGovernance isVault(IRewardPool(_rewardPool).lpToken()) {
-        require(_rewardPool != address(0), "new reward pool should not be empty");
+    // function changeRewardPool(address _rewardPool) external onlyGovernance isVault(IRewardPool(_rewardPool).lpToken()) {
+    //     require(_rewardPool != address(0), "new reward pool should not be empty");
 
-        address rewardPool = _rewardPool;
-        address vault = IRewardPool(rewardPool).lpToken();
+    //     address rewardPool = _rewardPool;
+    //     address vault = IRewardPool(rewardPool).lpToken();
 
-        isActive[vault] = true;
-        address oldRewardPool = vaultRewardPool[vault];
-        isActive[oldRewardPool] = false;
-        vaultRewardPool[vault] = rewardPool;
+    //     isActive[vault] = true;
+    //     address oldRewardPool = vaultRewardPool[vault];
+    //     isActive[oldRewardPool] = false;
+    //     vaultRewardPool[vault] = rewardPool;
 
-        isActive[rewardPool] = true;
-        addedOnBlock[rewardPool] = block.number;
-        contractType[rewardPool] = "rewardPool";
-        rewardPoolVault[rewardPool] = vault;
+    //     isActive[rewardPool] = true;
+    //     addedOnBlock[rewardPool] = block.number;
+    //     //contractType[rewardPool] = "rewardPool";
+    //     rewardPoolVault[rewardPool] = vault;
 
-        rewardPoolList.push(rewardPool);
+    //     rewardPoolList.push(rewardPool);
 
-        uint256 i;
-        for (i = 0; i < rewardPoolList.length; i++) {
-            if (oldRewardPool == rewardPoolList[i]) {
-                break;
-            }
-        }
-      }
-      while (i<rewardPoolList.length-1) {
-        rewardPoolList[i] = rewardPoolList[i+1];
-        i++;
-      }
-      /* rewardPoolList.length--; */
+    //     uint256 i;
+    //     for (i = 0; i < rewardPoolList.length; i++) {
+    //         if (oldRewardPool == rewardPoolList[i]) {
+    //             break;
+    //         }
+    //     }
 
+    //     while (i < rewardPoolList.length - 1) {
+    //         rewardPoolList[i] = rewardPoolList[i + 1];
+    //         i++;
+    //     }
+    //     /* rewardPoolList.length--; */
 
-        emit RewardPoolChanged(vault, rewardPool, oldRewardPool);
-    }
+    //     emit RewardPoolChanged(vault, rewardPool, oldRewardPool);
+    // }
 
     //Change strategy for existing vault.
-    function changeStrategy(address _strategy) external onlyGovernance isVault(IStrategy(_strategy).vault()) {
-        require(_strategy != address(0), "new strategy should not be empty");
+    // function changeStrategy(address _strategy) external onlyGovernance isVault(IStrategy(_strategy).vault()) {
+    //     require(_strategy != address(0), "new strategy should not be empty");
 
-        address strategy = _strategy;
-        address vault = IStrategy(strategy).vault();
-        strategyList.push(strategy);
+    //     address strategy = _strategy;
+    //     address vault = IStrategy(strategy).vault();
+    //     strategyList.push(strategy);
 
-        isActive[vault] = true;
-        address oldStrategy;
-        if (vaultMultipleStrategies[vault]) {
-            oldStrategy = address(0);
-            vaultStrategies[vault].push(strategy);
-        } else {
-            oldStrategy = vaultStrategy[vault];
-            isActive[oldStrategy] = false;
-            vaultStrategy[vault] = strategy;
+    //     isActive[vault] = true;
+    //     address oldStrategy;
+    //     if (vaultMultipleStrategies[vault]) {
+    //         oldStrategy = address(0);
+    //         vaultStrategies[vault].push(strategy);
+    //     } else {
+    //         oldStrategy = vaultStrategy[vault];
+    //         isActive[oldStrategy] = false;
+    //         vaultStrategy[vault] = strategy;
 
-            uint256 i;
-            for (i = 0; i < strategyList.length; i++) {
-                if (oldStrategy == strategyList[i]) {
-                    break;
-                }
-            }
-            while (i < strategyList.length - 1) {
-                strategyList[i] = strategyList[i + 1];
-                i++;
-            }
-            strategyList.length--;
-        }
+    //         uint256 i;
+    //         for (i = 0; i < strategyList.length; i++) {
+    //             if (oldStrategy == strategyList[i]) {
+    //                 break;
+    //             }
+    //         }
+    //         while (i < strategyList.length - 1) {
+    //             strategyList[i] = strategyList[i + 1];
+    //             i++;
+    //         }
+    //         strategyList.length--;
+    //     }
 
-        isActive[strategy] = true;
-        addedOnBlock[strategy] = block.number;
-        contractType[strategy] = "strategy";
-        strategyVault[strategy] = vault;
+    //     isActive[strategy] = true;
+    //     addedOnBlock[strategy] = block.number;
+    //     //contractType[strategy] = "strategy";
+    //     strategyVault[strategy] = vault;
 
-        emit StrategyChanged(vault, strategy, oldStrategy);
-    }
+    //     emit StrategyChanged(vault, strategy, oldStrategy);
+    // }
 
     function getVaultInfoSingleStrategy(address _vault)
         internal
@@ -435,7 +435,7 @@ contract BookkeeperRegistry is Governable {
             underlyingVaults[underlying][i] = underlyingVaults[underlying][i + 1];
             i++;
         }
-        underlyingVaults[underlying].length--;
+        //underlyingVaults[underlying].length--;
 
         for (i = 0; i < vaultList.length; i++) {
             if (vault == vaultList[i]) {
@@ -446,7 +446,7 @@ contract BookkeeperRegistry is Governable {
             vaultList[i] = vaultList[i + 1];
             i++;
         }
-        vaultList.length--;
+        //vaultList.length--;
 
         if (vaultMultipleStrategies[vault]) {
             for (i = 0; i < vaultStrategies[vault].length; i++) {
@@ -485,7 +485,7 @@ contract BookkeeperRegistry is Governable {
                 vaultStrategies[vault][i] = vaultStrategies[vault][i + 1];
                 i++;
             }
-            vaultStrategies[vault].length--;
+            //vaultStrategies[vault].length--;
         }
 
         for (i = 0; i < strategyList.length; i++) {
@@ -497,7 +497,7 @@ contract BookkeeperRegistry is Governable {
             strategyList[i] = strategyList[i + 1];
             i++;
         }
-        strategyList.length--;
+        //strategyList.length--;
 
         emit StrategyRemoved(strategy, vault);
     }
@@ -519,7 +519,7 @@ contract BookkeeperRegistry is Governable {
             rewardPoolList[i] = rewardPoolList[i + 1];
             i++;
         }
-        rewardPoolList.length--;
+        // rewardPoolList.length--;
 
         emit RewardPoolRemoved(rewardPool, vault);
     }
@@ -542,18 +542,19 @@ contract BookkeeperRegistry is Governable {
     }
 
     function isVault(address _vault) public view returns (bool) {
-        return vaultName[_vault] != "";
+        return StringUtil.strLength(vaultName[_vault]) != 0;
     }
 
     function isStrategy(address _strategy) public view returns (bool) {
-        return strategyName[_strategy] != "";
+        return StringUtil.strLength(strategyName[_strategy]) != 0;
     }
 
     function isRewardPool(address _rewardPool) public view returns (bool) {
-        return rewardPoolName[_rewardPool] != "";
+        return StringUtil.strLength(rewardPoolName[_rewardPool]) != 0;
     }
 
     function isUnderlying(address _underlying) public view returns (bool) {
-        return rewardPoolName[_underlying] != "";
+        return StringUtil.strLength(underlyingName[_underlying]) != 0;
     }
+
 }
