@@ -9,12 +9,11 @@ import "./interface/curve/ICurvePool.sol";
 import "./interface/curve/ICurveRegistry.sol";
 import "./interface/mooniswap/IMooniFactory.sol";
 import "./interface/mooniswap/IMooniswap.sol";
-import "./Storage.sol";
 import "./Governable.sol";
 
 pragma solidity 0.6.12;
 
-contract Oracle is Governable {
+contract OracleMainnet is Governable {
 
   using SafeERC20 for IERC20;
   using Address for address;
@@ -40,7 +39,8 @@ contract Oracle is Governable {
   0xdAC17F958D2ee523a2206206994597C13D831ec7, //USDT
   0xa47c8bf37f92aBed4A126BDA807A7b7498661acD, //UST
   0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599, //WBTC
-  0xdB25f211AB05b1c97D595516F45794528a807ad8  //EURS
+  0xdB25f211AB05b1c97D595516F45794528a807ad8, //EURS
+  0x514910771AF9Ca656af840dff83E8264EcF986CA  //LINK
   ];
   //Pricing tokens are Key tokens with good liquidity with the defined output token on Uniswap.
   address[] public pricingTokens = [
@@ -67,10 +67,152 @@ contract Oracle is Governable {
   0xaA17A236F2bAdc98DDc0Cf999AbB47D47Fc0A6Cf
   ];
 
-  event Check(string);
+  modifier validKeyToken(address keyToken){
+      require(checkKeyToken(keyToken), "Not a Key Token");
+      _;
+  }
+  modifier validPricingToken(address pricingToken){
+      require(checkPricingToken(pricingToken), "Not a Pricing Token");
+      _;
+  }
+  modifier validException(address exception){
+      (bool check0, bool check1) = checkCurveException(exception);
+      require(check0 || check1, "Not an exception");
+      _;
+  }
+
+  event FactoryChanged(address newFactory, address oldFactory);
+  event RegistryChanged(address newRegistry, address oldRegistry);
+  event KeyTokenAdded(address newKeyToken);
+  event PricingTokenAdded(address newPricingToken);
+  event KeyTokenRemoved(address keyToken);
+  event PricingTokenRemoved(address pricingToken);
+  event DefinedOutuptChanged(address newOutputToken, address oldOutputToken);
+  event CurveExceptionAdded(address newException, uint256 exceptionList);
+  event CurveExceptionRemoved(address oldException, uint256 exceptionList);
 
   constructor(address _storage)
   Governable(_storage) public {}
+
+  function changeUniFactory(address newFactory) external onlyGovernance {
+    address oldFactory = uniswapFactoryAddress;
+    uniswapFactoryAddress = newFactory;
+    uniswapFactory = IUniswapV2Factory(uniswapFactoryAddress);
+    emit FactoryChanged(newFactory, oldFactory);
+  }
+  function changeSushiFactory(address newFactory) external onlyGovernance {
+    address oldFactory = sushiswapFactoryAddress;
+    sushiswapFactoryAddress = newFactory;
+    sushiswapFactory = IUniswapV2Factory(sushiswapFactoryAddress);
+    emit FactoryChanged(newFactory, oldFactory);
+  }
+  function changeCurveRegistry(address newRegistry) external onlyGovernance {
+    address oldRegistry = curveRegistryAddress;
+    curveRegistryAddress = newRegistry;
+    curveRegistry = ICurveRegistry(curveRegistryAddress);
+    emit RegistryChanged(newRegistry, oldRegistry);
+  }
+  function changeOneInchFactory(address newFactory) external onlyGovernance {
+    address oldFactory = oneInchFactoryAddress;
+    oneInchFactoryAddress = newFactory;
+    oneInchFactory = IMooniFactory(oneInchFactoryAddress);
+    emit FactoryChanged(newFactory, oldFactory);
+  }
+
+  function addKeyToken(address newToken) external onlyGovernance {
+    require((checkKeyToken(newToken)==false), "Already a key token");
+    keyTokens.push(newToken);
+    emit KeyTokenAdded(newToken);
+  }
+  function addPricingToken(address newToken) public onlyGovernance validKeyToken(newToken) {
+    require((checkPricingToken(newToken)==false), "Already a pricing token");
+    pricingTokens.push(newToken);
+    emit PricingTokenAdded(newToken);
+  }
+
+  function removeKeyToken(address keyToken) external onlyGovernance validKeyToken(keyToken) {
+    uint256 i;
+    for ( i=0;i<keyTokens.length;i++) {
+      if (keyToken == keyTokens[i]){
+        break;
+      }
+    }
+    while (i<keyTokens.length-1) {
+      keyTokens[i] = keyTokens[i+1];
+      i++;
+    }
+    keyTokens.pop();
+
+    emit KeyTokenRemoved(keyToken);
+
+    if (checkPricingToken(keyToken)) {
+      removePricingToken(keyToken);
+    }
+  }
+  function removePricingToken(address pricingToken) public onlyGovernance validPricingToken(pricingToken) {
+    uint256 i;
+    for (i=0;i<pricingTokens.length;i++) {
+      if (pricingToken == pricingTokens[i]){
+        break;
+      }
+    }
+    while (i<pricingTokens.length-1) {
+      pricingTokens[i] = pricingTokens[i+1];
+      i++;
+    }
+    pricingTokens.pop();
+    emit PricingTokenRemoved(pricingToken);
+  }
+  function changeDefinedOutput(address newOutputToken) external onlyGovernance validKeyToken(newOutputToken) {
+    address oldOutputToken = definedOutputToken;
+    definedOutputToken = newOutputToken;
+    emit DefinedOutuptChanged(newOutputToken, oldOutputToken);
+  }
+
+  function addCurveException(address newException, uint256 exceptionList) external onlyGovernance {
+    (bool check0, bool check1) = checkCurveException(newException);
+    require(check0==false && check1 == false, "Already an exception");
+    require(exceptionList <= 1, 'Only accepts 0 or 1');
+    if (exceptionList == 0) {
+      curveExceptionList0.push(newException);
+    } else {
+      curveExceptionList1.push(newException);
+    }
+    emit CurveExceptionAdded(newException, exceptionList);
+  }
+  function removeCurveException(address exception) external onlyGovernance validException(exception) {
+    (bool check0, bool check1) = checkCurveException(exception);
+    uint256 i;
+    uint256 j;
+    uint256 list;
+
+    if (check0) {
+      list = 0;
+      for (i=0;i<curveExceptionList0.length;i++) {
+        if (exception == curveExceptionList0[i]){
+          break;
+        }
+      }
+      while (i<curveExceptionList0.length-1) {
+        curveExceptionList0[i] = curveExceptionList0[i+1];
+        i++;
+      }
+      curveExceptionList0.pop();
+    } else {
+      list = 1;
+      for (j=0;j<curveExceptionList1.length;j++) {
+        if (exception == curveExceptionList1[j]){
+          break;
+        }
+      }
+      while (j<curveExceptionList1.length-1) {
+        curveExceptionList1[j] = curveExceptionList1[j+1];
+        j++;
+      }
+      curveExceptionList1.pop();
+    }
+    emit CurveExceptionRemoved(exception, list);
+  }
 
   //Main function of the contract. Gives the price of a given token in the defined output token.
   //The contract allows for input tokens to be LP tokens from Uniswap, Sushiswap, Curve and 1Inch.
@@ -158,7 +300,7 @@ contract Oracle is Governable {
     } catch {
       return false;
     }
-    try pair.factory.gas(3000)() returns (address factory) {
+    try pair.factory{gas: 3000}() returns (address factory) {
       if (factory == uniswapFactoryAddress){
         return true;
       } else {
@@ -180,7 +322,7 @@ contract Oracle is Governable {
     } catch {
       return false;
     }
-    try pair.factory.gas(3000)() returns (address factory) {
+    try pair.factory{gas:3000}() returns (address factory) {
       if (factory == sushiswapFactoryAddress){
         return true;
       } else {
@@ -211,7 +353,7 @@ contract Oracle is Governable {
     uint256 token0Decimals = ERC20(tokens[0]).decimals();
     uint256 token1Decimals = ERC20(tokens[1]).decimals();
     uint256 supplyDecimals = ERC20(token).decimals();
-    (uint256 reserve0, uint256 reserve1, uint32 unused) = pair.getReserves();
+    (uint256 reserve0, uint256 reserve1,) = pair.getReserves();
     uint256 totalSupply = pair.totalSupply();
     if (reserve0 == 0 || reserve1 == 0 || totalSupply == 0) {
       amounts[0] = 0;
@@ -365,9 +507,7 @@ contract Oracle is Governable {
     uint256 largestPoolSize = 0;
     address largestPoolAddress;
     address largestKeyToken;
-    uint256 poolSize;
-    uint256 unused1;
-    uint256 unused2;
+    uint112 poolSize;
     uint256 i;
     uint256 decimals = ERC20(token).decimals();
     for (i=0;i<tokenList.length;i++) {
@@ -378,9 +518,9 @@ contract Oracle is Governable {
       IUniswapV2Pair pair = IUniswapV2Pair(pairAddress);
       address token0 = pair.token0();
       if (token == token0) {
-        (poolSize, unused1, unused2) = pair.getReserves();
+        (poolSize,,) = pair.getReserves();
       } else {
-        (unused1, poolSize, unused2) = pair.getReserves();
+        (,poolSize,) = pair.getReserves();
       }
       if (poolSize > largestPoolSize) {
         largestPoolSize = poolSize;
@@ -399,9 +539,7 @@ contract Oracle is Governable {
     uint256 largestPoolSize = 0;
     address largestPoolAddress;
     address largestKeyToken;
-    uint256 poolSize;
-    uint256 unused1;
-    uint256 unused2;
+    uint112 poolSize;
     uint256 i;
     uint256 decimals = ERC20(token).decimals();
     for (i=0;i<tokenList.length;i++) {
@@ -412,9 +550,9 @@ contract Oracle is Governable {
       IUniswapV2Pair pair = IUniswapV2Pair(pairAddress);
       address token0 = pair.token0();
       if (token == token0) {
-        (poolSize, unused1, unused2) = pair.getReserves();
+        (poolSize,,) = pair.getReserves();
       } else {
-        (unused1, poolSize, unused2) = pair.getReserves();
+        (,poolSize,) = pair.getReserves();
       }
       if (poolSize > largestPoolSize) {
         largestPoolSize = poolSize;
@@ -438,7 +576,6 @@ contract Oracle is Governable {
     address largestKeyToken;
     uint256 poolSize;
     uint256 i;
-    uint256 j;
     for (i=0;i<tokenList.length;i++) {
       address poolAddress = curveRegistry.find_pool_for_coins(token, tokenList[i],0);
       if (poolAddress == address(0)) {
@@ -454,7 +591,7 @@ contract Oracle is Governable {
         largestPoolSize = poolSize;
         largestKeyToken = tokenList[i];
         largestPoolAddress = poolAddress;
-        if (largestKeyToken == 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48) {
+        if (largestKeyToken == definedOutputToken) {
           return (largestKeyToken, largestPoolAddress, largestPoolSize);
         }
       }
@@ -484,7 +621,7 @@ contract Oracle is Governable {
   function getPriceVsTokenUni(address token0, address token1) public view returns (uint256) {
     address pairAddress = uniswapFactory.getPair(token0,token1);
     IUniswapV2Pair pair = IUniswapV2Pair(pairAddress);
-    (uint256 reserve0, uint256 reserve1, uint32 unused) = pair.getReserves();
+    (uint256 reserve0, uint256 reserve1,) = pair.getReserves();
     uint256 token0Decimals = ERC20(token0).decimals();
     uint256 token1Decimals = ERC20(token1).decimals();
     uint256 price;
@@ -500,7 +637,7 @@ contract Oracle is Governable {
   function getPriceVsTokenSushi(address token0, address token1) public view returns (uint256) {
     address pairAddress = sushiswapFactory.getPair(token0,token1);
     IUniswapV2Pair pair = IUniswapV2Pair(pairAddress);
-    (uint256 reserve0, uint256 reserve1, uint32 unused) = pair.getReserves();
+    (uint256 reserve0, uint256 reserve1,) = pair.getReserves();
     uint256 token0Decimals = ERC20(token0).decimals();
     uint256 token1Decimals = ERC20(token1).decimals();
     uint256 price;
@@ -570,6 +707,17 @@ contract Oracle is Governable {
     uint256 i;
     for (i=0;i<pricingTokens.length;i++) {
       if (token == pricingTokens[i]) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  //Checks if a given token is in the keyTokens list.
+  function checkKeyToken(address token) public view returns (bool) {
+    uint256 i;
+    for (i=0;i<keyTokens.length;i++) {
+      if (token == keyTokens[i]) {
         return true;
       }
     }
