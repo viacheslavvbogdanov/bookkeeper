@@ -4,7 +4,7 @@
   "description": "",
   "main": "null",
   "scripts": {
-    "test": "echo \"Error: please run tests individually\" && exit 1"
+    "test": "npx hardhat test ./test/test-StringUtil.js"
   },
   "repository": {
     "type": "git",
