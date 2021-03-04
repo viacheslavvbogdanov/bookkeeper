@@ -272,51 +272,46 @@ contract OracleMainnet is Governable {
   }
 
   //Checks if address is 1Inch LP
-  function isOneInchCheck(address token) public view returns (bool) {
+  function isOneInchCheck(address token) internal view returns (bool) {
     bool oneInchLP = oneInchFactory.isPool(token);
     return oneInchLP;
   }
 
   //Checks if address is Uni or Sushi LP. This is done in two steps, because the second step seems to cause errors for some tokens.
   //Only the first step is not deemed accurate enough, as any token could be called UNI-V2.
-  function isUniSushiCheck(address token) public view returns (bool) {
+  function isUniSushiCheck(address token) internal view returns (bool) {
     IUniswapV2Pair pair = IUniswapV2Pair(token);
     string memory uniSymbol = "UNI-V2";
     string memory sushiSymbol = "SLP";
     string memory symbol = pair.symbol();
-    if (keccak256(abi.encodePacked(symbol)) == keccak256(abi.encodePacked(uniSymbol))) {
-      try pair.factory{gas: 3000}() returns (address factory) {
-        if (factory == uniswapFactoryAddress){
-          return true;
-        } else {
-          return false;
-        }
-      } catch {
-        return false;
-      }
-    } else if (keccak256(abi.encodePacked(symbol)) == keccak256(abi.encodePacked(sushiSymbol))) {
-      try pair.factory{gas:3000}() returns (address factory) {
-        if (factory == sushiswapFactoryAddress){
-          return true;
-        } else {
-          return false;
-        }
-      } catch {
-        return false;
-      }
+    if (isEqualString(symbol, uniSymbol)) {
+      return checkFactory(pair, uniswapFactoryAddress);
+    } else if (isEqualString(symbol, sushiSymbol)) {
+      return checkFactory(pair, sushiswapFactoryAddress);
     } else {
       return false;
     }
   }
 
-  //Checks if address is Curve LP
-  function isCurveCheck(address token) public view returns (bool) {
-    address pool = curveRegistry.get_pool_from_lp_token(token);
-    if (pool != address(0)) {
-      return true;
-    } else {
+  function isEqualString(string memory arg1, string memory arg2) internal view returns (bool) {
+    bool check = (keccak256(abi.encodePacked(arg1)) == keccak256(abi.encodePacked(arg2)))? true:false;
+    return check;
+  }
+
+  function checkFactory(IUniswapV2Pair pair, address compareFactory) internal view returns (bool) {
+    try pair.factory{gas: 3000}() returns (address factory) {
+      bool check = (factory == compareFactory)? true:false;
+      return check;
+    } catch {
       return false;
     }
+  }
+
+  //Checks if address is Curve LP
+  function isCurveCheck(address token) internal view returns (bool) {
+    address pool = curveRegistry.get_pool_from_lp_token(token);
+    bool check = (pool != address(0))? true:false;
+    return check;
   }
 
   //Get underlying tokens and amounts for Uni/Sushi LPs
@@ -415,7 +410,7 @@ contract OracleMainnet is Governable {
   }
 
   //Check address for the Curve exception lists.
-  function checkCurveException(address token) public view returns (bool, bool) {
+  function checkCurveException(address token) internal view returns (bool, bool) {
     uint256 i;
     for (i=0;i<curveExceptionList0.length;i++) {
       if (token == curveExceptionList0[i]) {
@@ -462,81 +457,58 @@ contract OracleMainnet is Governable {
 
   //Checks the results of the different largest pool functions and returns the largest.
   function getLargestPool(address token, address[] memory tokenList) public view returns (address, address, bool, bool) {
-    (address uniKeyToken, uint256 uniLiquidity) = getUniLargestPool(token, tokenList);
-    (address sushiKeyToken, uint256 sushiLiquidity) = getSushiLargestPool(token, tokenList);
+    (address uniSushiKeyToken, uint256 uniSushiLiquidity, bool isUni) = getUniSushiLargestPool(token, tokenList);
     (address curveKeyToken, address curvePool, uint256 curveLiquidity) = getCurveLargestPool(token, tokenList);
-    if (uniLiquidity > sushiLiquidity && uniLiquidity > curveLiquidity) {
-      return (uniKeyToken, address(0), true, false);
-    } else if (sushiLiquidity > curveLiquidity) {
-      return (sushiKeyToken, address(0), false, true);
+    if (uniSushiLiquidity > curveLiquidity) {
+      bool isSushi = (isUni)? false:true;
+      return (uniSushiKeyToken, address(0), isUni, isSushi);
     } else {
       return (curveKeyToken, curvePool, false, false);
     }
   }
 
   //Gives the Uniswap pool with largest liquidity for a given token and a given tokenset (either keyTokens or pricingTokens)
-  function getUniLargestPool(address token, address[] memory tokenList) public view returns (address, uint256) {
+  function getUniSushiLargestPool(address token, address[] memory tokenList) internal view returns (address, uint256, bool) {
     uint256 largestPoolSize = 0;
     address largestKeyToken;
-    uint112 poolSize;
-    uint112 poolSize0;
-    uint112 poolSize1;
+    uint256 poolSize;
     uint256 i;
-    uint256 decimals = ERC20(token).decimals();
+    uint256 poolSizeUni;
+    uint256 poolSizeSushi;
+    bool largestPoolisUni;
     for (i=0;i<tokenList.length;i++) {
-      address pairAddress = uniswapFactory.getPair(token,tokenList[i]);
-      if (pairAddress==address(0)) {
-        continue;
+      address pairAddressUni = uniswapFactory.getPair(token,tokenList[i]);
+      address pairAddressSushi = sushiswapFactory.getPair(token,tokenList[i]);
+      if (pairAddressUni!=address(0)) {
+        poolSizeUni = getUniPoolSize(pairAddressUni, token);
       }
-      IUniswapV2Pair pair = IUniswapV2Pair(pairAddress);
-      address token0 = pair.token0();
-      (poolSize0, poolSize1,) = pair.getReserves();
-      poolSize = (token==token0)? poolSize0:poolSize1;
+      if (pairAddressSushi!=address(0)) {
+        poolSizeSushi = getUniPoolSize(pairAddressSushi, token);
+      }
+      bool uniDex = (poolSizeUni > poolSizeSushi);
+      poolSize = (uniDex)? poolSizeUni:poolSizeSushi;
       if (poolSize > largestPoolSize) {
         largestPoolSize = poolSize;
         largestKeyToken = tokenList[i];
+        largestPoolisUni = uniDex;
       }
     }
-    if (largestPoolSize < 10**decimals) {
-      return (address(0), 0);
-    }
-    return (largestKeyToken, largestPoolSize);
+    return (largestKeyToken, largestPoolSize, largestPoolisUni);
   }
 
-  //Gives the Sushiswap pool with largest liquidity for a given token and a given tokenset (either keyTokens or pricingTokens)
-  function getSushiLargestPool(address token, address[] memory tokenList) public view returns (address, uint256) {
-    uint256 largestPoolSize = 0;
-    address largestKeyToken;
-    uint112 poolSize;
-    uint112 poolSize0;
-    uint112 poolSize1;
-    uint256 i;
-    uint256 decimals = ERC20(token).decimals();
-    for (i=0;i<tokenList.length;i++) {
-      address pairAddress = sushiswapFactory.getPair(token,tokenList[i]);
-      if (pairAddress==address(0)) {
-        continue;
-      }
-      IUniswapV2Pair pair = IUniswapV2Pair(pairAddress);
-      address token0 = pair.token0();
-      (poolSize0,poolSize1,) = pair.getReserves();
-      poolSize = (token==token0)? poolSize0:poolSize1;
-      if (poolSize > largestPoolSize) {
-        largestPoolSize = poolSize;
-        largestKeyToken = tokenList[i];
-      }
-    }
-    if (largestPoolSize < 10**decimals) {
-      return (address(0), 0);
-    }
-    return (largestKeyToken, largestPoolSize);
+  function getUniPoolSize(address pairAddress, address token) internal view returns(uint256) {
+    IUniswapV2Pair pair = IUniswapV2Pair(pairAddress);
+    address token0 = pair.token0();
+    (uint112 poolSize0, uint112 poolSize1,) = pair.getReserves();
+    uint256 poolSize = (token==token0)? poolSize0:poolSize1;
+    return poolSize;
   }
 
   //Gives the Curve pool with largest liquidity for a given token and a given tokenset (either keyTokens or pricingTokens)
   //Curve can have multiple pools for a given pair. Research showed that the largest pool is always given as first instance, so only the first needs to be called.
   //In Curve USD based tokens are often pooled with 3Pool. In this case liquidity is the same with USDC, DAI and USDT. When liquidity is found with USDC
   //the loop is stopped, as no larger liquidity will be found with any other asset and this reduces calls.
-  function getCurveLargestPool(address token, address[] memory tokenList) public view returns (address, address, uint256) {
+  function getCurveLargestPool(address token, address[] memory tokenList) internal view returns (address, address, uint256) {
     uint256 largestPoolSize = 0;
     address largestPoolAddress;
     address largestKeyToken;
@@ -566,7 +538,7 @@ contract OracleMainnet is Governable {
   }
 
   //Gives the balance of a given token in a given pool.
-  function getCurveBalance(address tokenFrom, address tokenTo, address pool) public view returns (uint256) {
+  function getCurveBalance(address tokenFrom, address tokenTo, address pool) internal view returns (uint256) {
     uint256 balance;
     (int128 indexFrom,,bool underlying) = curveRegistry.get_coin_indices(pool, tokenFrom, tokenTo);
     uint256[8] memory balances;
@@ -585,7 +557,7 @@ contract OracleMainnet is Governable {
   }
 
   //Generic function giving the price of a given token vs another given token on Uniswap.
-  function getPriceVsTokenUni(address token0, address token1) public view returns (uint256) {
+  function getPriceVsTokenUni(address token0, address token1) internal view returns (uint256) {
     address pairAddress = uniswapFactory.getPair(token0,token1);
     IUniswapV2Pair pair = IUniswapV2Pair(pairAddress);
     (uint256 reserve0, uint256 reserve1,) = pair.getReserves();
@@ -601,7 +573,7 @@ contract OracleMainnet is Governable {
   }
 
   //Generic function giving the price of a given token vs another given token on Sushiswap.
-  function getPriceVsTokenSushi(address token0, address token1) public view returns (uint256) {
+  function getPriceVsTokenSushi(address token0, address token1) internal view returns (uint256) {
     address pairAddress = sushiswapFactory.getPair(token0,token1);
     IUniswapV2Pair pair = IUniswapV2Pair(pairAddress);
     (uint256 reserve0, uint256 reserve1,) = pair.getReserves();
@@ -617,7 +589,7 @@ contract OracleMainnet is Governable {
   }
 
   //Generic function giving the price of a given token vs another given token on Curve.
-  function getPriceVsTokenCurve(address token0, address token1, address poolAddress) public view returns (uint256) {
+  function getPriceVsTokenCurve(address token0, address token1, address poolAddress) internal view returns (uint256) {
     ICurvePool pool = ICurvePool(poolAddress);
     (int128 indexFrom, int128 indexTo, bool underlying) = curveRegistry.get_coin_indices(poolAddress, token0, token1);
     uint256 decimals0 = ERC20(token0).decimals();
@@ -641,7 +613,7 @@ contract OracleMainnet is Governable {
   }
 
   //Gives the price of a given keyToken.
-  function getKeyTokenPrice(address token) public view returns (uint256) {
+  function getKeyTokenPrice(address token) internal view returns (uint256) {
     bool isPricingToken = checkPricingToken(token);
     uint256 price;
     uint256 priceVsPricingToken;
