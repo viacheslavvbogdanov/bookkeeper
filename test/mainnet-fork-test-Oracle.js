@@ -37,7 +37,7 @@ describe("Testing all functionality", function (){
   let curveRegistryAddress = "0x7D86446dDb609eD0F5f8684AcF30380a356b2B4c";
   let oneInchFactoryAddress = "0xbAF9A5d4b0052359326A6CDAb54BABAa3a3A9643";
 
-  let normalTokens = [MFC.FARM_ADDRESS, MFC.renBTC_ADDRESS, MFC.BAC_ADDRESS, MFC.MAAPL_ADDRESS, MFC.UNI_ADDRESS, MFC.MIS_ADDRESS, MFC.SEUR_ADDRESS, MFC.SBTC_ADDRESS, MFC.GRAIN_ADDRESS];
+  let normalTokens = [MFC.FARM_ADDRESS, MFC.renBTC_ADDRESS, MFC.BAC_ADDRESS, MFC.MAAPL_ADDRESS, MFC.UNI_ADDRESS, MFC.SEUR_ADDRESS, MFC.SBTC_ADDRESS, MFC.GRAIN_ADDRESS];
   let uniLPs = ["0xbb2b8038a1640196fbe3e38816f3e67cba72d940","0xb4e16d0168e52d35cacd2c6185b44281ec28c9dc","0xd3d2e2692501a5c9ca623199d38826e513033a17","0x21b8065d10f73ee2e260e5b47d3344d3ced7596e",
                 "0x0d4a11d5eeaac28ec3f61d100daf4d40471f1852","0xa478c2975ab1ea89e8196811f51a7b7ade33eb11","0xf52f433b79d21023af94251958bed3b64a2b7930","0xa2107fa5b38d9bbd2c461d6edf11b11a50f6b974",
                 "0x97c4adc5d28a86f9470c70dd91dc6cc2f20d2d4d","0x32ce7e48debdccbfe0cd037cc89526e4382cb81b"];
@@ -271,7 +271,7 @@ describe("Testing all functionality", function (){
   });
 
   it("Curve LPs Repeatable", async function() {
-    for (i=0;i<10;i++) {
+    for (i=22;i<32;i++) {
       pool = await curveRegistry.pool_list(i);
       lpToken = await curveRegistry.get_lp_token(pool);
       curveLPs.push(lpToken);

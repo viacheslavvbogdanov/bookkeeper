@@ -142,7 +142,6 @@ contract OracleMainnet is Governable {
       i++;
     }
     keyTokens.pop();
-
     emit KeyTokenRemoved(keyToken);
 
     if (checkPricingToken(keyToken)) {
@@ -181,11 +180,10 @@ contract OracleMainnet is Governable {
     emit CurveExceptionAdded(newException, exceptionList);
   }
   function removeCurveException(address exception) external onlyGovernance validException(exception) {
-    (bool check0, bool check1) = checkCurveException(exception);
+    (bool check0,) = checkCurveException(exception);
     uint256 i;
     uint256 j;
     uint256 list;
-
     if (check0) {
       list = 0;
       for (i=0;i<curveExceptionList0.length;i++) {
@@ -225,18 +223,14 @@ contract OracleMainnet is Governable {
     bool curveLP;
     bool oneInchLP;
     (uniSushiLP, curveLP, oneInchLP) = isLPCheck(token);
+    uint256 priceToken;
+    uint256 tokenValue;
+    uint256 price;
+    uint256 i;
     if (uniSushiLP || oneInchLP) {
       address[2] memory tokens;
       uint256[2] memory amounts;
-      if (uniSushiLP) {
-        (tokens, amounts) = getUniUnderlying(token);
-      } else {
-        (tokens, amounts) = getOneInchUnderlying(token);
-      }
-      uint256 priceToken;
-      uint256 tokenValue;
-      uint256 price = 0;
-      uint256 i;
+      (tokens, amounts) = (uniSushiLP)? getUniUnderlying(token):getOneInchUnderlying(token);
       for (i=0;i<2;i++) {
         priceToken = computePrice(tokens[i]);
         if (priceToken == 0) {
@@ -251,96 +245,72 @@ contract OracleMainnet is Governable {
       address[8] memory tokens;
       uint256[8] memory amounts;
       (tokens, amounts) = getCurveUnderlying(token);
-      uint256 priceToken;
-      uint256 tokenValue;
-      uint256 price = 0;
-      uint256 i;
       for (i=0;i<tokens.length;i++) {
         if (tokens[i] == address(0)) {
           break;
-          } else {
-          priceToken = computePrice(tokens[i]);
-          if (priceToken == 0) {
-            price = 0;
-            return price;
-          }
-          tokenValue = priceToken*amounts[i]/10**precisionDecimals;
         }
+        priceToken = computePrice(tokens[i]);
+        if (priceToken == 0) {
+          price = 0;
+          return price;
+        }
+        tokenValue = priceToken*amounts[i]/10**precisionDecimals;
         price = price + tokenValue;
       }
       return price;
     } else {
-      uint256 price = computePrice(token);
-      return price;
+      return computePrice(token);
     }
   }
 
   function isLPCheck(address token) public view returns(bool, bool, bool) {
     bool isOneInch = isOneInchCheck(token);
-    bool isUniSushi = isUniCheck(token) || isSushiCheck(token);
+    bool isUniSushi = isUniSushiCheck(token);
     bool isCurve = isCurveCheck(token);
     return (isUniSushi, isCurve, isOneInch);
   }
 
   //Checks if address is 1Inch LP
-  function isOneInchCheck(address token) public view returns (bool) {
+  function isOneInchCheck(address token) internal view returns (bool) {
     bool oneInchLP = oneInchFactory.isPool(token);
     return oneInchLP;
   }
 
-  //Checks if address is Uni LP. This is done in two steps, because the second step seems to cause errors for some tokens.
-  //Only the first step is not deemed accurate enough, as any token could be caalled UNI-V2.
-  function isUniCheck(address token) public view returns (bool) {
+  //Checks if address is Uni or Sushi LP. This is done in two steps, because the second step seems to cause errors for some tokens.
+  //Only the first step is not deemed accurate enough, as any token could be called UNI-V2.
+  function isUniSushiCheck(address token) internal view returns (bool) {
     IUniswapV2Pair pair = IUniswapV2Pair(token);
     string memory uniSymbol = "UNI-V2";
-    try pair.symbol() returns (string memory symbol) {
-      if (keccak256(abi.encodePacked(symbol)) != keccak256(abi.encodePacked(uniSymbol))) {
-        return false;
-      }
-    } catch {
-      return false;
-    }
-    try pair.factory{gas: 3000}() returns (address factory) {
-      if (factory == uniswapFactoryAddress){
-        return true;
-      } else {
-        return false;
-      }
-    } catch {
+    string memory sushiSymbol = "SLP";
+    string memory symbol = pair.symbol();
+    if (isEqualString(symbol, uniSymbol)) {
+      return checkFactory(pair, uniswapFactoryAddress);
+    } else if (isEqualString(symbol, sushiSymbol)) {
+      return checkFactory(pair, sushiswapFactoryAddress);
+    } else {
       return false;
     }
   }
 
-  //Checks if address is Sushi LP.
-  function isSushiCheck(address token) public view returns (bool) {
-    IUniswapV2Pair pair = IUniswapV2Pair(token);
-    string memory sushiSymbol = "SLP";
-    try pair.symbol() returns (string memory symbol) {
-      if (keccak256(abi.encodePacked(symbol)) != keccak256(abi.encodePacked(sushiSymbol))) {
-        return false;
-      }
-    } catch {
-      return false;
-    }
-    try pair.factory{gas:3000}() returns (address factory) {
-      if (factory == sushiswapFactoryAddress){
-        return true;
-      } else {
-        return false;
-      }
+  function isEqualString(string memory arg1, string memory arg2) internal view returns (bool) {
+    bool check = (keccak256(abi.encodePacked(arg1)) == keccak256(abi.encodePacked(arg2)))? true:false;
+    return check;
+  }
+
+  function checkFactory(IUniswapV2Pair pair, address compareFactory) internal view returns (bool) {
+    try pair.factory{gas: 3000}() returns (address factory) {
+      bool check = (factory == compareFactory)? true:false;
+      return check;
     } catch {
       return false;
     }
   }
 
   //Checks if address is Curve LP
-  function isCurveCheck(address token) public view returns (bool) {
+  function isCurveCheck(address token) internal view returns (bool) {
     address pool = curveRegistry.get_pool_from_lp_token(token);
-    if (pool != address(0)) {
-      return true;
-    } else {
-      return false;
-    }
+    bool check = (pool != address(0))? true:false;
+    return check;
   }
 
   //Get underlying tokens and amounts for Uni/Sushi LPs
@@ -372,12 +342,7 @@ contract OracleMainnet is Governable {
     uint256[2] memory amounts;
     tokens[0] = pair.token0();
     tokens[1] = pair.token1();
-    uint256 token0Decimals;
-    if (tokens[0]==address(0)) {
-      token0Decimals = 18;
-    } else {
-      token0Decimals = ERC20(tokens[0]).decimals();
-    }
+    uint256 token0Decimals = (tokens[0]==address(0))? 18:ERC20(tokens[0]).decimals();
     uint256 token1Decimals = ERC20(tokens[1]).decimals();
     uint256 supplyDecimals = ERC20(token).decimals();
     uint256 reserve0 = pair.getBalanceForRemoval(tokens[0]);
@@ -419,8 +384,11 @@ contract OracleMainnet is Governable {
     //Some pools work with ETH instead of WETH. For further calculations and functionality this is changed to WETH address.
     uint256[8] memory decimals;
     uint256 i;
-    for (i=0;i<tokens.length;i++){
-      if (tokens[i]==address(0)) {
+    uint256 totalSupply = IERC20(token).totalSupply();
+    uint256 supplyDecimals = ERC20(token).decimals();
+    uint256[8] memory amounts;
+    for (i=0;i<tokens.length;i++) {
+      if (tokens[i] == address(0)){
         break;
       } else if (tokens[i]==0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE){
         decimals[i] = 18;
@@ -428,24 +396,20 @@ contract OracleMainnet is Governable {
       } else {
         decimals[i] = ERC20(tokens[i]).decimals();
       }
-    }
-    uint256 totalSupply = IERC20(token).totalSupply();
-    uint256 supplyDecimals = ERC20(token).decimals();
-    uint256[8] memory amounts;
-    for (i=0;i<tokens.length;i++) {
-      if (tokens[i] == address(0)){
-        break;
-      }
+
       amounts[i] = reserves[i]*10**(supplyDecimals-decimals[i]+precisionDecimals)/totalSupply;
-      while (amounts[i] > 10**precisionDecimals) {
-        amounts[i] = amounts[i]/10;
+      //Curve has errors in their registry, where amounts are stored with the wrong number of decimals
+      //This steps accounts for this. In general there will never be more than 1 of any underlying token
+      //per curve LP token. If it is more, the decimals are corrected.
+      if (amounts[i] > 10**precisionDecimals) {
+        amounts[i] = amounts[i]*10**(decimals[i]-18);
       }
     }
     return (tokens, amounts);
   }
 
   //Check address for the Curve exception lists.
-  function checkCurveException(address token) public view returns (bool, bool) {
+  function checkCurveException(address token) internal view returns (bool, bool) {
     uint256 i;
     for (i=0;i<curveExceptionList0.length;i++) {
       if (token == curveExceptionList0[i]) {
@@ -468,20 +432,22 @@ contract OracleMainnet is Governable {
     } else if (token == address(0)) {
       price = 0;
     } else {
-      (address keyToken, address pool, bool uni, bool sushi, bool curve) = getLargestPool(token,keyTokens);
+      (address keyToken, address pool, bool uni, bool sushi) = getLargestPool(token,keyTokens);
+      uint256 priceVsKeyToken;
+      uint256 keyTokenPrice;
       if (keyToken == address(0)) {
         price = 0;
       } else if (uni) {
-        uint256 priceVsKeyToken = getPriceVsTokenUni(token,keyToken);
-        uint256 keyTokenPrice = getKeyTokenPrice(keyToken);
+        priceVsKeyToken = getPriceVsTokenUni(token,keyToken);
+        keyTokenPrice = getKeyTokenPrice(keyToken);
         price = priceVsKeyToken*keyTokenPrice/10**precisionDecimals;
       } else if (sushi) {
-        uint256 priceVsKeyToken = getPriceVsTokenSushi(token,keyToken);
-        uint256 keyTokenPrice = getKeyTokenPrice(keyToken);
+        priceVsKeyToken = getPriceVsTokenSushi(token,keyToken);
+        keyTokenPrice = getKeyTokenPrice(keyToken);
         price = priceVsKeyToken*keyTokenPrice/10**precisionDecimals;
       } else {
-        uint256 priceVsKeyToken = getPriceVsTokenCurve(token,keyToken,pool);
-        uint256 keyTokenPrice = getKeyTokenPrice(keyToken);
+        priceVsKeyToken = getPriceVsTokenCurve(token,keyToken,pool);
+        keyTokenPrice = getKeyTokenPrice(keyToken);
         price = priceVsKeyToken*keyTokenPrice/10**precisionDecimals;
       }
     }
@@ -489,88 +455,59 @@ contract OracleMainnet is Governable {
   }
 
   //Checks the results of the different largest pool functions and returns the largest.
-  function getLargestPool(address token, address[] memory tokenList) public view returns (address, address, bool, bool, bool) {
-    (address uniKeyToken, uint256 uniLiquidity) = getUniLargestPool(token, tokenList);
-    (address sushiKeyToken, uint256 sushiLiquidity) = getSushiLargestPool(token, tokenList);
+  function getLargestPool(address token, address[] memory tokenList) public view returns (address, address, bool, bool) {
+    (address uniSushiKeyToken, uint256 uniSushiLiquidity, bool isUni) = getUniSushiLargestPool(token, tokenList);
     (address curveKeyToken, address curvePool, uint256 curveLiquidity) = getCurveLargestPool(token, tokenList);
-    if (uniLiquidity > sushiLiquidity && uniLiquidity > curveLiquidity) {
-      return (uniKeyToken, address(0), true, false, false);
-    } else if (sushiLiquidity > curveLiquidity) {
-      return (sushiKeyToken, address(0), false, true, false);
+    if (uniSushiLiquidity > curveLiquidity) {
+      bool isSushi = (isUni)? false:true;
+      return (uniSushiKeyToken, address(0), isUni, isSushi);
     } else {
-      return (curveKeyToken, curvePool, false, false, true);
+      return (curveKeyToken, curvePool, false, false);
     }
   }
 
   //Gives the Uniswap pool with largest liquidity for a given token and a given tokenset (either keyTokens or pricingTokens)
-  function getUniLargestPool(address token, address[] memory tokenList) public view returns (address, uint256) {
+  function getUniSushiLargestPool(address token, address[] memory tokenList) internal view returns (address, uint256, bool) {
     uint256 largestPoolSize = 0;
-    address largestPoolAddress;
     address largestKeyToken;
-    uint112 poolSize;
+    uint256 poolSize;
     uint256 i;
-    uint256 decimals = ERC20(token).decimals();
+    uint256 poolSizeUni;
+    uint256 poolSizeSushi;
+    bool largestPoolisUni;
     for (i=0;i<tokenList.length;i++) {
-      address pairAddress = uniswapFactory.getPair(token,tokenList[i]);
-      if (pairAddress==address(0)) {
-        continue;
+      address pairAddressUni = uniswapFactory.getPair(token,tokenList[i]);
+      address pairAddressSushi = sushiswapFactory.getPair(token,tokenList[i]);
+      if (pairAddressUni!=address(0)) {
+        poolSizeUni = getUniPoolSize(pairAddressUni, token);
       }
-      IUniswapV2Pair pair = IUniswapV2Pair(pairAddress);
-      address token0 = pair.token0();
-      if (token == token0) {
-        (poolSize,,) = pair.getReserves();
-      } else {
-        (,poolSize,) = pair.getReserves();
+      if (pairAddressSushi!=address(0)) {
+        poolSizeSushi = getUniPoolSize(pairAddressSushi, token);
       }
+      bool uniDex = (poolSizeUni > poolSizeSushi);
+      poolSize = (uniDex)? poolSizeUni:poolSizeSushi;
       if (poolSize > largestPoolSize) {
         largestPoolSize = poolSize;
         largestKeyToken = tokenList[i];
-        largestPoolAddress = pairAddress;
+        largestPoolisUni = uniDex;
       }
     }
-    if (largestPoolSize < 10**decimals) {
-      return (address(0), 0);
-    }
-    return (largestKeyToken, largestPoolSize);
+    return (largestKeyToken, largestPoolSize, largestPoolisUni);
   }
 
-  //Gives the Sushiswap pool with largest liquidity for a given token and a given tokenset (either keyTokens or pricingTokens)
-  function getSushiLargestPool(address token, address[] memory tokenList) public view returns (address, uint256) {
-    uint256 largestPoolSize = 0;
-    address largestPoolAddress;
-    address largestKeyToken;
-    uint112 poolSize;
-    uint256 i;
-    uint256 decimals = ERC20(token).decimals();
-    for (i=0;i<tokenList.length;i++) {
-      address pairAddress = sushiswapFactory.getPair(token,tokenList[i]);
-      if (pairAddress==address(0)) {
-        continue;
-      }
-      IUniswapV2Pair pair = IUniswapV2Pair(pairAddress);
-      address token0 = pair.token0();
-      if (token == token0) {
-        (poolSize,,) = pair.getReserves();
-      } else {
-        (,poolSize,) = pair.getReserves();
-      }
-      if (poolSize > largestPoolSize) {
-        largestPoolSize = poolSize;
-        largestKeyToken = tokenList[i];
-        largestPoolAddress = pairAddress;
-      }
-    }
-    if (largestPoolSize < 10**decimals) {
-      return (address(0), 0);
-    }
-    return (largestKeyToken, largestPoolSize);
+  function getUniPoolSize(address pairAddress, address token) internal view returns(uint256) {
+    IUniswapV2Pair pair = IUniswapV2Pair(pairAddress);
+    address token0 = pair.token0();
+    (uint112 poolSize0, uint112 poolSize1,) = pair.getReserves();
+    uint256 poolSize = (token==token0)? poolSize0:poolSize1;
+    return poolSize;
   }
 
   //Gives the Curve pool with largest liquidity for a given token and a given tokenset (either keyTokens or pricingTokens)
   //Curve can have multiple pools for a given pair. Research showed that the largest pool is always given as first instance, so only the first needs to be called.
   //In Curve USD based tokens are often pooled with 3Pool. In this case liquidity is the same with USDC, DAI and USDT. When liquidity is found with USDC
   //the loop is stopped, as no larger liquidity will be found with any other asset and this reduces calls.
-  function getCurveLargestPool(address token, address[] memory tokenList) public view returns (address, address, uint256) {
+  function getCurveLargestPool(address token, address[] memory tokenList) internal view returns (address, address, uint256) {
     uint256 largestPoolSize = 0;
     address largestPoolAddress;
     address largestKeyToken;
@@ -582,7 +519,7 @@ contract OracleMainnet is Governable {
         continue;
       }
       address lpToken = curveRegistry.get_lp_token(poolAddress);
-      (bool exception0, bool exception1) = checkCurveException(lpToken);
+      (bool exception0,) = checkCurveException(lpToken);
       if (exception0) {
         continue;
       }
@@ -600,25 +537,26 @@ contract OracleMainnet is Governable {
   }
 
   //Gives the balance of a given token in a given pool.
-  function getCurveBalance(address tokenFrom, address tokenTo, address pool) public view returns (uint256) {
+  function getCurveBalance(address tokenFrom, address tokenTo, address pool) internal view returns (uint256) {
     uint256 balance;
-    (int128 indexFrom, int128 indexTo, bool underlying) = curveRegistry.get_coin_indices(pool, tokenFrom, tokenTo);
+    (int128 indexFrom,,bool underlying) = curveRegistry.get_coin_indices(pool, tokenFrom, tokenTo);
+    uint256[8] memory balances;
     if (underlying) {
-      uint256[8] memory balances = curveRegistry.get_underlying_balances(pool);
+      balances = curveRegistry.get_underlying_balances(pool);
       uint256 decimals = ERC20(tokenFrom).decimals();
       balance = balances[uint256(indexFrom)];
       if (balance > 10**(decimals+10)) {
         balance = balance*10**(decimals-18);
       }
     } else {
-      uint256[8] memory balances = curveRegistry.get_balances(pool);
+      balances = curveRegistry.get_balances(pool);
       balance = balances[uint256(indexFrom)];
     }
     return balance;
   }
 
   //Generic function giving the price of a given token vs another given token on Uniswap.
-  function getPriceVsTokenUni(address token0, address token1) public view returns (uint256) {
+  function getPriceVsTokenUni(address token0, address token1) internal view returns (uint256) {
     address pairAddress = uniswapFactory.getPair(token0,token1);
     IUniswapV2Pair pair = IUniswapV2Pair(pairAddress);
     (uint256 reserve0, uint256 reserve1,) = pair.getReserves();
@@ -634,7 +572,7 @@ contract OracleMainnet is Governable {
   }
 
   //Generic function giving the price of a given token vs another given token on Sushiswap.
-  function getPriceVsTokenSushi(address token0, address token1) public view returns (uint256) {
+  function getPriceVsTokenSushi(address token0, address token1) internal view returns (uint256) {
     address pairAddress = sushiswapFactory.getPair(token0,token1);
     IUniswapV2Pair pair = IUniswapV2Pair(pairAddress);
     (uint256 reserve0, uint256 reserve1,) = pair.getReserves();
@@ -650,7 +588,7 @@ contract OracleMainnet is Governable {
   }
 
   //Generic function giving the price of a given token vs another given token on Curve.
-  function getPriceVsTokenCurve(address token0, address token1, address poolAddress) public view returns (uint256) {
+  function getPriceVsTokenCurve(address token0, address token1, address poolAddress) internal view returns (uint256) {
     ICurvePool pool = ICurvePool(poolAddress);
     (int128 indexFrom, int128 indexTo, bool underlying) = curveRegistry.get_coin_indices(poolAddress, token0, token1);
     uint256 decimals0 = ERC20(token0).decimals();
@@ -674,7 +612,7 @@ contract OracleMainnet is Governable {
   }
 
   //Gives the price of a given keyToken.
-  function getKeyTokenPrice(address token) public view returns (uint256) {
+  function getKeyTokenPrice(address token) internal view returns (uint256) {
     bool isPricingToken = checkPricingToken(token);
     uint256 price;
     uint256 priceVsPricingToken;
@@ -684,7 +622,7 @@ contract OracleMainnet is Governable {
       price = getPriceVsTokenUni(token,definedOutputToken);
     } else {
       uint256 pricingTokenPrice;
-      (address pricingToken, address pricingPool, bool uni, bool sushi, bool curve) = getLargestPool(token,pricingTokens);
+      (address pricingToken, address pricingPool, bool uni, bool sushi) = getLargestPool(token,pricingTokens);
       if (uni) {
         priceVsPricingToken = getPriceVsTokenUni(token,pricingToken);
       } else if (sushi) {
@@ -692,11 +630,7 @@ contract OracleMainnet is Governable {
       } else {
         priceVsPricingToken = getPriceVsTokenCurve(token,pricingToken,pricingPool);
       }
-      if (pricingToken == definedOutputToken) {
-        pricingTokenPrice = 10**precisionDecimals;
-      } else {
-        pricingTokenPrice = getPriceVsTokenUni(pricingToken,definedOutputToken);
-      }
+      pricingTokenPrice = (pricingToken == definedOutputToken)? 10**precisionDecimals:getPriceVsTokenUni(pricingToken,definedOutputToken);
       price = priceVsPricingToken*pricingTokenPrice/10**precisionDecimals;
     }
     return price;
