@@ -259,8 +259,7 @@ contract OracleMainnet is Governable {
       }
       return price;
     } else {
-      price = computePrice(token);
-      return price;
+      return computePrice(token);
     }
   }
 
