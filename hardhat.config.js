@@ -16,13 +16,16 @@ module.exports = {
       forking: {
         //url: "https://mainnet.infura.io/v3/" + keys.infuraKey,
         url: "https://eth-mainnet.alchemyapi.io/v2/" + keys.alchemyKeyMainnet,
-        blockNumber: 11900760
+        blockNumber: 11984580
       }
     },
     ropsten: {
       allowUnlimitedContractSize: true,
       url: "https://eth-ropsten.alchemyapi.io/v2/" + keys.alchemyKeyRopsten,
-      accounts: ["0x" + keys.ropstenPrivateKey]
+      // accounts: ["0x" + keys.ropstenPrivateKey],
+    },
+    mainnet: {
+      url: "https://eth-mainnet.alchemyapi.io/v2/" + keys.alchemyKeyMainnet,
     }
   },
   etherscan: {
@@ -34,7 +37,7 @@ module.exports = {
        settings: {
          optimizer: {
            enabled: true,
-           runs: 150
+           runs: 1
          }
        }},
     ]
@@ -45,6 +48,5 @@ module.exports = {
   gasReporter: {
     enabled: true,
     currency: 'USD',
-    gasPrice: 100,
   }
 };

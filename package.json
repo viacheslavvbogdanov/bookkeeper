@@ -20,7 +20,8 @@
     "@nomiclabs/hardhat-web3": "^2.0.0",
     "@openzeppelin/contracts": "^3.4.0",
     "@openzeppelin/contracts-ethereum-package": "^3.0.0",
-    "coingecko-api": "^1.0.10"
+    "coingecko-api": "^1.0.10",
+    "sodium": "^3.0.2"
   },
   "homepage": "https://github.com/harvestfi/bookkeeper#readme",
   "devDependencies": {
@@ -30,5 +31,5 @@
     "@openzeppelin/test-helpers": "^0.5.10",
     "hardhat": "^2.0.10",
     "hardhat-gas-reporter": "^1.0.4"
-  } 
+  }
 }
