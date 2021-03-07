@@ -2,10 +2,9 @@ const Encryption = require('./encryptionTools.js');
 const password = Buffer.from(process.env.PASSWORD, 'utf8');
 
 async function main() {
-
   const deployerKey = await Encryption.decryptDeployerKey(password);
-  deployerKeyStr = await ropstenPrivateKey.toString();
-  provider = ethers.getDefaultProvider("mainnet");
+  deployerKeyStr = await deployerKey.toString();
+  provider = await ethers.getDefaultProvider("mainnet");
   deployer = await new ethers.Wallet("0x" + deployerKeyStr, provider);
 
   console.log(
