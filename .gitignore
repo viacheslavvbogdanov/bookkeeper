@@ -7,6 +7,8 @@ deployments
 
 dev-keys.json
 package-lock.json
+publicEncryptedDeployerKey.bin
+publicEncryptedMasterKey.bin
 
 coverage/
 coverage.json

@@ -1,23 +1,21 @@
+const Encryption = require('./encryptionTools.js');
+const password = Buffer.from(process.env.PASSWORD, 'utf8');
+
 async function main() {
 
-  const [deployer] = await ethers.getSigners();
+  const deployerKey = await Encryption.decryptDeployerKey(password);
+  deployerKeyStr = await ropstenPrivateKey.toString();
+  provider = ethers.getDefaultProvider("mainnet");
+  deployer = await new ethers.Wallet("0x" + deployerKeyStr, provider);
 
   console.log(
     "Deploying contracts with the account:",
     deployer.address
   );
 
-  // console.log("Account balance:", (await deployer.getBalance()).toString());
-
   const Storage = await ethers.getContractFactory("Storage");
   const storage = await Storage.deploy();
   console.log("Storage address:", storage.address);
-
-
-  const OracleRopsten = await ethers.getContractFactory("OracleRopsten");
-  const oracleRopsten = await OracleRopsten.deploy(storage.address);
-
-  console.log("Oracle address:", oracleRopsten.address);
 }
 
 main()
