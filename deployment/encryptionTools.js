@@ -1,7 +1,7 @@
 const sodium = require('sodium').api;
 const fs = require('fs/promises');
 
-function createPassword(password) {
+function createPassword(password, net) {
   let masterKey = Buffer.allocUnsafe(sodium.crypto_secretbox_KEYBYTES);
   let masterSalt = Buffer.allocUnsafe(sodium.crypto_pwhash_SALTBYTES);
 
@@ -16,27 +16,27 @@ function createPassword(password) {
 
   publicEncryptedMasterKey = sodium.crypto_secretbox(masterKey, derivedNonce, derivedKey);
 
-  fs.writeFile('publicEncryptedMasterKey.bin', masterSalt, function(err) {
+  fs.writeFile('encrypted/publicEncryptedMasterKey_'+net+'.bin', masterSalt, function(err) {
     if (err) throw err;
   });
-  fs.appendFile('publicEncryptedMasterKey.bin', publicEncryptedMasterKey, function(err) {
+  fs.appendFile('encrypted/publicEncryptedMasterKey_'+net+'.bin', publicEncryptedMasterKey, function(err) {
     if (err) throw err;
   });
   console.log("Encrypted password file saved");
 }
 
-async function readMasterKeyFile() {
-  masterKeyFile = await fs.readFile('publicEncryptedMasterKey.bin');
+async function readMasterKeyFile(net) {
+  masterKeyFile = await fs.readFile('encrypted/publicEncryptedMasterKey_'+net+'.bin');
   return masterKeyFile;
 };
 
-async function readDeployerKeyFile() {
-  deployerKeyFile = await fs.readFile('publicEncryptedDeployerKey.bin');
+async function readDeployerKeyFile(net) {
+  deployerKeyFile = await fs.readFile('encrypted/publicEncryptedDeployerKey_'+net+'.bin');
   return deployerKeyFile;
 };
 
-async function getMasterKey(password) {
-  masterKeyFile = await readMasterKeyFile();
+async function getMasterKey(password, net) {
+  masterKeyFile = await readMasterKeyFile(net);
   masterSalt = await masterKeyFile.slice(0, sodium.crypto_pwhash_SALTBYTES);
   publicEncryptedMasterKey = await masterKeyFile.slice(sodium.crypto_pwhash_SALTBYTES, masterKeyFile.length);
 
@@ -53,23 +53,23 @@ async function getMasterKey(password) {
   return masterKey;
 }
 
-async function encryptDeployerKey(password, deployerKey) {
-  masterKey = await getMasterKey(password);
+async function encryptDeployerKey(password, deployerKey, net) {
+  masterKey = await getMasterKey(password, net);
   nonce = Buffer.allocUnsafe(sodium.crypto_secretbox_NONCEBYTES);
   sodium.randombytes(nonce);
   publicEncryptedDeployerKey = sodium.crypto_secretbox(deployerKey, nonce, masterKey);
-  fs.writeFile('publicEncryptedDeployerKey.bin', nonce, function(err) {
+  fs.writeFile('encrypted/publicEncryptedDeployerKey_'+net+'.bin', nonce, function(err) {
     if (err) throw err;
   });
-  fs.appendFile('publicEncryptedDeployerKey.bin', publicEncryptedDeployerKey, function(err) {
+  fs.appendFile('encrypted/publicEncryptedDeployerKey_'+net+'.bin', publicEncryptedDeployerKey, function(err) {
     if (err) throw err;
   });
   console.log("Encrypted deployer key file saved");
 }
 
-async function decryptDeployerKey(password) {
-  deployerKeyFile = await readDeployerKeyFile();
-  masterKey = await getMasterKey(password);
+async function decryptDeployerKey(password, net) {
+  deployerKeyFile = await readDeployerKeyFile(net);
+  masterKey = await getMasterKey(password, net);
   nonce = await deployerKeyFile.slice(0, sodium.crypto_secretbox_NONCEBYTES);
   publicEncryptedDeployerKey = await deployerKeyFile.slice(sodium.crypto_secretbox_NONCEBYTES, deployerKeyFile.length)
 
