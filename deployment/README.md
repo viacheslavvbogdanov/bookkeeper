@@ -7,7 +7,7 @@ This directory contains deployment scripts that allow deployment of contracts to
 Before deployment the private key needs to be encrypted with a password. I would recommend to first try and deploy on Ropsten to familiarize yourself with the process. Note that the Ropsten version is older and has very limited functionality when deployed, but the deployment is good practice.
 
 Before you continue make sure to disable your terminal history. You can set a password and private key using the command:
-- `set PASSWORD=<<your password>> && set PRIVATE_KEY=<<your private key>> && npx hardhat run --network <<network>> deployment/setPasswordAndKey.js && set PASSWORD= && set PRIVATE_KEY=`
+- `set PASSWORD=<<your password>> && set DEPLOYER_KEY=<<your private key>> && npx hardhat run --network <<network>> deployment/setPasswordAndKey.js && set PASSWORD= && set PRIVATE_KEY=`
 
 For the private key, omit the 0x prefix. It will be added automatically. This command will save 2 encrypted files in the folder `/encrypted`. When first running, you will need to manually create this folder in the root of the project.
 
