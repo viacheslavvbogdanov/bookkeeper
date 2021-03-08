@@ -1,8 +1,9 @@
 const Encryption = require('./encryptionTools.js');
 const password = Buffer.from(process.env.PASSWORD, 'utf8');
+const net = network.name;
 
 async function main() {
-  const ropstenPrivateKey = await Encryption.decryptDeployerKey(password);
+  const ropstenPrivateKey = await Encryption.decryptDeployerKey(password, net);
   keyStr = await ropstenPrivateKey.toString();
   provider = await ethers.getDefaultProvider("ropsten");
   deployer = await new ethers.Wallet("0x" + keyStr, provider);
@@ -13,7 +14,7 @@ async function main() {
   );
 
   const OracleRopsten = await ethers.getContractFactory("OracleRopsten", deployer);
-  const oracleRopsten = await OracleRopsten.deploy("0x3655C41815B08Fca78B8A79DC8b87095c76B4Ff1");
+  const oracleRopsten = await OracleRopsten.deploy("0x01081d9fA569190Bb40f8b8280ea18923037f9fC");
   console.log("Oracle address:", oracleRopsten.address);
 }
 
