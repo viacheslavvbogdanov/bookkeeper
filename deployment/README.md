@@ -33,12 +33,10 @@ Decrypted deployer key
 Deploying contracts with the account: 0x76F2995915Dbf09c43f46568E023D3A0a73591af
 Storage address: 0x01081d9fA569190Bb40f8b8280ea18923037f9fC
 ```
-Where the deployer account will show your address, and the Storage address will provide the address of the newly launched contract. This `Storage` contract address is needed as input for deploying the `Oracle` contract and any other contract in the future. So add this address to the `deployOracle<<Network>>.js` file corresponding to the network you just launched the `Storage` contract on. It should be included as an argument for the deploy function on line 17:
-
-`const oracleMainnet = await OracleMainnet.deploy( "## PUT IN STORAGE ADDRESS ##" );`
+Where the deployer account will show your address, and the Storage address will provide the address of the newly launched contract. This `Storage` contract address is needed as input for deploying the `Oracle` contract and any other contract in the future. So add this address to the `deployOracle<<Network>>.js` file corresponding to the network you just launched the `Storage` contract on. It will be included in the script as an environment variable.
 
 We are now ready to launch the `Oracle` contract. This is done very much in the same way we launched the `Storage` contract. Run the command:
-- `set PASSWORD=<<your password>> && npx hardhat run --network <<network>> deployment/deployOracle<<Network>>.js && set PASSWORD=`
+- `set PASSWORD=<<your password>> && set STORAGE_ADDRESS=<<storage address>> && npx hardhat run --network <<your network>> deployment/deployOracle<<Network>>.js && set PASSWORD=`
 
 This will give the following output:
 ```

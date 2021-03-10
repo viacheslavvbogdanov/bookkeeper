@@ -1,5 +1,6 @@
 const Encryption = require('./encryptionTools.js');
 const password = Buffer.from(process.env.PASSWORD, 'utf8');
+const storage = process.env.STORAGE_ADDRESS.trim();
 const net = network.name;
 
 async function main() {
@@ -14,7 +15,7 @@ async function main() {
   );
 
   const OracleMainnet = await ethers.getContractFactory("OracleMainnet");
-  const oracleMainnet = await OracleMainnet.deploy( "## PUT IN STORAGE ADDRESS ##" );
+  const oracleMainnet = await OracleMainnet.deploy( storage );
   console.log("Contract address:", oracleMainnet.address);
 }
 
