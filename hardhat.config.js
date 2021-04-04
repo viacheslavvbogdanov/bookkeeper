@@ -4,6 +4,8 @@ require("@nomiclabs/hardhat-truffle5");
 require("hardhat-gas-reporter");
 
 const keys = require('./dev-keys.json');
+const ethForkUrl = "https://eth-mainnet.alchemyapi.io/v2/" + keys.alchemyKeyMainnet;
+const bscForkUrl = "https://bsc-dataseed1.ninicoin.io/";
 
 /**
  * @type import('hardhat/config').HardhatUserConfig
@@ -13,10 +15,10 @@ module.exports = {
   networks: {
     hardhat: {
       allowUnlimitedContractSize: true,
+      chainId: (process.env.FORK_BSC) ? 56 : 1,
       forking: {
-        //url: "https://mainnet.infura.io/v3/" + keys.infuraKey,
-        url: "https://eth-mainnet.alchemyapi.io/v2/" + keys.alchemyKeyMainnet,
-        blockNumber: 11984580
+        url: (process.env.FORK_BSC) ? bscForkUrl : ethForkUrl,
+        blockNumber: (process.env.FORK_BSC) ? undefined : 11984580,
       }
     },
     ropsten: {
@@ -26,7 +28,11 @@ module.exports = {
     },
     mainnet: {
       url: "https://eth-mainnet.alchemyapi.io/v2/" + keys.alchemyKeyMainnet,
-    }
+    },
+    bsc: {
+      url: "https://bsc-dataseed.binance.org/",
+      chainId: 56,
+    },
   },
   etherscan: {
     apiKey: keys.etherscanAPI
