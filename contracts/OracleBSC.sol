@@ -26,28 +26,28 @@ contract OracleBSC is Governable {
   IPancakeFactory pancakeFactory = IPancakeFactory(pancakeFactoryAddress);
   IMooniFactory oneInchFactory = IMooniFactory(oneInchFactoryAddress);
 
-  //Key tokens are used to find liquidity for any given token on Uni, Sushi and Curve.
+  //Key tokens are used to find liquidity for any given token on Pancakeswap and 1INCH.
   address[] public keyTokens = [
-  /* 0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d, //USDC */
+  0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d, //USDC
   0x2170Ed0880ac9A755fd29B2688956BD959F933F8, //ETH
-  /* 0x1AF3F329e8BE154074D8769D1FFa4eE058B1DBc3, //DAI */
-  /* 0x55d398326f99059fF775485246999027B3197955, //USDT */
+  0x1AF3F329e8BE154074D8769D1FFa4eE058B1DBc3, //DAI
+  0x55d398326f99059fF775485246999027B3197955, //USDT
   0x23396cF899Ca06c4472205fC903bDB4de249D6fC, //UST
   0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c, //BTCB
   0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56, //BUSD
   0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c, //WBNB
-  /* 0x4BD17003473389A42DAF6a0a729f6Fdb328BbBd7, //VAI */
+  0x4BD17003473389A42DAF6a0a729f6Fdb328BbBd7, //VAI
   0x111111111117dC0aa78b770fA6A738034120C302 //1INCH
   ];
-  //Pricing tokens are Key tokens with good liquidity with the defined output token on Uniswap.
+  //Pricing tokens are Key tokens with good liquidity with the defined output token on Pancakeswap.
   address[] public pricingTokens = [
   0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c, //WBNB
   0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56, //BUSD
   0x23396cF899Ca06c4472205fC903bDB4de249D6fC //UST
-  /* 0x55d398326f99059fF775485246999027B3197955, //USDT */
-  /* 0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d, //USDC */
-  /* 0x4BD17003473389A42DAF6a0a729f6Fdb328BbBd7, //VAI */
-  /* 0x1AF3F329e8BE154074D8769D1FFa4eE058B1DBc3  //DAI */
+  0x55d398326f99059fF775485246999027B3197955, //USDT
+  0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d, //USDC
+  0x4BD17003473389A42DAF6a0a729f6Fdb328BbBd7, //VAI
+  0x1AF3F329e8BE154074D8769D1FFa4eE058B1DBc3  //DAI
   ];
   //The defined output token is the unit in which prices of input tokens are given.
   address public definedOutputToken = 0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56; //BUSD
@@ -134,7 +134,7 @@ contract OracleBSC is Governable {
   }
 
   //Main function of the contract. Gives the price of a given token in the defined output token.
-  //The contract allows for input tokens to be LP tokens from Uniswap, Sushiswap, Curve and 1Inch.
+  //The contract allows for input tokens to be LP tokens from Pancakeswap and 1Inch.
   //In case of LP token, the underlying tokens will be found and valued to get the price.
   function getPrice(address token) external view returns (uint256) {
     if (token == definedOutputToken) {
@@ -178,8 +178,8 @@ contract OracleBSC is Governable {
     return oneInchLP;
   }
 
-  //Checks if address is Uni or Sushi LP. This is done in two steps, because the second step seems to cause errors for some tokens.
-  //Only the first step is not deemed accurate enough, as any token could be called UNI-V2.
+  //Checks if address is Pancake LP. This is done in two steps, because the second step seems to cause errors for some tokens.
+  //Only the first step is not deemed accurate enough, as any token could be called Cake-LP.
   function isPancakeCheck(address token) internal view returns (bool) {
     IPancakePair pair = IPancakePair(token);
     IBEP20 pairToken = IBEP20(token);
@@ -206,7 +206,7 @@ contract OracleBSC is Governable {
     }
   }
 
-  //Get underlying tokens and amounts for Uni/Sushi LPs
+  //Get underlying tokens and amounts for Pancake LPs
   function getPancakeUnderlying(address token) public view returns (address[2] memory, uint256[2] memory) {
     IPancakePair pair = IPancakePair(token);
     IBEP20 pairToken = IBEP20(token);
@@ -250,8 +250,8 @@ contract OracleBSC is Governable {
     amounts[0] = reserve0*10**(supplyDecimals-token0Decimals+precisionDecimals)/totalSupply;
     amounts[1] = reserve1*10**(supplyDecimals-token1Decimals+precisionDecimals)/totalSupply;
 
-    //1INCH uses ETH, instead of WETH in pools. For further calculations we continue with WETH instead.
-    //ETH will always be the first in the pair, so no need to check tokens[1]
+    //1INCH uses BNB, instead of WBNB in pools. For further calculations we continue with WBNB instead.
+    //BNB will always be the first in the pair, so no need to check tokens[1]
     if (tokens[0] == address(0)) {
       tokens[0] = 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c;
     }
@@ -295,7 +295,7 @@ contract OracleBSC is Governable {
     }
   }
 
-  //Gives the Uniswap pool with largest liquidity for a given token and a given tokenset (either keyTokens or pricingTokens)
+  //Gives the Pancakeswap pool with largest liquidity for a given token and a given tokenset (either keyTokens or pricingTokens)
   function getPancakeLargestPool(address token, address[] memory tokenList) internal view returns (address, uint256) {
     uint256 largestPoolSize = 0;
     address largestKeyToken;
@@ -324,7 +324,7 @@ contract OracleBSC is Governable {
     return poolSize;
   }
 
-  //Gives the Uniswap pool with largest liquidity for a given token and a given tokenset (either keyTokens or pricingTokens)
+  //Gives the 1INCH pool with largest liquidity for a given token and a given tokenset (either keyTokens or pricingTokens)
   function get1InchLargestPool(address token, address[] memory tokenList) internal view returns (address, uint256) {
     uint256 largestPoolSize = 0;
     address largestKeyToken;
@@ -371,7 +371,7 @@ contract OracleBSC is Governable {
     return poolSize;
   }
 
-  //Generic function giving the price of a given token vs another given token on Uniswap.
+  //Generic function giving the price of a given token vs another given token on Pancakeswap.
   function getPriceVsTokenPancake(address token0, address token1) internal view returns (uint256) {
     address pairAddress = pancakeFactory.getPair(token0,token1);
     IPancakePair pair = IPancakePair(pairAddress);
@@ -387,7 +387,7 @@ contract OracleBSC is Governable {
     return price;
   }
 
-  //Generic function giving the price of a given token vs another given token on Sushiswap.
+  //Generic function giving the price of a given token vs another given token on 1INCH.
   function getPriceVsToken1Inch(address token0, address token1) internal view returns (uint256) {
     address pairAddress = oneInchFactory.pools(token0,token1);
     IMooniswap pair = IMooniswap(pairAddress);
