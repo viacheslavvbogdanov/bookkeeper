@@ -3,7 +3,7 @@ const Encryption = require('./encryptionTools.js');
 async function deploy(password, net, contractName, ...args) {
   const privateKey = await Encryption.decryptDeployerKey(password, net);
   keyStr = await privateKey.toString();
-  provider = await ethers.getDefaultProvider(net);
+  provider = await new ethers.providers.JsonRpcProvider(network.config.url);
   deployer = await new ethers.Wallet("0x" + keyStr, provider);
 
   console.log(
@@ -11,7 +11,7 @@ async function deploy(password, net, contractName, ...args) {
       contractName,
       "on the net",
       net,
-      " with the account:",
+      "with the account:",
       deployer.address
   );
 
