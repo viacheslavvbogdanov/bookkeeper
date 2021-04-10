@@ -36,7 +36,7 @@ module.exports = {
     },
   },
   etherscan: {
-    apiKey: keys.etherscanAPI
+    apiKey: (process.env.BSC) ? keys.bscscanAPI : keys.etherscanAPI
   },
   solidity: {
     compilers: [
