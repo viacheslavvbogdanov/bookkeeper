@@ -19,7 +19,7 @@ contract OracleBSC is Governable {
   using SafeMath for uint256;
 
   //Addresses for factories and registries for different DEX platforms. Functions will be added to allow to alter these when needed.
-  address public pancakeFactoryAddress = 0xBCfCcbde45cE874adCB698cC183deBcF17952812;
+  address public pancakeFactoryAddress = 0x10ED43C718714eb63d5aA57B78B54704E256024E;
   address public oneInchFactoryAddress = 0xD41B24bbA51fAc0E4827b6F94C0D6DDeB183cD64;
   uint256 public precisionDecimals = 18;
 
