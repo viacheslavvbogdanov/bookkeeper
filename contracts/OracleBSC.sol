@@ -8,12 +8,13 @@ import "./interface/pancakeswap/IPancakePair.sol";
 import "./interface/mooniswap/IMooniFactory.sol";
 import "./interface/mooniswap/IMooniswap.sol";
 import "./Governable.sol";
+import "./StableSwapOracle.sol";
 
 import "hardhat/console.sol";
 
 pragma solidity 0.6.12;
 
-contract OracleBSC is Governable {
+contract OracleBSC is Governable, StableSwapOracle {
 
   using SafeBEP20 for IBEP20;
   using Address for address;
