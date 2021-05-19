@@ -9,8 +9,7 @@ project_structure:
 
 autofetch_sources: True
 
-
-# require OpenZepplin Contracts
+# these are required for brownie
 dependencies:
   - OpenZeppelin/openzeppelin-contracts@3.4.0
   - thegismar/pancake-swap-lib@1.0.0

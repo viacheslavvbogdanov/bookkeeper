@@ -78,6 +78,11 @@ def o(OracleBSC, storage, accounts, registry):
     for r in registry:
         o.modifyRegistry(r[0], r[1], r[2])
         o.addStableToken(r[0])
+
+    # btcb/renbtc -> btcb
+    o.modifyReplacementTokens('0x2a435Ecb3fcC0E316492Dc1cdd62d0F189be5640',
+                              '0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c')
+
     yield o
 
 
@@ -85,4 +90,6 @@ def test(o, tokens, interface):
     for t in tokens:
         i = interface.BEP20(t)
         s = i.symbol()
-        console.print(f'{o.getPrice(t) / 1e18:.6f} {s}/BUSD')
+        price = o.getPrice(t)
+        assert o.getPrice(t) > 0
+        console.print(f'{price / 1e18:.6f} {s}/BUSD')

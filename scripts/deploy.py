@@ -50,7 +50,7 @@ def registry():
 
 
 def main():
-    me = accounts.load('boobies')
+    me = accounts.load('YOUR_ACCOUNT')
     accounts.default = me
     s = Storage.deploy(publish_source=True)
     o = OracleBSC.deploy(s.address, publish_source=True)
@@ -59,4 +59,7 @@ def main():
         o.modifyRegistry(r[0], r[1], r[2])
         o.addStableToken(r[0])
 
+    # btcb/renbtc -> btcb
+    o.modifyReplacementTokens('0x2a435Ecb3fcC0E316492Dc1cdd62d0F189be5640',
+                              '0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c')
     print(o.address)

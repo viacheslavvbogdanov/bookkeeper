@@ -8,14 +8,16 @@ import "./interface/pancakeswap/IPancakePair.sol";
 import "./interface/mooniswap/IMooniFactory.sol";
 import "./interface/mooniswap/IMooniswap.sol";
 import "./Governable.sol";
-import "./StableSwapOracle.sol";
+import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 
 import "hardhat/console.sol";
 
 pragma solidity 0.6.12;
 
-contract OracleBSC is Governable, StableSwapOracle {
+contract OracleBSC is Governable {
 
+    using EnumerableSet for EnumerableSet.AddressSet;
+    EnumerableSet.AddressSet private stableTokens;
     using SafeBEP20 for IBEP20;
     using Address for address;
     using SafeMath for uint256;
@@ -27,6 +29,18 @@ contract OracleBSC is Governable, StableSwapOracle {
 
     IPancakeFactory pancakeFactory = IPancakeFactory(pancakeFactoryAddress);
     IMooniFactory oneInchFactory = IMooniFactory(oneInchFactoryAddress);
+
+    // registry for stable token -> sc address -> calldata to retrive price
+
+    mapping(address => registry) tokenToPrice;
+
+    struct registry {
+        address _address;
+        bytes _calldata;
+    }
+
+    mapping(address => address) replacementTokens;
+
 
     //Key tokens are used to find liquidity for any given token on Pancakeswap and 1INCH.
     address[] public keyTokens = [
@@ -139,6 +153,13 @@ contract OracleBSC is Governable, StableSwapOracle {
         emit DefinedOutuptChanged(newOutputToken, oldOutputToken);
     }
 
+    function modifyReplacementTokens(address _inputToken, address _replacementToken)
+    external onlyGovernance
+    {
+        replacementTokens[_inputToken] = _replacementToken;
+    }
+
+
     //Main function of the contract. Gives the price of a given token in the defined output token.
     //The contract allows for input tokens to be LP tokens from Pancakeswap and 1Inch.
     //In case of LP token, the underlying tokens will be found and valued to get the price.
@@ -147,8 +168,10 @@ contract OracleBSC is Governable, StableSwapOracle {
             return (10 ** precisionDecimals);
         }
 
-        if (token == address(0x2a435Ecb3fcC0E316492Dc1cdd62d0F189be5640)) {
-            token = 0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c;
+        // if the token exists in the mapping, we'll swapp it for the replacement
+        // example btcb/renbtc pool -> btcb
+        if (replacementTokens[token] != address(0)) {
+            token = replacementTokens[token];
         }
 
         // jump out if it's a stable
@@ -459,4 +482,60 @@ contract OracleBSC is Governable, StableSwapOracle {
         }
         return false;
     }
+
+    // @param _token token to be queried
+    // @param _address sc address in registry
+    // @param _calldata abi encoded function signature with parameters to be called
+    function modifyRegistry(address _token, address _address, bytes calldata _calldata)
+    external onlyGovernance
+    returns (bool)
+    {
+        registry memory r;
+        r._address = _address;
+        r._calldata = _calldata;
+        tokenToPrice[_token] = r;
+        return true;
+    }
+
+    //@param _token token to be added to stable token set
+    function addStableToken(address _token)
+    external onlyGovernance
+    returns (bool)
+    {
+        stableTokens.add(_token);
+        return true;
+    }
+
+    //@param _token token to be removed from stable token set
+    function removeStableToken(address _token)
+    external onlyGovernance
+    returns (bool)
+    {
+        stableTokens.remove(_token);
+        return true;
+    }
+
+    //@param _token to check if is stable token
+    function isStableToken(address _token)
+    internal view
+    returns (bool)
+    {
+        return stableTokens.contains(_token);
+    }
+
+    //@dev queries the struct registry that has previously been loaded with smart contract address,
+    // calldata that retrieves the price for that particular token, this can be changed via modifyRegistry
+    //@param _token token to return price for
+    function getStablesPrice(address _token)
+    internal view
+    returns (uint256)
+    {
+        registry memory r = tokenToPrice[_token];
+        (bool success, bytes memory returnData) = r._address.staticcall(r._calldata);
+        require(success, "couldn't call for price data"); // this is very unlikely to not succeed
+        return abi.decode(returnData, (uint256));
+
+    }
+
+
 }
