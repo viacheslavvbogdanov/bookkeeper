@@ -1,0 +1,30 @@
+project_structure:
+  build: build
+  contracts: contracts
+  interfaces: interfaces
+  reports: reports
+  scripts: scripts
+  tests: test
+
+
+autofetch_sources: True
+
+# these are required for brownie
+dependencies:
+  - OpenZeppelin/openzeppelin-contracts@3.4.0
+  - thegismar/pancake-swap-lib@1.0.0
+
+compiler:
+  solc:
+    version: 0.6.12
+    remappings:
+      - "@openzeppelin=OpenZeppelin/openzeppelin-contracts@3.4.0"
+      - "@pancakeswap/pancake-swap-lib=thegismar/pancake-swap-lib@1.0.0"
+
+hypothesis:
+  max_examples: 100
+  stateful_step_count: 10
+
+reports:
+  exclude_contracts:
+    - SafeMath

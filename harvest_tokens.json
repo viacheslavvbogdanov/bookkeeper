@@ -1,0 +1,465 @@
+{
+  "data": [
+    {
+      "id": 13,
+      "contract": {
+        "id": 50,
+        "address": "0x4b5c23cac08a567ecf0c1ffca8372a45a5d33743",
+        "name": "FARM",
+        "created": 5992726,
+        "updated": 6736455,
+        "type": 4,
+        "network": "bsc",
+        "underlying": null
+      },
+      "updatedBlock": 5992726,
+      "name": "FARM Reward Token",
+      "symbol": "FARM",
+      "decimals": 18
+    },
+    {
+      "id": 8,
+      "contract": {
+        "id": 25,
+        "address": "0x0e09fabb73bd3ade0a17ecc321fd13a19e81ce82",
+        "name": "Cake",
+        "created": 5992270,
+        "updated": 6965342,
+        "type": 4,
+        "network": "bsc",
+        "underlying": null
+      },
+      "updatedBlock": 5992270,
+      "name": "PancakeSwap Token",
+      "symbol": "Cake",
+      "decimals": 18
+    },
+    {
+      "id": 2,
+      "contract": {
+        "id": 6,
+        "address": "0x2170ed0880ac9a755fd29b2688956bd959f933f8",
+        "name": "ETH",
+        "created": 5992193,
+        "updated": 6965422,
+        "type": 4,
+        "network": "bsc",
+        "underlying": null
+      },
+      "updatedBlock": 5992193,
+      "name": "Ethereum Token",
+      "symbol": "ETH",
+      "decimals": 18
+    },
+    {
+      "id": 1,
+      "contract": {
+        "id": 4,
+        "address": "0x250632378e573c6be1ac2f97fcdf00515d0aa91b",
+        "name": "BETH",
+        "created": 5992193,
+        "updated": 6929588,
+        "type": 4,
+        "network": "bsc",
+        "underlying": null
+      },
+      "updatedBlock": 5992193,
+      "name": "Binance Beacon ETH",
+      "symbol": "BETH",
+      "decimals": 18
+    },
+    {
+      "id": 12,
+      "contract": {
+        "id": 48,
+        "address": "0x0d9319565be7f53cefe84ad201be3f40feae2740",
+        "name": "sBDO",
+        "created": 5992341,
+        "updated": 6333924,
+        "type": 4,
+        "network": "bsc",
+        "underlying": null
+      },
+      "updatedBlock": 5992341,
+      "name": "bDollar Share",
+      "symbol": "sBDO",
+      "decimals": 18
+    },
+    {
+      "id": 4,
+      "contract": {
+        "id": 15,
+        "address": "0xcf6bb5389c92bdda8a3747ddb454cb7a64626c63",
+        "name": "XVS",
+        "created": 5992243,
+        "updated": 6965885,
+        "type": 4,
+        "network": "bsc",
+        "underlying": null
+      },
+      "updatedBlock": 5992243,
+      "name": "Venus",
+      "symbol": "XVS",
+      "decimals": 18
+    },
+    {
+      "id": 3,
+      "contract": {
+        "id": 11,
+        "address": "0x7130d2a12b9bcbfae4f2634d864a1ee1ce3ead9c",
+        "name": "BTCB",
+        "created": 5992229,
+        "updated": 6929609,
+        "type": 4,
+        "network": "bsc",
+        "underlying": null
+      },
+      "updatedBlock": 5992229,
+      "name": "BTCB Token",
+      "symbol": "BTCB",
+      "decimals": 18
+    },
+    {
+      "id": 11,
+      "contract": {
+        "id": 43,
+        "address": "0x190b589cf9fb8ddeabbfeae36a813ffb2a702454",
+        "name": "BDO",
+        "created": 5992327,
+        "updated": 6939011,
+        "type": 4,
+        "network": "bsc",
+        "underlying": null
+      },
+      "updatedBlock": 5992327,
+      "name": "bDollar",
+      "symbol": "BDO",
+      "decimals": 18
+    },
+    {
+      "id": 6,
+      "contract": {
+        "id": 20,
+        "address": "0x4bd17003473389a42daf6a0a729f6fdb328bbbd7",
+        "name": "VAI",
+        "created": 5992249,
+        "updated": 6906958,
+        "type": 4,
+        "network": "bsc",
+        "underlying": null
+      },
+      "updatedBlock": 5992249,
+      "name": "VAI Stablecoin",
+      "symbol": "VAI",
+      "decimals": 18
+    },
+    {
+      "id": 10,
+      "contract": {
+        "id": 37,
+        "address": "0xf952fc3ca7325cc27d15885d37117676d25bfda6",
+        "name": "EGG",
+        "created": 5992304,
+        "updated": 6333916,
+        "type": 4,
+        "network": "bsc",
+        "underlying": null
+      },
+      "updatedBlock": 5992304,
+      "name": "Goose Golden Egg",
+      "symbol": "EGG",
+      "decimals": 18
+    },
+    {
+      "id": 14,
+      "contract": {
+        "id": 71,
+        "address": "0x111111111117dc0aa78b770fa6a738034120c302",
+        "name": "1INCH",
+        "created": 6186796,
+        "updated": 6333936,
+        "type": 4,
+        "network": "bsc",
+        "underlying": null
+      },
+      "updatedBlock": 6186796,
+      "name": "1INCH Token",
+      "symbol": "1INCH",
+      "decimals": 18
+    },
+    {
+      "id": 23,
+      "contract": {
+        "id": 118,
+        "address": "0xe0e514c71282b6f4e823703a39374cf58dc3ea4f",
+        "name": "BELT",
+        "created": 6620042,
+        "updated": 6965010,
+        "type": 4,
+        "network": "bsc",
+        "underlying": null
+      },
+      "updatedBlock": 6620042,
+      "name": "BELT Token",
+      "symbol": "BELT",
+      "decimals": 18
+    },
+    {
+      "id": 18,
+      "contract": {
+        "id": 95,
+        "address": "0xaf4de8e872131ae328ce21d909c74705d3aaf452",
+        "name": "3EPS",
+        "created": 6534727,
+        "updated": 6536682,
+        "type": 4,
+        "network": "bsc",
+        "underlying": "0xe9e7cea3dedca5984780bafc599bd69add087d56"
+      },
+      "updatedBlock": 6534727,
+      "name": "Ellipsis.finance BUSD/USDC/USDT",
+      "symbol": "3EPS",
+      "decimals": 18
+    },
+    {
+      "id": 7,
+      "contract": {
+        "id": 8,
+        "address": "0xe9e7cea3dedca5984780bafc599bd69add087d56",
+        "name": "BUSD",
+        "created": 5992263,
+        "updated": 6965200,
+        "type": 4,
+        "network": "bsc",
+        "underlying": null
+      },
+      "updatedBlock": 5992263,
+      "name": "BUSD Token",
+      "symbol": "BUSD",
+      "decimals": 18
+    },
+    {
+      "id": 17,
+      "contract": {
+        "id": 87,
+        "address": "0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d",
+        "name": "USDC",
+        "created": 6191872,
+        "updated": 6929726,
+        "type": 4,
+        "network": "bsc",
+        "underlying": null
+      },
+      "updatedBlock": 6191872,
+      "name": "USD Coin",
+      "symbol": "USDC",
+      "decimals": 18
+    },
+    {
+      "id": 19,
+      "contract": {
+        "id": 99,
+        "address": "0xa7f552078dcc247c2684336020c03648500c6d9f",
+        "name": "EPS",
+        "created": 6534771,
+        "updated": 6536699,
+        "type": 4,
+        "network": "bsc",
+        "underlying": "0xe9e7cea3dedca5984780bafc599bd69add087d56"
+      },
+      "updatedBlock": 6534771,
+      "name": "Ellipsis",
+      "symbol": "EPS",
+      "decimals": 18
+    },
+    {
+      "id": 22,
+      "contract": {
+        "id": 114,
+        "address": "0x86afa7ff694ab8c985b79733745662760e454169",
+        "name": "Belt.fi bDAI/bUSDC/bUSDT/bBUSD",
+        "created": 6619994,
+        "updated": 6620015,
+        "type": 4,
+        "network": "bsc",
+        "underlying": "0x1af3f329e8be154074d8769d1ffa4ee058b1dbc3"
+      },
+      "updatedBlock": 6619994,
+      "name": "bDAI+bUSDC+bUSDT+bBUSD",
+      "symbol": "Belt.fi bDAI/bUSDC/bUSDT/bBUSD",
+      "decimals": 18
+    },
+    {
+      "id": 15,
+      "contract": {
+        "id": 72,
+        "address": "0xfce146bf3146100cfe5db4129cf6c82b0ef4ad8c",
+        "name": "renBTC",
+        "created": 6186796,
+        "updated": 6333929,
+        "type": 4,
+        "network": "bsc",
+        "underlying": null
+      },
+      "updatedBlock": 6186796,
+      "name": "renBTC",
+      "symbol": "renBTC",
+      "decimals": 8
+    },
+    {
+      "id": 24,
+      "contract": {
+        "id": 122,
+        "address": "0x049d68029688eabf473097a2fc38ef61633a3c7a",
+        "name": "fUSDT",
+        "created": 6736265,
+        "updated": 6736290,
+        "type": 4,
+        "network": "bsc",
+        "underlying": null
+      },
+      "updatedBlock": 6736265,
+      "name": "Frapped USDT",
+      "symbol": "fUSDT",
+      "decimals": 6
+    },
+    {
+      "id": 20,
+      "contract": {
+        "id": 103,
+        "address": "0x52d86850bc8207b520340b7e39cdaf22561b9e56",
+        "name": "SWIRL",
+        "created": 6619780,
+        "updated": 6619853,
+        "type": 4,
+        "network": "bsc",
+        "underlying": null
+      },
+      "updatedBlock": 6619780,
+      "name": "Swirl.Cash",
+      "symbol": "SWIRL",
+      "decimals": 18
+    },
+    {
+      "id": 21,
+      "contract": {
+        "id": 108,
+        "address": "0x0abd3e3502c15ec252f90f64341cba74a24fba06",
+        "name": "SPACE",
+        "created": 6619882,
+        "updated": 6619965,
+        "type": 4,
+        "network": "bsc",
+        "underlying": null
+      },
+      "updatedBlock": 6619882,
+      "name": "farm.space",
+      "symbol": "SPACE",
+      "decimals": 18
+    },
+    {
+      "id": 25,
+      "contract": {
+        "id": 121,
+        "address": "0x373410a99b64b089dfe16f1088526d399252dace",
+        "name": "fusdt3EPS",
+        "created": 6736265,
+        "updated": 6736290,
+        "type": 4,
+        "network": "bsc",
+        "underlying": "0x049d68029688eabf473097a2fc38ef61633a3c7a"
+      },
+      "updatedBlock": 6736265,
+      "name": "Ellipsis.finance fUSDT/3EPS",
+      "symbol": "fusdt3EPS",
+      "decimals": 18
+    },
+    {
+      "id": 26,
+      "contract": {
+        "id": 126,
+        "address": "0x2a435ecb3fcc0e316492dc1cdd62d0f189be5640",
+        "name": "btcEPS",
+        "created": 6736321,
+        "updated": 6736344,
+        "type": 4,
+        "network": "bsc",
+        "underlying": "0x7130d2a12b9bcbfae4f2634d864a1ee1ce3ead9c"
+      },
+      "updatedBlock": 6736321,
+      "name": "Ellipsis.finance BTCB/renBTC",
+      "symbol": "btcEPS",
+      "decimals": 18
+    },
+    {
+      "id": 16,
+      "contract": {
+        "id": 81,
+        "address": "0x1af3f329e8be154074d8769d1ffa4ee058b1dbc3",
+        "name": "DAI",
+        "created": 6191727,
+        "updated": 6929694,
+        "type": 4,
+        "network": "bsc",
+        "underlying": null
+      },
+      "updatedBlock": 6191727,
+      "name": "Dai Token",
+      "symbol": "DAI",
+      "decimals": 18
+    },
+    {
+      "id": 27,
+      "contract": {
+        "id": 130,
+        "address": "0xf16e81dce15b08f326220742020379b855b87df9",
+        "name": "ICE",
+        "created": 6736381,
+        "updated": 6965596,
+        "type": 4,
+        "network": "bsc",
+        "underlying": null
+      },
+      "updatedBlock": 6736381,
+      "name": "IceToken",
+      "symbol": "ICE",
+      "decimals": 18
+    },
+    {
+      "id": 9,
+      "contract": {
+        "id": 32,
+        "address": "0x55d398326f99059ff775485246999027b3197955",
+        "name": "USDT",
+        "created": 5992290,
+        "updated": 6965705,
+        "type": 4,
+        "network": "bsc",
+        "underlying": null
+      },
+      "updatedBlock": 5992290,
+      "name": "Tether USD",
+      "symbol": "USDT",
+      "decimals": 18
+    },
+    {
+      "id": 5,
+      "contract": {
+        "id": 17,
+        "address": "0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c",
+        "name": "WBNB",
+        "created": 5992243,
+        "updated": 6965885,
+        "type": 4,
+        "network": "bsc",
+        "underlying": null
+      },
+      "updatedBlock": 5992243,
+      "name": "Wrapped BNB",
+      "symbol": "WBNB",
+      "decimals": 18
+    }
+  ],
+  "code": "200",
+  "status": "OK"
+}
