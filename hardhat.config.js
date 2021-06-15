@@ -19,7 +19,7 @@ module.exports = {
       chainId: (process.env.FORK_BSC) ? 56 : 1,
       forking: {
         url: (process.env.FORK_BSC) ? bscForkUrl : ethForkUrl,
-        blockNumber: (process.env.FORK_BSC) ? undefined : 11984580,
+        blockNumber: (process.env.FORK_BSC) ? undefined : 12625928,
       }
     },
     ropsten: {
