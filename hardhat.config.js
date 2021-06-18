@@ -7,6 +7,27 @@ require("hardhat-gas-reporter");
 const keys = require('./dev-keys.json');
 const ethForkUrl = "https://eth-mainnet.alchemyapi.io/v2/" + keys.alchemyKeyMainnet;
 const bscForkUrl = "https://bsc-dataseed1.ninicoin.io/";
+// const maticForkUrl = "https://rpc-mainnet.maticvigil.com/";
+const maticForkUrl = "https://matic-mainnet.chainstacklabs.com";
+// const maticForkUrl = "https://polygon-mainnet.infura.io/v3/"+ keys.infuraProjectId;
+
+let chainId = 1
+let forkUrl = ethForkUrl
+let blockNumber = 12625928 //TODO update to latest from etherscan
+
+if (process.env.FORK_BSC || keys.fork==='bsc') {
+  chainId = 56
+  forkUrl = bscForkUrl
+  blockNumber = 8313231 //TODO update to latest from bscscan
+
+} else if (process.env.FORK_MATIC || keys.fork==='matic') {
+  chainId = 137
+  forkUrl = maticForkUrl
+  blockNumber = undefined
+}
+
+console.log('forkUrl', forkUrl);
+console.log('chainId', chainId);
 
 /**
  * @type import('hardhat/config').HardhatUserConfig
@@ -16,10 +37,10 @@ module.exports = {
   networks: {
     hardhat: {
       allowUnlimitedContractSize: true,
-      chainId: (process.env.FORK_BSC) ? 56 : 1,
+      chainId: chainId,
       forking: {
-        url: (process.env.FORK_BSC) ? bscForkUrl : ethForkUrl,
-        blockNumber: (process.env.FORK_BSC) ? undefined : 12625928,
+        url: forkUrl,
+        blockNumber: blockNumber,
       }
     },
     ropsten: {
@@ -33,6 +54,10 @@ module.exports = {
     bsc: {
       url: "https://bsc-dataseed.binance.org/",
       chainId: 56,
+    },
+    matic: {
+      url: "https://rpc-mainnet.maticvigil.com/",
+      chainId: 137,
     },
   },
   etherscan: {
