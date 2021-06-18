@@ -29,10 +29,16 @@ The project uses Hardhat to compile, test and deploy solidity smart contracts.
 1. To use Hardhat install all dependencies from `package.json` using `npm install`.
 2. Create a `dev-keys.json` file with your Alchemy API key:
 ```
-  {
-    "alchemyKey": "<your-alchemy-key>"
-  }
+{
+  "etherscanAPI": "<your-etherscanAPI-key>",
+  "alchemyKeyMainnet": "<your-alchemy-key>",
+  "alchemyKeyRopsten": "<your-alchemy-key-ropsten>",
+  "alchemyKey": "<your-alchemy-key>",
+  "bscscanAPI": "<your-bscscanAPI-key>",
+  "fork":"main"
+}
 ```
+fork may be "matic","bsc" or "main" (used in [hardhat.config.js]())
 
 ## Run
 
