@@ -27,7 +27,7 @@ contract OracleMatic is Governable {
   IUniswapV2Factory quickswapFactory = IUniswapV2Factory(quickswapFactoryAddress);
   IUniswapV2Factory sushiswapFactory = IUniswapV2Factory(sushiswapFactoryAddress);
 
-  //Key tokens are used to find liquidity for any given token on Uni, Sushi
+  //Key tokens are used to find liquidity for any given token on Quick, Sushi
   address[] public keyTokens = [
     0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270, //WMATIC
     0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174, //USDC
@@ -36,7 +36,7 @@ contract OracleMatic is Governable {
     0xc2132D05D31c914a87C6611C10748AEb04B58e8F, //USDT
     0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6  //WBTC
   ];
-  //Pricing tokens are Key tokens with good liquidity with the defined output token on Uniswap.
+  //Pricing tokens are Key tokens with good liquidity with the defined output token on Quickswap.
   address[] public pricingTokens = [
     0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270, //WMATIC
     0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174, //USDC
@@ -70,7 +70,7 @@ contract OracleMatic is Governable {
   constructor(address _storage)
   Governable(_storage) public {}
 
-  function changeUniFactory(address newFactory) external onlyGovernance {
+  function changeQuickFactory(address newFactory) external onlyGovernance {
     address oldFactory = quickswapFactoryAddress;
     quickswapFactoryAddress = newFactory;
     quickswapFactory = IUniswapV2Factory(quickswapFactoryAddress);
@@ -135,18 +135,18 @@ contract OracleMatic is Governable {
   }
 
   //Main function of the contract. Gives the price of a given token in the defined output token.
-  //The contract allows for input tokens to be LP tokens from Uniswap, Sushiswap
+  //The contract allows for input tokens to be LP tokens from Quickswap, Sushiswap
   //In case of LP token, the underlying tokens will be found and valued to get the price.
   function getPrice(address token) external view returns (uint256) {
     if (token == definedOutputToken) {
       return (10**precisionDecimals);
     }
-    bool uniSushiLP = isUniSushiCheck(token);
+    bool quickSushiLP = isQuickSushiCheck(token);
     uint256 priceToken;
     uint256 tokenValue;
     uint256 price;
     uint256 i;
-    if (uniSushiLP) {
+    if (quickSushiLP) {
       address[2] memory tokens;
       uint256[2] memory amounts;
       (tokens, amounts) = getUniUnderlying(token);
@@ -165,13 +165,8 @@ contract OracleMatic is Governable {
     }
   }
 
-//  function isLPCheck(address token) public view returns(bool) {
-//    bool isUniSushi = isUniSushiCheck(token);
-//    return isUniSushi;
-//  }
-
-  //Checks if address is Uni or Sushi LP.
-  function isUniSushiCheck(address token) internal view returns (bool) {
+  //Checks if address is Quick or Sushi LP.
+  function isQuickSushiCheck(address token) internal view returns (bool) {
     IUniswapV2Pair pair = IUniswapV2Pair(token);
     return checkFactory(pair, quickswapFactoryAddress) || checkFactory(pair, sushiswapFactoryAddress);
   }
@@ -191,7 +186,7 @@ contract OracleMatic is Governable {
     return check;
   }
 
-  //Get underlying tokens and amounts for Uni/Sushi LPs
+  //Get underlying tokens and amounts for Quick/Sushi LPs
   function getUniUnderlying(address token) public view returns (address[2] memory, uint256[2] memory) {
     IUniswapV2Pair pair = IUniswapV2Pair(token);
     address[2] memory tokens;
@@ -221,13 +216,13 @@ contract OracleMatic is Governable {
     } else if (token == address(0)) {
       price = 0;
     } else {
-      (address keyToken, bool uni) = getUniSushiLargestPool(token,keyTokens);
+      (address keyToken, bool quick) = getLargestPool(token,keyTokens);
       uint256 priceVsKeyToken;
       uint256 keyTokenPrice;
       if (keyToken == address(0)) {
         price = 0;
-      } else if (uni) {
-        priceVsKeyToken = getPriceVsTokenUni(token,keyToken);
+      } else if (quick) {
+        priceVsKeyToken = getPriceVsToken(token,keyToken);
         keyTokenPrice = getKeyTokenPrice(keyToken);
         price = priceVsKeyToken*keyTokenPrice/10**precisionDecimals;
       } else {
@@ -239,36 +234,36 @@ contract OracleMatic is Governable {
     return (price);
   }
 
-  //Gives the Uniswap pool with largest liquidity for a given token and a given tokenset (either keyTokens or pricingTokens)
-  function getUniSushiLargestPool(address token, address[] memory tokenList) internal view returns (address, bool) {
+  //Gives the Quickswap pool with largest liquidity for a given token and a given tokenset (either keyTokens or pricingTokens)
+  function getLargestPool(address token, address[] memory tokenList) internal view returns (address, bool) {
     uint256 largestPoolSize = 0;
     address largestKeyToken;
     uint256 poolSize;
     uint256 i;
-    uint256 poolSizeUni;
+    uint256 poolSizeQuick;
     uint256 poolSizeSushi;
-    bool largestPoolIsUni;
+    bool largestPoolIsQuick;
     for (i=0;i<tokenList.length;i++) {
-      address pairAddressUni = quickswapFactory.getPair(token,tokenList[i]);
+      address pairAddressQuick = quickswapFactory.getPair(token,tokenList[i]);
       address pairAddressSushi = sushiswapFactory.getPair(token,tokenList[i]);
-      if (pairAddressUni!=address(0)) {
-        poolSizeUni = getUniPoolSize(pairAddressUni, token);
+      if (pairAddressQuick!=address(0)) {
+        poolSizeQuick = getPoolSize(pairAddressQuick, token);
       }
       if (pairAddressSushi!=address(0)) {
-        poolSizeSushi = getUniPoolSize(pairAddressSushi, token);
+        poolSizeSushi = getPoolSize(pairAddressSushi, token);
       }
-      bool uniDex = (poolSizeUni > poolSizeSushi);
-      poolSize = (uniDex)? poolSizeUni:poolSizeSushi;
+      bool quickDex = (poolSizeQuick > poolSizeSushi);
+      poolSize = (quickDex)? poolSizeQuick:poolSizeSushi;
       if (poolSize > largestPoolSize) {
         largestPoolSize = poolSize;
         largestKeyToken = tokenList[i];
-        largestPoolIsUni = uniDex;
+        largestPoolIsQuick = quickDex;
       }
     }
-    return (largestKeyToken, largestPoolIsUni);
+    return (largestKeyToken, largestPoolIsQuick);
   }
 
-  function getUniPoolSize(address pairAddress, address token) internal view returns(uint256) {
+  function getPoolSize(address pairAddress, address token) internal view returns(uint256) {
     IUniswapV2Pair pair = IUniswapV2Pair(pairAddress);
     address token0 = pair.token0();
     (uint112 poolSize0, uint112 poolSize1,) = pair.getReserves();
@@ -276,8 +271,8 @@ contract OracleMatic is Governable {
     return poolSize;
   }
 
-//Generic function giving the price of a given token vs another given token on Uniswap.
-function getPriceVsTokenUni(address token0, address token1) internal view returns (uint256) {
+//Generic function giving the price of a given token vs another given token on Quickswap.
+function getPriceVsToken(address token0, address token1) internal view returns (uint256) {
   address pairAddress = quickswapFactory.getPair(token0,token1);
   IUniswapV2Pair pair = IUniswapV2Pair(pairAddress);
   (uint256 reserve0, uint256 reserve1,) = pair.getReserves();
@@ -316,13 +311,13 @@ function getPriceVsTokenUni(address token0, address token1) internal view return
     if (token == definedOutputToken) {
       price = 10**precisionDecimals;
     } else if (isPricingToken) {
-//      price = getPriceVsTokenUni(token,definedOutputToken);
+//      price = getPriceVsTokenQuick(token,definedOutputToken);
       price = getPriceVsTokenSushi(token,definedOutputToken);
     } else {
       uint256 pricingTokenPrice;
-      (address pricingToken, bool uni) = getUniSushiLargestPool(token,pricingTokens);
-      if (uni) {
-        priceVsPricingToken = getPriceVsTokenUni(token,pricingToken);
+      (address pricingToken, bool quick) = getLargestPool(token,pricingTokens);
+      if (quick) {
+        priceVsPricingToken = getPriceVsToken(token,pricingToken);
       } else {
         priceVsPricingToken = getPriceVsTokenSushi(token,pricingToken);
       }
