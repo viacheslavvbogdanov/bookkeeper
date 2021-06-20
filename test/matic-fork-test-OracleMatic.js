@@ -30,7 +30,7 @@ describe("Testing all functionality", function () {
   let storage;
   let oracle;
 
-  let uniswapFactoryAddress = "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f";
+  let quickswapFactoryAddress = "0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32";
   let sushiswapFactoryAddress = "0xc35DADB65012eC5796536bD9864eD8773aBc74C4";
 
   let keyTokens = {
@@ -43,7 +43,7 @@ describe("Testing all functionality", function () {
 
   let definedOutputToken = keyTokens['USDC'];
 
-  let sushiswapFactory;
+  let sushiswapFactory, quickswapFactory;
 
   before(async function () {
     console.log("Setting up contract")
@@ -55,7 +55,9 @@ describe("Testing all functionality", function () {
     oracle = await OracleMatic.new(storage.address, {from: governance});
 
     sushiswapFactory = await IUniswapV2Factory.at(sushiswapFactoryAddress);
+    quickswapFactory = await IUniswapV2Factory.at(quickswapFactoryAddress);
   });
+
   it("Normal Tokens", async function () {
 
     for (const tokenName in keyTokens) {
@@ -76,39 +78,49 @@ describe("Testing all functionality", function () {
 
   });
 
-  it("Sushi LPs Repeatable", async function() {
-    const pairsLength = (await sushiswapFactory.allPairsLength()).toNumber()
-    console.log('sushiswapFactory allPairsLength', pairsLength);
+  async function testSwapFactory(swapFactory) {
+    const pairsLength = (await swapFactory.allPairsLength()).toNumber()
+    console.log('swapFactory allPairsLength', pairsLength);
 
-    const testPairsCount = Math.min(5, pairsLength)
+    const testPairsCount = Math.min(2, pairsLength)
     for (i=0; i<testPairsCount; i++) {
-      const sushiLP = await sushiswapFactory.allPairs(i);
-      console.log("Sushi token",i,sushiLP);
+      const LP = await swapFactory.allPairs(i);
+      console.log("token",i,LP);
 
       try {
         console.time("getPrice");
-        price = await oracle.getPrice(sushiLP);
+        price = await oracle.getPrice(LP);
         console.timeEnd("getPrice");
         console.log("price:", BigNumber(price).toFixed()/10**precisionDecimals);
       } catch {
-        console.log("Uni", i, sushiLP);
+        console.log("Uni", i, LP);
       }
 
-      underlying = await oracle.getUniUnderlying(sushiLP);
+      underlying = await oracle.getUniUnderlying(LP);
       token0 = underlying[0][0].toLowerCase();
       token1 = underlying[0][1].toLowerCase();
       amount0 = BigNumber(underlying[1][0]).toFixed();
       amount1 = BigNumber(underlying[1][1]).toFixed();
-      console.log('token0', token0, 'amount0', amount0);
-      console.log('token1', token1, 'amount1', amount1);
+      const erc0 = await ERC20.at(token0)
+      const erc1 = await ERC20.at(token1)
+      console.log( 'token0', await erc0.symbol(), token0, 'amount0', amount0);
+      console.log( 'token1', await erc1.symbol(), token1, 'amount1', amount1);
 
       console.log("")
     }
+  }
+
+  it("Sushi LPs Repeatable", async function() {
+    await testSwapFactory(sushiswapFactory)
+  });
+
+  it("Quick LPs Repeatable", async function() {
+    await testSwapFactory(quickswapFactory)
   });
 
   it("Control functions", async function() {
     console.log("Change factories");
-    await oracle.changeSushiFactory(uniswapFactoryAddress, {from: governance});
+    await oracle.changeSushiFactory(quickswapFactoryAddress, {from: governance});
     console.log("Change back");
     await oracle.changeSushiFactory(sushiswapFactoryAddress, {from: governance});
     console.log("Add FARM as key token");
@@ -125,6 +137,12 @@ describe("Testing all functionality", function () {
     console.log("FARM is key token:",isKeyToken);
     isPricingToken = await oracle.checkPricingToken(MFC.FARM_ADDRESS, {from: governance});
     console.log("FARM is pricing token:", isPricingToken);
+
+    ethPrice = await oracle.getPrice(keyTokens['WETH'], {from: governance});
+    console.log("WETH price:", BigNumber(ethPrice).toFixed()/10**precisionDecimals);
+    usdcPrice = await oracle.getPrice(keyTokens['USDC'], {from: governance});
+    console.log("USDC price:", BigNumber(usdcPrice).toFixed()/10**precisionDecimals);
+
     console.log("Change defined output to WETH");
     await oracle.changeDefinedOutput(keyTokens['WETH'], {from: governance});
     ethPrice = await oracle.getPrice(keyTokens['WETH'], {from: governance});
