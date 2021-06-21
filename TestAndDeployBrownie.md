@@ -7,7 +7,7 @@ bsc - mainnet](https://eth-brownie.readthedocs.io/en/stable/network-management.h
 To run the tests:
 1. [Install Brownie](https://eth-brownie.readthedocs.io/en/stable/install.html) & [Ganache-CLI](https://github.com/trufflesuite/ganache-cli), if you haven't already.
 
-2. Sign up for [BSCSCAN](www.bscscan.com) and generate an API key. This is required for fetching source codes of the 
+2. Sign up for [BSCSCAN](https://www.bscscan.com) and generate an API key. This is required for fetching source codes of the 
    mainnet contracts we will be interacting with. Store the API key in the `BSCSCAN_TOKEN` environment variable.
 
 ```bash
@@ -23,7 +23,7 @@ pip install -r requirements.txt
 4. Run the tests.
 
 ```
-brownie test  test/test_stableoracle_deployed.py -s --network bsc-main-fork
+brownie test test/test_stableoracle.py -s --network bsc-main-fork
 ```
 
 To deploy the contract and initialize the registry:

@@ -3,10 +3,37 @@ require("@nomiclabs/hardhat-etherscan");
 require("@nomiclabs/hardhat-truffle5");
 require("@nomiclabs/hardhat-ethers");
 require("hardhat-gas-reporter");
+require("hardhat-deploy");
+require("@nomiclabs/hardhat-ethers");
 
 const keys = require('./dev-keys.json');
 const ethForkUrl = "https://eth-mainnet.alchemyapi.io/v2/" + keys.alchemyKeyMainnet;
 const bscForkUrl = "https://bsc-dataseed1.ninicoin.io/";
+// const maticForkUrl = "https://rpc-mainnet.maticvigil.com/";
+const maticForkUrl = "https://matic-mainnet.chainstacklabs.com";
+const maticTestnetForkUrl = "https://matic-mumbai.chainstacklabs.com";
+
+let chainId = 1
+let forkUrl = ethForkUrl
+let blockNumber = 12625928 //TODO update to latest from etherscan
+
+if (process.env.FORK_BSC || keys.fork==='bsc') {
+  chainId = 56
+  forkUrl = bscForkUrl
+  blockNumber = 8313231 //TODO update to latest from bscscan
+
+} else if (process.env.FORK_MATIC || keys.fork==='matic') {
+  chainId = 137
+  forkUrl = maticForkUrl
+  blockNumber = undefined
+}  else if (process.env.FORK_MATIC || keys.fork==='maticTestnet') {
+  chainId = 80001
+  forkUrl = maticTestnetForkUrl
+  blockNumber = undefined
+}
+
+// console.log('forkUrl', forkUrl);
+// console.log('chainId', chainId);
 
 /**
  * @type import('hardhat/config').HardhatUserConfig
@@ -16,10 +43,10 @@ module.exports = {
   networks: {
     hardhat: {
       allowUnlimitedContractSize: true,
-      chainId: (process.env.FORK_BSC) ? 56 : 1,
+      chainId: chainId,
       forking: {
-        url: (process.env.FORK_BSC) ? bscForkUrl : ethForkUrl,
-        blockNumber: (process.env.FORK_BSC) ? undefined : 11984580,
+        url: forkUrl,
+        blockNumber: blockNumber,
       }
     },
     ropsten: {
@@ -34,6 +61,21 @@ module.exports = {
       url: "https://bsc-dataseed.binance.org/",
       chainId: 56,
     },
+    matic: {
+      url: maticForkUrl,
+      chainId: 137,
+      accounts: [`0x${keys.MATIC_PRIVATE_KEY}`]
+    },
+    maticTestnet: {
+      url: maticTestnetForkUrl,
+      chainId: 80001,
+      accounts: [`0x${keys.MATIC_PRIVATE_KEY}`]
+    },
+  },
+  namedAccounts: {
+    deployer: {
+      default: 0, // here this will by default take the first account as deployer
+    }
   },
   etherscan: {
     apiKey: (process.env.BSC) ? keys.bscscanAPI : keys.etherscanAPI
