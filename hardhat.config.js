@@ -3,13 +3,15 @@ require("@nomiclabs/hardhat-etherscan");
 require("@nomiclabs/hardhat-truffle5");
 require("@nomiclabs/hardhat-ethers");
 require("hardhat-gas-reporter");
+require("hardhat-deploy");
+require("@nomiclabs/hardhat-ethers");
 
 const keys = require('./dev-keys.json');
 const ethForkUrl = "https://eth-mainnet.alchemyapi.io/v2/" + keys.alchemyKeyMainnet;
 const bscForkUrl = "https://bsc-dataseed1.ninicoin.io/";
 // const maticForkUrl = "https://rpc-mainnet.maticvigil.com/";
 const maticForkUrl = "https://matic-mainnet.chainstacklabs.com";
-// const maticForkUrl = "https://polygon-mainnet.infura.io/v3/"+ keys.infuraProjectId;
+const maticTestnetForkUrl = "https://matic-mumbai.chainstacklabs.com";
 
 let chainId = 1
 let forkUrl = ethForkUrl
@@ -24,10 +26,14 @@ if (process.env.FORK_BSC || keys.fork==='bsc') {
   chainId = 137
   forkUrl = maticForkUrl
   blockNumber = undefined
+}  else if (process.env.FORK_MATIC || keys.fork==='maticTestnet') {
+  chainId = 80001
+  forkUrl = maticTestnetForkUrl
+  blockNumber = undefined
 }
 
-console.log('forkUrl', forkUrl);
-console.log('chainId', chainId);
+// console.log('forkUrl', forkUrl);
+// console.log('chainId', chainId);
 
 /**
  * @type import('hardhat/config').HardhatUserConfig
@@ -56,9 +62,20 @@ module.exports = {
       chainId: 56,
     },
     matic: {
-      url: "https://rpc-mainnet.maticvigil.com/",
+      url: maticForkUrl,
       chainId: 137,
+      accounts: [`0x${keys.MATIC_PRIVATE_KEY}`]
     },
+    maticTestnet: {
+      url: maticTestnetForkUrl,
+      chainId: 80001,
+      accounts: [`0x${keys.MATIC_PRIVATE_KEY}`]
+    },
+  },
+  namedAccounts: {
+    deployer: {
+      default: 0, // here this will by default take the first account as deployer
+    }
   },
   etherscan: {
     apiKey: (process.env.BSC) ? keys.bscscanAPI : keys.etherscanAPI
