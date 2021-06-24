@@ -4,7 +4,7 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
+import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "./interface/uniswap/IUniswapV2Factory.sol";
 import "./interface/uniswap/IUniswapV2Pair.sol";
 import "./interface/curve/ICurvePool.sol";
@@ -15,7 +15,7 @@ import "./Governable.sol";
 
 pragma solidity 0.6.12;
 
-contract OracleBase is Governable, Initializable  {
+abstract contract OracleBase is Governable, Initializable  {
 
   using SafeERC20 for IERC20;
   using Address for address;
@@ -23,15 +23,17 @@ contract OracleBase is Governable, Initializable  {
 
   uint256 public precisionDecimals = 18;
 
+  address public ETH  = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+  address public WETH = address(0);
+
+  //The defined output token is the unit in which prices of input tokens are given.
+  address public definedOutputToken = address(0);
+
   //Addresses for factories and registries for different DEX platforms. Functions will be added to allow to alter these when needed.
   address public uniswapFactoryAddress   = address(0);
   address public sushiswapFactoryAddress = address(0);
   address public curveRegistryAddress    = address(0);
   address public oneInchFactoryAddress   = address(0);
-
-
-  address public ETH  = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
-  address public WETH = address(0);
 
   //Key tokens are used to find liquidity for any given token on Uni, Sushi and Curve.
   address[] public keyTokens;
@@ -39,14 +41,16 @@ contract OracleBase is Governable, Initializable  {
   //Pricing tokens are Key tokens with good liquidity with the defined output token on Uniswap.
   address[] public pricingTokens;
 
-  //The defined output token is the unit in which prices of input tokens are given.
-  address public definedOutputToken = address(0);
-
   //Below are addresses of LP tokens for which it is known that the get_underlying functions of Curve Registry do not work because of errors in the Curve contract.
   //The exceptions are split. In the first exception the get_underlying_coins is called with get_balances.
   //In the second exception get_coins and get_balances are called.
   address[] public curveExceptionList0;
   address[] public curveExceptionList1;
+
+  IUniswapV2Factory uniswapFactory;
+  IUniswapV2Factory sushiswapFactory;
+  ICurveRegistry curveRegistry;
+  IMooniFactory oneInchFactory;
 
   modifier validKeyToken(address keyToken){
       require(checkKeyToken(keyToken), "Not a Key Token");
@@ -72,18 +76,33 @@ contract OracleBase is Governable, Initializable  {
   event CurveExceptionAdded(address newException, uint256 exceptionList);
   event CurveExceptionRemoved(address oldException, uint256 exceptionList);
 
-  constructor(address _storage)
-  Governable(_storage) public {}
+  constructor(address _storage) Governable(_storage) public {
+    initialize(_storage); //TODO remove in proxy version?
 
-  function initialize() public initializer {
-    initializeFactories();
+  }
+
+  function initialize(address _storage) public virtual initializer {
+    setStorage(_storage);
+    // at inherited contract you have to initialize:
+    // - Factories' addresses
+    // - WETH address
+    // - definedOutputToken address
+    // - keyTokens[]
+    // - pricingTokens[]
+    // When curve registry used:
+    // - curveExceptionList0[]
+    // - curveExceptionList1[]
   }
 
   function initializeFactories() public {
-    IUniswapV2Factory uniswapFactory = IUniswapV2Factory(uniswapFactoryAddress);
-    IUniswapV2Factory sushiswapFactory = IUniswapV2Factory(sushiswapFactoryAddress);
-    ICurveRegistry curveRegistry = ICurveRegistry(curveRegistryAddress);
-    IMooniFactory oneInchFactory = IMooniFactory(oneInchFactoryAddress);
+    if (uniswapFactoryAddress!=address(0))
+      uniswapFactory = IUniswapV2Factory(uniswapFactoryAddress);
+    if (sushiswapFactoryAddress!=address(0))
+      sushiswapFactory = IUniswapV2Factory(sushiswapFactoryAddress);
+    if (curveRegistryAddress!=address(0))
+      curveRegistry = ICurveRegistry(curveRegistryAddress);
+    if (oneInchFactoryAddress!=address(0))
+      oneInchFactory = IMooniFactory(oneInchFactoryAddress);
   }
 
   function changeUniFactory(address newFactory) external onlyGovernance {

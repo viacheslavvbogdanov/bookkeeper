@@ -5,6 +5,7 @@ require("@nomiclabs/hardhat-ethers");
 require("hardhat-gas-reporter");
 require("hardhat-deploy");
 require("@nomiclabs/hardhat-ethers");
+require('@openzeppelin/hardhat-upgrades');
 
 const keys = require('./dev-keys.json');
 const ethForkUrl = "https://eth-mainnet.alchemyapi.io/v2/" + keys.alchemyKeyMainnet;
@@ -64,12 +65,12 @@ module.exports = {
     matic: {
       url: maticForkUrl,
       chainId: 137,
-      accounts: [`0x${keys.MATIC_PRIVATE_KEY}`]
+      //accounts: [`0x${keys.MATIC_PRIVATE_KEY}`]
     },
     maticTestnet: {
       url: maticTestnetForkUrl,
       chainId: 80001,
-      accounts: [`0x${keys.MATIC_PRIVATE_KEY}`]
+      // accounts: [`0x${keys.MATIC_PRIVATE_KEY}`]
     },
   },
   namedAccounts: {
@@ -92,6 +93,7 @@ module.exports = {
     ]
   },
   mocha: {
+    "require": "hardhat/register",
     timeout: 2000000
   },
   gasReporter: {
