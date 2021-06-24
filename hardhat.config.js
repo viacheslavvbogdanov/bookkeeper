@@ -27,10 +27,6 @@ if (process.env.FORK_BSC || keys.fork==='bsc') {
   chainId = 137
   forkUrl = maticForkUrl
   blockNumber = undefined
-}  else if (process.env.FORK_MATIC || keys.fork==='maticTestnet') {
-  chainId = 80001
-  forkUrl = maticTestnetForkUrl
-  blockNumber = undefined
 }
 
 // console.log('forkUrl', forkUrl);

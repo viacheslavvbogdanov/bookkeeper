@@ -1,6 +1,6 @@
 // Utilities
 const Utils = require("./utilities/Utils.js");
-const MFC = require("./mainnet-fork-test-config.js");
+const MFC = require("./config/mainnet-fork-test-config.js");
 
 const { send } = require("@openzeppelin/test-helpers");
 const BigNumber = require("bignumber.js");

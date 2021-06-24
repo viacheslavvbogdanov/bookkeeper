@@ -2,7 +2,7 @@
 // noinspection JSUndeclaredVariable
 
 const Utils = require("./utilities/Utils.js");
-const MFC = require("./mainnet-fork-test-config.js");
+const MFC = require("./config/mainnet-fork-test-config.js");
 const CoinGecko = require("coingecko-api");
 const CoinGeckoClient = new CoinGecko();
 
@@ -22,7 +22,7 @@ const Storage = artifacts.require("Storage");
 const OracleMainnet = artifacts.require("OracleMainnet");
 
 // Vanilla Mocha test. Increased compatibility with tools that integrate Mocha.
-describe("Testing all functionality", function (){
+describe("Mainnet: Testing all functionality", function (){
 
   function sum(total,num) {
     return BigNumber.sum(total,num);
