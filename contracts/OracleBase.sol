@@ -304,6 +304,7 @@ abstract contract OracleBase is Governable, Initializable  {
   }
 
   function isEqualString(string memory arg1, string memory arg2) internal view returns (bool) {
+    //TODO optimize
     bool check = (keccak256(abi.encodePacked(arg1)) == keccak256(abi.encodePacked(arg2)))? true:false;
     return check;
   }
