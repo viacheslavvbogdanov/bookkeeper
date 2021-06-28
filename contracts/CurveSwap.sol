@@ -32,6 +32,9 @@ abstract contract CurveSwap is SwapBase {
     _;
   }
 
+  event CurveExceptionAdded(address newException, uint256 exceptionList);
+  event CurveExceptionRemoved(address oldException, uint256 exceptionList);
+
   constructor(address _factoryAddress, address _storage, address _WETH, address[] _exceptionList0, address[] _exceptionList1) SwapBase(_factoryAddress, _storage) public {
     curveExceptionList0 = _exceptionList0;
     curveExceptionList1 = _exceptionList1;
@@ -122,7 +125,7 @@ abstract contract CurveSwap is SwapBase {
       if (exception0) {
         continue;
       }
-      poolSize = getCurveBalance(token, tokenList[i], poolAddress);
+      poolSize = getBalance(token, tokenList[i], poolAddress);
       if (poolSize > largestPoolSize) {
         largestPoolSize = poolSize;
         largestKeyToken = tokenList[i];
@@ -155,7 +158,7 @@ abstract contract CurveSwap is SwapBase {
   }
 
   /// @dev Generic function giving the price of a given token vs another given token
-  function getPriceVsToken(address token0, address token1) internal view returns (uint256) {
+  function getPriceVsToken(address token0, address token1, address poolAddress) internal view returns (uint256) {
     ICurvePool pool = ICurvePool(poolAddress);
     (int128 indexFrom, int128 indexTo, bool underlying) = curveRegistry.get_coin_indices(poolAddress, token0, token1);
     uint256 decimals0 = ERC20(token0).decimals();

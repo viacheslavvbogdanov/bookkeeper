@@ -45,8 +45,6 @@ abstract contract OracleBase is Governable, Initializable  {
   event KeyTokenRemoved(address keyToken);
   event PricingTokenRemoved(address pricingToken);
   event DefinedOutputChanged(address newOutputToken, address oldOutputToken);
-  event CurveExceptionAdded(address newException, uint256 exceptionList);
-  event CurveExceptionRemoved(address oldException, uint256 exceptionList);
 
   constructor(address _storage) Governable(_storage) public {
     initialize(_storage); //TODO remove in proxy version?

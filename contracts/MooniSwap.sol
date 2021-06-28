@@ -29,12 +29,12 @@ abstract contract MooniSwap is SwapBase {
     emit FactoryChanged(newFactory, oldFactory);
   }
 
-  /// @dev  Check what token is pool of this Swap
+  /// @dev Check what token is pool of this Swap
   function isPool(address token) public virtual view returns(bool){
     return oneInchFactory.isPool(token);
   }
 
-  /// @dev  Get underlying tokens and amounts
+  /// @dev Get underlying tokens and amounts
   function getUnderlying(address token) public virtual view returns (address[] memory, uint256[] memory){
     IMooniswap pair = IMooniswap(token);
     address[2] memory tokens;
