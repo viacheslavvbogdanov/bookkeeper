@@ -8,7 +8,7 @@ import "./Governable.sol";
 
 pragma solidity 0.6.12;
 
-abstract contract SwapFactory is Governable {
+abstract contract SwapBase is Governable {
 
   using Address for address;
   using SafeMath for uint256;
