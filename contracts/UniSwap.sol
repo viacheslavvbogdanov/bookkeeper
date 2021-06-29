@@ -27,7 +27,7 @@ contract UniSwap is SwapBase {
   function checkFactory(IUniswapV2Pair pair, address compareFactory) internal view returns (bool) {
     bool check;
     try pair.factory{gas: 3000}() returns (address factory) {
-      check = (factory == compareFactory)? true:false; //TODO Why used '?:' ?
+      check = (factory == compareFactory);
     } catch {
       check = false;
     }
