@@ -12,33 +12,30 @@ import "./SwapBase.sol";
 
 pragma solidity 0.6.12;
 
-abstract contract MooniSwap is SwapBase {
+contract OneInchSwap is SwapBase {
 
   IMooniFactory oneInchFactory;
 
-  constructor(address _factoryAddress, address _storage) SwapBase(_factoryAddress, _storage) public {
+  address public WETH = address(0);
 
+  constructor(address _factoryAddress, address _storage, address _WETH) SwapBase(_factoryAddress, _storage) public {
+    WETH = _WETH;
   }
 
-  function initializeFactory() public virtual;
-
-  function changeFactory(address newFactory) external onlyGovernance {
-    address oldFactory = factoryAddress;
-    factoryAddress = newFactory;
-    if (factoryAddress!=address(0)) initializeFactory();
-    emit FactoryChanged(newFactory, oldFactory);
+  function initializeFactory() public virtual override {
+    oneInchFactory =  IMooniFactory(factoryAddress);
   }
 
   /// @dev Check what token is pool of this Swap
-  function isPool(address token) public virtual view returns(bool){
+  function isPool(address token) public virtual override view returns(bool){
     return oneInchFactory.isPool(token);
   }
 
   /// @dev Get underlying tokens and amounts
-  function getUnderlying(address token) public virtual view returns (address[] memory, uint256[] memory){
+  function getUnderlying(address token) public virtual override view returns (address[] memory, uint256[] memory){
     IMooniswap pair = IMooniswap(token);
-    address[2] memory tokens;
-    uint256[2] memory amounts;
+    address[] memory tokens  = new address[](2);
+    uint256[] memory amounts = new uint256[](2);
     tokens[0] = pair.token0();
     tokens[1] = pair.token1();
     uint256 token0Decimals = (tokens[0]==address(0))? 18:ERC20(tokens[0]).decimals();
@@ -63,17 +60,15 @@ abstract contract MooniSwap is SwapBase {
     return (tokens, amounts);
   }
 
-  /// @dev Returns pool size
-  function getPoolSize(address pairAddress, address token) public virtual view returns(uint256);
-
   /// @dev Gives a pool with largest liquidity for a given token and a given tokenset (either keyTokens or pricingTokens)
-  function getLargestPool(address token, address[] memory tokenList) internal view returns (address, address, uint256);
-  // return (largestKeyToken, largestPoolAddress, largestPoolSize);
-
-  /// @dev Gives the balance of a given token in a given pool.
-  function getBalance(address tokenFrom, address tokenTo, address pool) internal view returns (uint256);
+  function getLargestPool(address token, address[] memory tokenList) public virtual override view returns (address, address, uint256) {
+    //    return (largestKeyToken, largestPoolAddress, largestPoolSize);
+    return (address(0), address(0), 0); //TODO ?
+  }
 
   /// @dev Generic function giving the price of a given token vs another given token
-  function getPriceVsToken(address token0, address token1) internal view returns (uint256) ;
+  function getPriceVsToken(address token0, address token1, address poolAddress) public virtual override view returns (uint256) {
+    return 0; //TODO ?
+  }
 
 }

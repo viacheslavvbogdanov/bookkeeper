@@ -113,36 +113,16 @@ abstract contract OracleBase is Governable, Initializable  {
   //The contract allows for input tokens to be LP tokens from Uniswap, Sushiswap, Curve and 1Inch.
   //In case of LP token, the underlying tokens will be found and valued to get the price.
   function getPrice(address token) external view returns (uint256) {
-    //TODO swaps array iteration
-    if (token == definedOutputToken) {
+    if (token == definedOutputToken)
       return (10**precisionDecimals);
-    }
-    bool uniSushiLP;
-    bool curveLP;
-    bool oneInchLP;
-    (uniSushiLP, curveLP, oneInchLP) = isLPCheck(token);
+
     uint256 priceToken;
     uint256 tokenValue;
     uint256 price;
     uint256 i;
-    if (uniSushiLP || oneInchLP) {
-      address[2] memory tokens;
-      uint256[2] memory amounts;
-      (tokens, amounts) = (uniSushiLP)? getUniUnderlying(token):getOneInchUnderlying(token);
-      for (i=0;i<2;i++) {
-        priceToken = computePrice(tokens[i]);
-        if (priceToken == 0) {
-          price = 0;
-          return price;
-        }
-        tokenValue = priceToken*amounts[i]/10**precisionDecimals;
-        price = price + tokenValue;
-      }
-      return price;
-    } else if (curveLP) {
-      address[8] memory tokens;
-      uint256[8] memory amounts;
-      (tokens, amounts) = getCurveUnderlying(token);
+    (bool swapFound, SwapBase swap) = getSwapForPool(token);
+    if (swapFound) {
+      (address[] memory tokens, uint256[] memory amounts) = swap.getUnderlying(token);
       for (i=0;i<tokens.length;i++) {
         if (tokens[i] == address(0)) {
           break;
@@ -161,39 +141,28 @@ abstract contract OracleBase is Governable, Initializable  {
     }
   }
 
-  function isLPCheck(address token) public view returns(bool, bool, bool) {
-    //TODO iterate swaps array and call isPool, if found, return true and index pool
-    bool isOneInch = isOneInchCheck(token);
-    bool isUniSushi = isUniSushiCheck(token);
-    bool isCurve = isCurveCheck(token);
-    return (isUniSushi, isCurve, isOneInch);
+  function getSwapForPool(address token) public view returns(bool, SwapBase) {
+    for (uint i=0; i<swaps.length; i++ ) {
+      if (swaps[i].isPool(token)) return (true, swaps[i]);
+    }
+    return (false, swaps[0]); //TODO find better way to handle result when swap is not found
   }
-
 
   //General function to compute the price of a token vs the defined output token.
   function computePrice(address token) public view returns (uint256) {
-    //TODO swaps array
     uint256 price;
     if (token == definedOutputToken) {
       price = 10**precisionDecimals;
     } else if (token == address(0)) {
       price = 0;
     } else {
-      (address keyToken, address pool, bool uni, bool sushi) = getLargestPool(token,keyTokens);
+      (SwapBase swap, address keyToken, address pool) = getLargestPool(token,keyTokens);
       uint256 priceVsKeyToken;
       uint256 keyTokenPrice;
       if (keyToken == address(0)) {
         price = 0;
-      } else if (uni) {
-        priceVsKeyToken = getPriceVsTokenUni(token,keyToken);
-        keyTokenPrice = getKeyTokenPrice(keyToken);
-        price = priceVsKeyToken*keyTokenPrice/10**precisionDecimals;
-      } else if (sushi) {
-        priceVsKeyToken = getPriceVsTokenSushi(token,keyToken);
-        keyTokenPrice = getKeyTokenPrice(keyToken);
-        price = priceVsKeyToken*keyTokenPrice/10**precisionDecimals;
       } else {
-        priceVsKeyToken = getPriceVsTokenCurve(token,keyToken,pool);
+        priceVsKeyToken = swap.getPriceVsToken(token,keyToken,pool);
         keyTokenPrice = getKeyTokenPrice(keyToken);
         price = priceVsKeyToken*keyTokenPrice/10**precisionDecimals;
       }
@@ -202,40 +171,39 @@ abstract contract OracleBase is Governable, Initializable  {
   }
 
   //Checks the results of the different largest pool functions and returns the largest.
-  function getLargestPool(address token, address[] memory tokenList) public view returns (address, address, bool, bool) {
-    //TODO swaps array
-    (address uniSushiKeyToken, uint256 uniSushiLiquidity, bool isUni) = getUniSushiLargestPool(token, tokenList);
-    (address curveKeyToken, address curvePool, uint256 curveLiquidity) = getCurveLargestPool(token, tokenList);
-    if (uniSushiLiquidity > curveLiquidity) {
-      bool isSushi = (isUni)? false:true;
-      return (uniSushiKeyToken, address(0), isUni, isSushi);
-    } else {
-      return (curveKeyToken, curvePool, false, false);
+  function getLargestPool(address token, address[] memory tokenList) public view returns (SwapBase, address, address) {
+    address largestKeyToken = address(0);
+    address largestPool = address(0);
+    uint largestPoolSize = 0;
+    SwapBase largestSwap;
+    for (uint i=0;i<swaps.length;i++) {
+      SwapBase swap = swaps[i];
+      (address swapLargestKeyToken, address swapLargestPool, uint swapLargestPoolSize) = swap.getLargestPool(token, tokenList);
+      if (swapLargestPoolSize>largestPoolSize) {
+        largestSwap = swap;
+        largestKeyToken = swapLargestKeyToken;
+        largestPool = swapLargestPool;
+      }
     }
+    return (largestSwap, largestKeyToken, largestPool);
   }
 
 
   //Gives the price of a given keyToken.
   function getKeyTokenPrice(address token) internal view returns (uint256) {
-    //TODO swaps array iterate
     bool isPricingToken = checkPricingToken(token);
     uint256 price;
     uint256 priceVsPricingToken;
     if (token == definedOutputToken) {
       price = 10**precisionDecimals;
     } else if (isPricingToken) {
-      price = getPriceVsTokenUni(token,definedOutputToken);
+      price = swaps[0].getPriceVsToken(token, definedOutputToken, address(0)); // first swap is used
     } else {
       uint256 pricingTokenPrice;
-      (address pricingToken, address pricingPool, bool uni, bool sushi) = getLargestPool(token,pricingTokens);
-      if (uni) {
-        priceVsPricingToken = getPriceVsTokenUni(token,pricingToken);
-      } else if (sushi) {
-        priceVsPricingToken = getPriceVsTokenSushi(token,pricingToken);
-      } else {
-        priceVsPricingToken = getPriceVsTokenCurve(token,pricingToken,pricingPool);
-      }
-      pricingTokenPrice = (pricingToken == definedOutputToken)? 10**precisionDecimals:getPriceVsTokenUni(pricingToken,definedOutputToken);
+      (SwapBase swap, address pricingToken, address pricingPool) = getLargestPool(token,pricingTokens);
+      if (pricingPool==address(0)) return 0; // when no pools was found
+      priceVsPricingToken = swap.getPriceVsToken(token, pricingToken, pricingPool);
+      pricingTokenPrice = (pricingToken == definedOutputToken)? 10**precisionDecimals : swap.getPriceVsToken(pricingToken,definedOutputToken,pricingPool);
       price = priceVsPricingToken*pricingTokenPrice/10**precisionDecimals;
     }
     return price;

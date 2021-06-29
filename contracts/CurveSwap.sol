@@ -9,22 +9,31 @@ import "./Governable.sol";
 import "./interface/curve/ICurvePool.sol";
 import "./interface/curve/ICurveRegistry.sol";
 import "./SwapBase.sol";
+import "./OracleBase.sol";
 
 pragma solidity 0.6.12;
 
-abstract contract CurveSwap is SwapBase {
+contract CurveSwap is SwapBase {
+
+  OracleBase oracleBase;
 
   ICurveRegistry public curveRegistry;
 
   //Below are addresses of LP tokens for which it is known that the get_underlying functions of Curve Registry do not work because of errors in the Curve contract.
   //The exceptions are split. In the first exception the get_underlying_coins is called with get_balances.
   //In the second exception get_coins and get_balances are called.
-  address[] public curveExceptionList0;
-  address[] public curveExceptionList1;
+  address[] public curveExceptionList0 = [
+  0xFd2a8fA60Abd58Efe3EeE34dd494cD491dC14900,
+  0x02d341CcB60fAaf662bC0554d13778015d1b285C
+  ];
+  address[] public curveExceptionList1 = [
+  0x49849C98ae39Fff122806C06791Fa73784FB3675,
+  0x075b1bb99792c9E1041bA13afEf80C91a1e70fB3,
+  0xaA17A236F2bAdc98DDc0Cf999AbB47D47Fc0A6Cf
+  ];
 
   address public ETH  = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
   address public WETH = address(0);
-
 
   modifier validException(address exception){
     (bool check0, bool check1) = checkCurveException(exception);
@@ -35,33 +44,28 @@ abstract contract CurveSwap is SwapBase {
   event CurveExceptionAdded(address newException, uint256 exceptionList);
   event CurveExceptionRemoved(address oldException, uint256 exceptionList);
 
-  constructor(address _factoryAddress, address _storage, address _WETH, address[] _exceptionList0, address[] _exceptionList1) SwapBase(_factoryAddress, _storage) public {
-    curveExceptionList0 = _exceptionList0;
-    curveExceptionList1 = _exceptionList1;
+  constructor(address _factoryAddress, address _storage, address _WETH, OracleBase _oracleBase ) SwapBase(_factoryAddress, _storage) public {
     WETH = _WETH;
+    oracleBase = _oracleBase;
   }
 
-  function initializeFactory() public virtual;
-
-  function changeFactory(address newFactory) external onlyGovernance {
-    address oldFactory = factoryAddress;
-    factoryAddress = newFactory;
-    if (factoryAddress!=address(0)) initializeFactory();
-    emit FactoryChanged(newFactory, oldFactory);
+  function initializeFactory() public virtual override {
+    curveRegistry =  ICurveRegistry(factoryAddress);
   }
 
-  /// @dev  Check what token is pool of this Swap
-  function isPool(address token) public virtual view returns(bool){
+  /// @dev Check what token is pool of this Swap
+  function isPool(address token) public virtual override view returns(bool){
     address pool = curveRegistry.get_pool_from_lp_token(token);
     bool check = (pool != address(0))? true:false;
     return check;
   }
 
-  /// @dev  Get underlying tokens and amounts
-  function getUnderlying(address token) public virtual view returns (address[] memory, uint256[] memory){
+  /// @dev Get underlying tokens and amounts
+  function getUnderlying(address token) public virtual override view returns (address[] memory, uint256[] memory){
     address pool = curveRegistry.get_pool_from_lp_token(token);
     (bool exception0, bool exception1) = checkCurveException(token);
     address[8] memory tokens;
+    address[] memory returnTokens = new address[](8);
     uint256[8] memory reserves;
     if (exception0) {
       tokens = curveRegistry.get_underlying_coins(pool);
@@ -79,8 +83,9 @@ abstract contract CurveSwap is SwapBase {
     uint256 i;
     uint256 totalSupply = IERC20(token).totalSupply();
     uint256 supplyDecimals = ERC20(token).decimals();
-    uint256[8] memory amounts;
+    uint256[] memory amounts = new uint256[](8);
     for (i=0;i<tokens.length;i++) {
+      returnTokens[i] = tokens[i];
       if (tokens[i] == address(0)){
         break;
       } else if (tokens[i]==ETH){
@@ -98,18 +103,15 @@ abstract contract CurveSwap is SwapBase {
         amounts[i] = amounts[i]*10**(decimals[i]-18);
       }
     }
-    return (tokens, amounts);
+    return (returnTokens, amounts);
   }
-
-  /// @dev Returns pool size
-  function getPoolSize(address pairAddress, address token) public virtual view returns(uint256);
 
   /// @dev Gives a pool with largest liquidity for a given token and a given tokenset (either keyTokens or pricingTokens)
   //Gives the Curve pool with largest liquidity for a given token and a given tokenset (either keyTokens or pricingTokens)
   //Curve can have multiple pools for a given pair. Research showed that the largest pool is always given as first instance, so only the first needs to be called.
   //In Curve USD based tokens are often pooled with 3Pool. In this case liquidity is the same with USDC, DAI and USDT. When liquidity is found with USDC
   //the loop is stopped, as no larger liquidity will be found with any other asset and this reduces calls.
-  function getLargestPool(address token, address[] memory tokenList) internal view returns (address, address, uint256){
+  function getLargestPool(address token, address[] memory tokenList) public virtual override view returns (address, address, uint256){
     uint256 largestPoolSize = 0;
     address largestPoolAddress;
     address largestKeyToken;
@@ -130,7 +132,7 @@ abstract contract CurveSwap is SwapBase {
         largestPoolSize = poolSize;
         largestKeyToken = tokenList[i];
         largestPoolAddress = poolAddress;
-        if (largestKeyToken == definedOutputToken) {
+        if (largestKeyToken == oracleBase.definedOutputToken()) {
           return (largestKeyToken, largestPoolAddress, largestPoolSize);
         }
       }
@@ -158,7 +160,7 @@ abstract contract CurveSwap is SwapBase {
   }
 
   /// @dev Generic function giving the price of a given token vs another given token
-  function getPriceVsToken(address token0, address token1, address poolAddress) internal view returns (uint256) {
+  function getPriceVsToken(address token0, address token1, address poolAddress) public virtual override view returns (uint256) {
     ICurvePool pool = ICurvePool(poolAddress);
     (int128 indexFrom, int128 indexTo, bool underlying) = curveRegistry.get_coin_indices(poolAddress, token0, token1);
     uint256 decimals0 = ERC20(token0).decimals();
@@ -180,7 +182,6 @@ abstract contract CurveSwap is SwapBase {
     }
     return price;
   }
-
 
   function addCurveException(address newException, uint256 exceptionList) external onlyGovernance {
     (bool check0, bool check1) = checkCurveException(newException);
@@ -225,8 +226,7 @@ abstract contract CurveSwap is SwapBase {
     }
     emit CurveExceptionRemoved(exception, list);
   }
-
-  //Check address for the Curve exception lists.
+  /// @dev Check address for the Curve exception lists.
   function checkCurveException(address token) internal view returns (bool, bool) {
     uint256 i;
     for (i=0;i<curveExceptionList0.length;i++) {

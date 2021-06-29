@@ -12,7 +12,7 @@ import "./SwapBase.sol";
 
 pragma solidity 0.6.12;
 
-abstract contract UniSwap is SwapBase {
+contract UniSwap is SwapBase {
 
   IUniswapV2Factory uniswapFactory;
 
@@ -20,13 +20,8 @@ abstract contract UniSwap is SwapBase {
 
   }
 
-  function initializeFactory() public virtual;
-
-  function changeFactory(address newFactory) external onlyGovernance {
-    address oldFactory = factoryAddress;
-    factoryAddress = newFactory;
-    if (factoryAddress!=address(0)) initializeFactory();
-    emit FactoryChanged(newFactory, oldFactory);
+  function initializeFactory() public virtual override {
+    uniswapFactory = IUniswapV2Factory(factoryAddress);
   }
 
   function checkFactory(IUniswapV2Pair pair, address compareFactory) internal view returns (bool) {
@@ -39,17 +34,17 @@ abstract contract UniSwap is SwapBase {
     return check;
   }
 
-  /// @dev  Check what token is pool of this Swap
-  function isPool(address token) public virtual view returns(bool){
+  /// @dev Check what token is pool of this Swap
+  function isPool(address token) public virtual override view returns(bool){
     IUniswapV2Pair pair = IUniswapV2Pair(token);
     return checkFactory(pair, factoryAddress);
   }
 
-  /// @dev  Get underlying tokens and amounts
-  function getUnderlying(address token) public virtual view returns (address[] memory, uint256[] memory){
+  /// @dev Get underlying tokens and amounts
+  function getUnderlying(address token) public virtual override view returns (address[] memory, uint256[] memory){
     IUniswapV2Pair pair = IUniswapV2Pair(token);
-    address[2] memory tokens;
-    uint256[2] memory amounts;
+    address[] memory tokens  = new address[](2);
+    uint256[] memory amounts = new uint256[](2);
     tokens[0] = pair.token0();
     tokens[1] = pair.token1();
     uint256 token0Decimals = ERC20(tokens[0]).decimals();
@@ -68,7 +63,7 @@ abstract contract UniSwap is SwapBase {
   }
 
   /// @dev Returns pool size
-  function getPoolSize(address pairAddress, address token) public virtual view returns(uint256){
+  function getPoolSize(address pairAddress, address token) internal view returns(uint256){
     IUniswapV2Pair pair = IUniswapV2Pair(pairAddress);
     address token0 = pair.token0();
     (uint112 poolSize0, uint112 poolSize1,) = pair.getReserves();
@@ -77,28 +72,27 @@ abstract contract UniSwap is SwapBase {
   }
 
   /// @dev Gives a pool with largest liquidity for a given token and a given tokenset (either keyTokens or pricingTokens)
-  function getLargestPool(address token, address[] memory tokenList) internal view returns (address, address, uint256){
+  function getLargestPool(address token, address[] memory tokenList) public virtual override view returns (address, address, uint256){
     uint256 largestPoolSize = 0;
     address largestKeyToken;
+    address largestPool;
     uint256 poolSize;
     uint256 i;
     for (i=0;i<tokenList.length;i++) {
-      address pairAddressUni = uniswapFactory.getPair(token,tokenList[i]);
-      poolSize = pairAddressUni!=address(0) ? getUniPoolSize(pairAddressUni, token) : 0;
+      address poolAddress = uniswapFactory.getPair(token,tokenList[i]);
+      poolSize = poolAddress !=address(0) ? getPoolSize(poolAddress, token) : 0;
       if (poolSize > largestPoolSize) {
-        largestPoolSize = poolSize;
         largestKeyToken = tokenList[i];
-        largestPoolIsUni = uniDex;
+        largestPool = poolAddress;
+        largestPoolSize = poolSize;
       }
     }
-    return (largestKeyToken, largestPoolSize, largestPoolIsUni);
+    return (largestKeyToken, largestPool, largestPoolSize);
   }
 
-  /// @dev Gives the balance of a given token in a given pool.
-  function getBalance(address tokenFrom, address tokenTo, address pool) internal view returns (uint256);
-
   /// @dev Generic function giving the price of a given token vs another given token
-  function getPriceVsToken(address token0, address token1) internal view returns (uint256){
+  function getPriceVsToken(address token0, address token1, address poolAddress) public virtual override view returns (uint256){
+    //TODO use poolAddress
     address pairAddress = uniswapFactory.getPair(token0,token1);
     IUniswapV2Pair pair = IUniswapV2Pair(pairAddress);
     (uint256 reserve0, uint256 reserve1,) = pair.getReserves();
