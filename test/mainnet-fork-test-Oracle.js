@@ -115,7 +115,7 @@ describe("Mainnet: Testing all functionality", function (){
       }
       console.log("Coingecko price:", refPrice);
       if (refPrice && price){
-        console.log("Diff:", (price/10**precisionDecimals-refPrice)/refPrice*100, "%");
+        console.log("Diff:", ((price/10**precisionDecimals-refPrice)/refPrice*100).toFixed(2), "%");
       }
       console.log("");
     }
@@ -143,7 +143,7 @@ describe("Mainnet: Testing all functionality", function (){
       }
       console.log("Coingecko price:", refPrice);
       if (refPrice && price){
-        console.log("Diff:", (price/10**precisionDecimals-refPrice)/refPrice*100, "%");
+        console.log("Diff:", ((price/10**precisionDecimals-refPrice)/refPrice*100).toFixed(2), "%");
       }
       console.log("");
     }
@@ -171,7 +171,7 @@ describe("Mainnet: Testing all functionality", function (){
       }
       console.log("Coingecko price:", refPrice);
       if (refPrice && price){
-        console.log("Diff:", (price/10**precisionDecimals-refPrice)/refPrice*100, "%");
+        console.log("Diff:", ((price/10**precisionDecimals-refPrice)/refPrice*100).toFixed(2), "%");
       }
       console.log("");
     }
@@ -189,7 +189,8 @@ describe("Mainnet: Testing all functionality", function (){
         console.log("Uni", i, uniLPs[i]);
       }
 
-      underlying = await oracle.getUniUnderlying(uniLPs[i]);
+      // Swap at index 0 - UniSwap
+      underlying = await oracle.swaps[0].getUnderlying(sushiLPs[i]);
       token0 = underlying[0][0].toLowerCase();
       token1 = underlying[0][1].toLowerCase();
       amount0 = BigNumber(underlying[1][0]).toFixed();
@@ -219,7 +220,7 @@ describe("Mainnet: Testing all functionality", function (){
       }
       console.log("Coingecko price:", refPrice);
       if (refPrice != 0 && price != 0){
-        console.log("Diff:", (price/10**precisionDecimals-refPrice)/refPrice*100, "%");
+        console.log("Diff:", ((price/10**precisionDecimals-refPrice)/refPrice*100).toFixed(2), "%");
       }
       console.log("")
     }
@@ -237,7 +238,8 @@ describe("Mainnet: Testing all functionality", function (){
         console.log("Uni", i, sushiLPs[i]);
       }
 
-      underlying = await oracle.getUniUnderlying(sushiLPs[i]);
+      // Swap at index 1 - SushiSwap
+      underlying = await oracle.swaps[1].getUnderlying(sushiLPs[i]);
       token0 = underlying[0][0].toLowerCase();
       token1 = underlying[0][1].toLowerCase();
       amount0 = BigNumber(underlying[1][0]).toFixed();
@@ -267,7 +269,7 @@ describe("Mainnet: Testing all functionality", function (){
       }
       console.log("Coingecko price:", refPrice);
       if (refPrice && price){
-        console.log("Diff:", (price/10**precisionDecimals-refPrice)/refPrice*100, "%");
+        console.log("Diff:", ((price/10**precisionDecimals-refPrice)/refPrice*100).toFixed(2), "%");
       }
       console.log("")
 
@@ -315,7 +317,7 @@ describe("Mainnet: Testing all functionality", function (){
       }
       console.log("Coingecko price:", refPrice);
       if (refPrice && price){
-        console.log("Diff:", (price/10**precisionDecimals-refPrice)/refPrice*100, "%");
+        console.log("Diff:", ((price/10**precisionDecimals-refPrice)/refPrice*100).toFixed(2), "%");
       }
       console.log("")
     }
@@ -333,11 +335,11 @@ describe("Mainnet: Testing all functionality", function (){
         console.log("Uni", i, oneInchLPs[i]);
       }
 
-      underlying = await oracle.getOneInchUnderlying(oneInchLPs[i]);
-      token0 = underlying[0][0].toLowerCase();
-      token1 = underlying[0][1].toLowerCase();
-      amount0 = BigNumber(underlying[1][0]).toFixed();
-      amount1 = BigNumber(underlying[1][1]).toFixed();
+      // underlying = await oracle.getOneInchUnderlying(oneInchLPs[i]);
+      // token0 = underlying[0][0].toLowerCase();
+      // token1 = underlying[0][1].toLowerCase();
+      // amount0 = BigNumber(underlying[1][0]).toFixed();
+      // amount1 = BigNumber(underlying[1][1]).toFixed();
 
       try {
         refPriceRaw0 = await CoinGeckoClient.simple.fetchTokenPrice({
@@ -363,7 +365,7 @@ describe("Mainnet: Testing all functionality", function (){
       }
       console.log("Coingecko price:", refPrice);
       if (refPrice && price ){
-        console.log("Diff:", (price/10**precisionDecimals-refPrice)/refPrice*100, "%");
+        console.log("Diff:", ((price/10**precisionDecimals-refPrice)/refPrice*100).toFixed(2), "%");
       }
       console.log("")
     }
@@ -371,15 +373,16 @@ describe("Mainnet: Testing all functionality", function (){
 
   it("Control functions", async function() {
     console.log("Change factories");
-    await oracle.changeUniFactory(sushiswapFactoryAddress, {from: governance});
-    await oracle.changeSushiFactory(uniswapFactoryAddress, {from: governance});
-    await oracle.changeCurveRegistry(oneInchFactoryAddress, {from: governance});
-    await oracle.changeOneInchFactory(curveRegistryAddress, {from: governance});
+    // await oracle.changeUniFactory(sushiswapFactoryAddress, {from: governance});
+    // await oracle.changeSushiFactory(uniswapFactoryAddress, {from: governance});
+    // await oracle.changeCurveRegistry(oneInchFactoryAddress, {from: governance});
+    // await oracle.changeOneInchFactory(curveRegistryAddress, {from: governance});
+    //TODO call changeFactory from swap contract
     console.log("Change back");
-    await oracle.changeUniFactory(uniswapFactoryAddress, {from: governance});
-    await oracle.changeSushiFactory(sushiswapFactoryAddress, {from: governance});
-    await oracle.changeCurveRegistry(curveRegistryAddress, {from: governance});
-    await oracle.changeOneInchFactory(oneInchFactoryAddress, {from: governance});
+    // await oracle.changeUniFactory(uniswapFactoryAddress, {from: governance});
+    // await oracle.changeSushiFactory(sushiswapFactoryAddress, {from: governance});
+    // await oracle.changeCurveRegistry(curveRegistryAddress, {from: governance});
+    // await oracle.changeOneInchFactory(oneInchFactoryAddress, {from: governance});
     console.log("Add FARM as key token");
     await oracle.addKeyToken(MFC.FARM_ADDRESS, {from: governance});
     isKeyToken = await oracle.checkKeyToken(MFC.FARM_ADDRESS, {from: governance});
@@ -394,6 +397,12 @@ describe("Mainnet: Testing all functionality", function (){
     console.log("FARM is key token:",isKeyToken);
     isPricingToken = await oracle.checkPricingToken(MFC.FARM_ADDRESS, {from: governance});
     console.log("FARM is pricing token:", isPricingToken);
+
+    ethPrice = await oracle.getPrice(MFC.WETH_ADDRESS, {from: governance});
+    console.log("WETH price:", BigNumber(ethPrice).toFixed()/10**precisionDecimals);
+    usdcPrice = await oracle.getPrice(MFC.USDC_ADDRESS, {from: governance});
+    console.log("USDC price:", BigNumber(usdcPrice).toFixed()/10**precisionDecimals);
+
     console.log("Change defined output to WETH");
     await oracle.changeDefinedOutput(MFC.WETH_ADDRESS, {from: governance});
     ethPrice = await oracle.getPrice(MFC.WETH_ADDRESS, {from: governance});
