@@ -178,7 +178,7 @@ describe("Mainnet: Testing all functionality", function (){
     }
   });
 
-  it.only("Uni LPs Repeatable", async function() {
+  it("Uni LPs Repeatable", async function() {
     for (i=0;i<uniLPs.length;i++) {
       console.log("Uni token",i,uniLPs[i]);
       try {
@@ -190,8 +190,8 @@ describe("Mainnet: Testing all functionality", function (){
         console.log("Uni", i, uniLPs[i]);
       }
 
-      // Swap at index 0 - UniSwap
-      const swapAddress = await oracle.swaps(0);
+
+      const swapAddress = await oracle.swaps(0); // Swap at index 0 - UniSwap
       const swap = await SwapBase.at(swapAddress)
       const underlying = await swap.getUnderlying(uniLPs[i]);
       const token0 = underlying[0][0].toLowerCase();
@@ -241,8 +241,10 @@ describe("Mainnet: Testing all functionality", function (){
         console.log("Uni", i, sushiLPs[i]);
       }
 
-      // Swap at index 1 - SushiSwap
-      underlying = await oracle.swaps[1].getUnderlying(sushiLPs[i]);
+
+      const swapAddress = await oracle.swaps(1); // Swap at index 1 - SushiSwap
+      const swap = await SwapBase.at(swapAddress)
+      const underlying = await swap.getUnderlying(sushiLPs[i]);
       token0 = underlying[0][0].toLowerCase();
       token1 = underlying[0][1].toLowerCase();
       amount0 = BigNumber(underlying[1][0]).toFixed();
@@ -298,7 +300,9 @@ describe("Mainnet: Testing all functionality", function (){
         console.log("Uni", i, curveLPs[i]);
       }
 
-      underlying = await oracle.getCurveUnderlying(curveLPs[i]);
+      const swapAddress = await oracle.swaps(2); // Swap at index 2 - CurveSwap
+      const swap = await SwapBase.at(swapAddress)
+      const underlying = await swap.getUnderlying(curveLPs[i]);
       refPrice = 0;
       for (j=0;j<8;j++) {
         token = underlying[0][j].toLowerCase();
@@ -338,11 +342,13 @@ describe("Mainnet: Testing all functionality", function (){
         console.log("Uni", i, oneInchLPs[i]);
       }
 
-      // underlying = await oracle.getOneInchUnderlying(oneInchLPs[i]);
-      // token0 = underlying[0][0].toLowerCase();
-      // token1 = underlying[0][1].toLowerCase();
-      // amount0 = BigNumber(underlying[1][0]).toFixed();
-      // amount1 = BigNumber(underlying[1][1]).toFixed();
+      const swapAddress = await oracle.swaps(3); // Swap at index 3 - OneInchSwap
+      const swap = await SwapBase.at(swapAddress)
+      const underlying = await swap.getUnderlying(oneInchLPs[i]);
+      token0 = underlying[0][0].toLowerCase();
+      token1 = underlying[0][1].toLowerCase();
+      amount0 = BigNumber(underlying[1][0]).toFixed();
+      amount1 = BigNumber(underlying[1][1]).toFixed();
 
       try {
         refPriceRaw0 = await CoinGeckoClient.simple.fetchTokenPrice({
