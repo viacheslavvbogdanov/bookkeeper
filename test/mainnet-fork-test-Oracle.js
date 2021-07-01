@@ -16,6 +16,7 @@ const IUniswapV2Pair = artifacts.require("IUniswapV2Pair");
 const ICurveRegistry = artifacts.require("ICurveRegistry");
 const ICurvePool = artifacts.require("ICurvePool")
 const IMooniFactory = artifacts.require("IMooniFactory")
+const SwapBase = artifacts.require("SwapBase")
 
 //const Strategy = artifacts.require("");
 const Storage = artifacts.require("Storage");
@@ -177,7 +178,7 @@ describe("Mainnet: Testing all functionality", function (){
     }
   });
 
-  it("Uni LPs Repeatable", async function() {
+  it.only("Uni LPs Repeatable", async function() {
     for (i=0;i<uniLPs.length;i++) {
       console.log("Uni token",i,uniLPs[i]);
       try {
@@ -190,11 +191,13 @@ describe("Mainnet: Testing all functionality", function (){
       }
 
       // Swap at index 0 - UniSwap
-      underlying = await oracle.swaps[0].getUnderlying(sushiLPs[i]);
-      token0 = underlying[0][0].toLowerCase();
-      token1 = underlying[0][1].toLowerCase();
-      amount0 = BigNumber(underlying[1][0]).toFixed();
-      amount1 = BigNumber(underlying[1][1]).toFixed();
+      const swapAddress = await oracle.swaps(0);
+      const swap = await SwapBase.at(swapAddress)
+      const underlying = await swap.getUnderlying(uniLPs[i]);
+      const token0 = underlying[0][0].toLowerCase();
+      const token1 = underlying[0][1].toLowerCase();
+      const amount0 = BigNumber(underlying[1][0]).toFixed();
+      const amount1 = BigNumber(underlying[1][1]).toFixed();
 
       try {
         refPriceRaw0 = await CoinGeckoClient.simple.fetchTokenPrice({
@@ -215,11 +218,11 @@ describe("Mainnet: Testing all functionality", function (){
         refPrice1 = undefined;
       }
       refPrice = amount0*refPrice0/10**precisionDecimals + amount1*refPrice1/10**precisionDecimals;
-      if (refPrice0 || refPrice1) {
-        refPrice = 0;
+      if (!refPrice0 || !refPrice1) {
+        refPrice = undefined;
       }
       console.log("Coingecko price:", refPrice);
-      if (refPrice != 0 && price != 0){
+      if (refPrice && price){
         console.log("Diff:", ((price/10**precisionDecimals-refPrice)/refPrice*100).toFixed(2), "%");
       }
       console.log("")
