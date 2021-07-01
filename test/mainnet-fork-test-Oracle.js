@@ -21,6 +21,8 @@ const SwapBase = artifacts.require("SwapBase")
 //const Strategy = artifacts.require("");
 const Storage = artifacts.require("Storage");
 const OracleMainnet = artifacts.require("OracleMainnet");
+const OracleMainnet_old = artifacts.require("OracleMainnet_old");
+const assert = require('assert');
 
 // Vanilla Mocha test. Increased compatibility with tools that integrate Mocha.
 describe("Mainnet: Testing all functionality", function (){
@@ -88,6 +90,31 @@ describe("Mainnet: Testing all functionality", function (){
     curveRegistry = await ICurveRegistry.at(curveRegistryAddress);
     oneInchFactory = await IMooniFactory.at(oneInchFactoryAddress);
   });
+
+  it.only("Production Tokens", async function () {
+    const tokens = require("./config/production-tokens.js");
+    // const oldOracle = await OracleMainnet_old.at('0x48dc32eca58106f06b41de514f29780ffa59c279')
+    const oldOracle = await OracleMainnet_old.new(storage.address, {from: governance})
+    for (const token in tokens) {
+      const tokenName = tokens[token];
+      // console.log('token', token, tokenName);
+      try {
+        const oldPrice = await oldOracle.getPrice(token);
+        const newPrice = await oracle.getPrice(token);
+        const equal = newPrice.eq(oldPrice)
+        console.log(token, tokenName, equal ? '+ equal' : '-NOT EQUAL!!!')
+        if (!equal) {
+          console.log('newPrice', newPrice.toString());
+          console.log('oldPrice', oldPrice.toString());
+        }
+        // assert(equal, 'New oracle price must be equal old oracle price')
+      } catch(e) {
+        console.log('Exception:', e);
+      }
+      console.log('');
+    }
+
+  })
 
   it("Normal Tokens", async function () {
     checkTokens = [

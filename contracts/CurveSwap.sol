@@ -86,6 +86,7 @@ contract CurveSwap is SwapBase {
       } else if (tokens[i]==ETH){
         decimals[i] = 18;
         tokens[i] = WETH;
+        returnTokens[i] = WETH;
       } else {
         decimals[i] = ERC20(tokens[i]).decimals();
       }

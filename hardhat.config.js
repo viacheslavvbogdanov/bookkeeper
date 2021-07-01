@@ -16,6 +16,7 @@ const maticTestnetForkUrl = "https://matic-mumbai.chainstacklabs.com";
 
 let chainId = 1
 let forkUrl = ethForkUrl
+// let blockNumber = undefined
 let blockNumber = 12625928 //TODO update to latest from etherscan
 
 if (process.env.FORK_BSC || keys.fork==='bsc') {
@@ -90,7 +91,7 @@ module.exports = {
   },
   mocha: {
     "require": "hardhat/register",
-    timeout: 2000000
+    timeout: 10000000
   },
   gasReporter: {
     enabled: true,

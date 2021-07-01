@@ -9,6 +9,8 @@ import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "./Governable.sol";
 import "./SwapBase.sol";
 
+import "hardhat/console.sol"; //TODO remove
+
 pragma solidity 0.6.12;
 
 abstract contract OracleBase is Governable, Initializable  {
@@ -147,13 +149,17 @@ abstract contract OracleBase is Governable, Initializable  {
       }
       return price;
     } else {
+      console.log('-computePrice'); //TODO remove
       return computePrice(token);
     }
   }
 
   function getSwapForPool(address token) public view returns(bool, SwapBase) {
     for (uint i=0; i<swaps.length; i++ ) {
-      if (swaps[i].isPool(token)) return (true, swaps[i]);
+      if (swaps[i].isPool(token)) {
+        console.log('-swap', i);
+        return (true, swaps[i]);
+      }
     }
     return (false, swaps[0]); //TODO find better way to handle result when swap is not found
   }
@@ -193,6 +199,9 @@ abstract contract OracleBase is Governable, Initializable  {
         largestSwap = swap;
         largestKeyToken = swapLargestKeyToken;
         largestPool = swapLargestPool;
+        largestPoolSize = swapLargestPoolSize;
+        console.log('-largest',i, largestPoolSize );
+        console.log('-key, pool', largestKeyToken, swapLargestPool);
       }
     }
     return (largestSwap, largestKeyToken, largestPool);
