@@ -28,6 +28,8 @@ abstract contract OracleBase is Governable, Initializable  {
   //Pricing tokens are Key tokens with good liquidity with the defined output token on Uniswap.
   address[] public pricingTokens;
 
+  mapping(address => address) replacementTokens;
+
   SwapBase[] public swaps;
 
   modifier validKeyToken(address keyToken){
@@ -107,7 +109,9 @@ abstract contract OracleBase is Governable, Initializable  {
     definedOutputToken = newOutputToken;
     emit DefinedOutputChanged(newOutputToken, oldOutputToken);
   }
-
+  function modifyReplacementTokens(address _inputToken, address _replacementToken) external onlyGovernance {
+    replacementTokens[_inputToken] = _replacementToken;
+  }
 
   //Main function of the contract. Gives the price of a given token in the defined output token.
   //The contract allows for input tokens to be LP tokens from Uniswap, Sushiswap, Curve and 1Inch.
@@ -115,6 +119,12 @@ abstract contract OracleBase is Governable, Initializable  {
   function getPrice(address token) external view returns (uint256) {
     if (token == definedOutputToken)
       return (10**precisionDecimals);
+
+    // if the token exists in the mapping, we'll swap it for the replacement
+    // example btcb/renbtc pool -> btcb
+    if (replacementTokens[token] != address(0)) {
+      token = replacementTokens[token];
+    }
 
     uint256 priceToken;
     uint256 tokenValue;

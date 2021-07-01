@@ -1,13 +1,8 @@
 // SPDX-License-Identifier: MIT
-import "@openzeppelin/contracts/utils/Address.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "./Governable.sol";
-
 import "./interface/mooniswap/IMooniFactory.sol";
 import "./interface/mooniswap/IMooniswap.sol";
+import "./Governable.sol";
 import "./SwapBase.sol";
 
 pragma solidity 0.6.12;
@@ -16,10 +11,10 @@ contract OneInchSwap is SwapBase {
 
   IMooniFactory oneInchFactory;
 
-  address public WETH = address(0);
+  address public baseCurrency = address(0);
 
-  constructor(address _factoryAddress, address _storage, address _WETH) SwapBase(_factoryAddress, _storage) public {
-    WETH = _WETH;
+  constructor(address _factoryAddress, address _storage, address _baseCurrency) SwapBase(_factoryAddress, _storage) public {
+    baseCurrency = _baseCurrency;
   }
 
   function initializeFactory() public virtual override {
@@ -52,10 +47,14 @@ contract OneInchSwap is SwapBase {
     amounts[0] = reserve0*10**(supplyDecimals-token0Decimals+precisionDecimals)/totalSupply;
     amounts[1] = reserve1*10**(supplyDecimals-token1Decimals+precisionDecimals)/totalSupply;
 
+    //MAINNET:
     //1INCH uses ETH, instead of WETH in pools. For further calculations we continue with WETH instead.
     //ETH will always be the first in the pair, so no need to check tokens[1]
+    //BSC:
+    //1INCH uses BNB, instead of WBNB in pools. For further calculations we continue with WBNB instead.
+    //BNB will always be the first in the pair, so no need to check tokens[1]
     if (tokens[0] == address(0)) {
-      tokens[0] = WETH;
+      tokens[0] = baseCurrency;
     }
     return (tokens, amounts);
   }

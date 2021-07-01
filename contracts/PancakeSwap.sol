@@ -1,25 +1,25 @@
 // SPDX-License-Identifier: MIT
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "./interface/uniswap/IUniswapV2Factory.sol";
-import "./interface/uniswap/IUniswapV2Pair.sol";
+import "@pancakeswap/pancake-swap-lib/contracts/token/BEP20/IBEP20.sol";
+import "./interface/pancakeswap/IPancakeFactory.sol";
+import "./interface/pancakeswap/IPancakePair.sol";
 import "./Governable.sol";
 import "./SwapBase.sol";
 
 pragma solidity 0.6.12;
 
-contract UniSwap is SwapBase {
+contract PancakeSwap is SwapBase {
 
-  IUniswapV2Factory uniswapFactory;
+  IPancakeFactory pancakeFactory;
 
   constructor(address _factoryAddress, address _storage) SwapBase(_factoryAddress, _storage) public {
 
   }
 
   function initializeFactory() public virtual override {
-    uniswapFactory = IUniswapV2Factory(factoryAddress);
+    pancakeFactory = IPancakeFactory(factoryAddress);
   }
 
-  function checkFactory(IUniswapV2Pair pair, address compareFactory) internal view returns (bool) {
+  function checkFactory(IPancakePair pair, address compareFactory) internal view returns (bool) {
     bool check;
     try pair.factory{gas: 3000}() returns (address factory) {
       check = (factory == compareFactory);
@@ -31,38 +31,39 @@ contract UniSwap is SwapBase {
 
   /// @dev Check what token is pool of this Swap
   function isPool(address token) public virtual override view returns(bool){
-    IUniswapV2Pair pair = IUniswapV2Pair(token);
+    IPancakePair pair = IPancakePair(token);
     return checkFactory(pair, factoryAddress);
   }
 
   /// @dev Get underlying tokens and amounts
   function getUnderlying(address token) public virtual override view returns (address[] memory, uint256[] memory){
-    IUniswapV2Pair pair = IUniswapV2Pair(token);
+    IPancakePair pair = IPancakePair(token);
+    IBEP20 pairToken = IBEP20(token);
     address[] memory tokens  = new address[](2);
     uint256[] memory amounts = new uint256[](2);
     tokens[0] = pair.token0();
     tokens[1] = pair.token1();
-    uint256 token0Decimals = ERC20(tokens[0]).decimals();
-    uint256 token1Decimals = ERC20(tokens[1]).decimals();
-    uint256 supplyDecimals = ERC20(token).decimals();
-    (uint256 reserve0, uint256 reserve1,) = pair.getReserves();
-    uint256 totalSupply = pair.totalSupply();
+    uint256 token0Decimals = IBEP20(tokens[0]).decimals();
+    uint256 token1Decimals = IBEP20(tokens[1]).decimals();
+    uint256 supplyDecimals = IBEP20(token).decimals();
+    (uint256 reserve0, uint256 reserve1, uint32 blockTimestampLast) = pair.getReserves();
+    uint256 totalSupply = pairToken.totalSupply();
     if (reserve0 == 0 || reserve1 == 0 || totalSupply == 0) {
       amounts[0] = 0;
       amounts[1] = 0;
       return (tokens, amounts);
     }
-    amounts[0] = reserve0*10**(supplyDecimals-token0Decimals+precisionDecimals)/totalSupply;
-    amounts[1] = reserve1*10**(supplyDecimals-token1Decimals+precisionDecimals)/totalSupply;
+    amounts[0] = reserve0 * 10 ** (supplyDecimals - token0Decimals + precisionDecimals) / totalSupply;
+    amounts[1] = reserve1 * 10 ** (supplyDecimals - token1Decimals + precisionDecimals) / totalSupply;
     return (tokens, amounts);
   }
 
   /// @dev Returns pool size
   function getPoolSize(address pairAddress, address token) internal view returns(uint256){
-    IUniswapV2Pair pair = IUniswapV2Pair(pairAddress);
+    IPancakePair pair = IPancakePair(pairAddress);
     address token0 = pair.token0();
     (uint112 poolSize0, uint112 poolSize1,) = pair.getReserves();
-    uint256 poolSize = (token==token0)? poolSize0:poolSize1;
+    uint256 poolSize = (token == token0) ? poolSize0 : poolSize1;
     return poolSize;
   }
 
@@ -74,7 +75,7 @@ contract UniSwap is SwapBase {
     uint256 poolSize;
     uint256 i;
     for (i=0;i<tokenList.length;i++) {
-      address poolAddress = uniswapFactory.getPair(token,tokenList[i]);
+      address poolAddress = pancakeFactory.getPair(token,tokenList[i]);
       poolSize = poolAddress !=address(0) ? getPoolSize(poolAddress, token) : 0;
       if (poolSize > largestPoolSize) {
         largestKeyToken = tokenList[i];
@@ -87,17 +88,16 @@ contract UniSwap is SwapBase {
 
   /// @dev Generic function giving the price of a given token vs another given token
   function getPriceVsToken(address token0, address token1, address poolAddress) public virtual override view returns (uint256){
-    //TODO use poolAddress
-    address pairAddress = uniswapFactory.getPair(token0,token1);
-    IUniswapV2Pair pair = IUniswapV2Pair(pairAddress);
+    address pairAddress = pancakeFactory.getPair(token0, token1);
+    IPancakePair pair = IPancakePair(pairAddress);
     (uint256 reserve0, uint256 reserve1,) = pair.getReserves();
-    uint256 token0Decimals = ERC20(token0).decimals();
-    uint256 token1Decimals = ERC20(token1).decimals();
+    uint256 token0Decimals = IBEP20(token0).decimals();
+    uint256 token1Decimals = IBEP20(token1).decimals();
     uint256 price;
     if (token0 == pair.token0()) {
-      price = (reserve1*10**(token0Decimals-token1Decimals+precisionDecimals))/reserve0;
+      price = (reserve1 * 10 ** (token0Decimals - token1Decimals + precisionDecimals)) / reserve0;
     } else {
-      price = (reserve0*10**(token0Decimals-token1Decimals+precisionDecimals))/reserve1;
+      price = (reserve0 * 10 ** (token0Decimals - token1Decimals + precisionDecimals)) / reserve1;
     }
     return price;
   }

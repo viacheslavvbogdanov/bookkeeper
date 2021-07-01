@@ -1,13 +1,8 @@
 // SPDX-License-Identifier: MIT
-import "@openzeppelin/contracts/utils/Address.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "./Governable.sol";
-
 import "./interface/curve/ICurvePool.sol";
 import "./interface/curve/ICurveRegistry.sol";
+import "./Governable.sol";
 import "./SwapBase.sol";
 import "./OracleBase.sol";
 
