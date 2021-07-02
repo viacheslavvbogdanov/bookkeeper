@@ -9,7 +9,8 @@ import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "./Governable.sol";
 import "./SwapBase.sol";
 
-import "hardhat/console.sol"; //TODO remove
+import "hardhat/console.sol";
+import "./UniSwap.sol";
 
 pragma solidity 0.6.12;
 
@@ -128,28 +129,22 @@ abstract contract OracleBase is Governable, Initializable  {
       token = replacementTokens[token];
     }
 
-    uint256 priceToken;
+    uint256 tokenPrice;
     uint256 tokenValue;
-    uint256 price;
+    uint256 price = 0;
     uint256 i;
     (bool swapFound, SwapBase swap) = getSwapForPool(token);
     if (swapFound) {
       (address[] memory tokens, uint256[] memory amounts) = swap.getUnderlying(token);
       for (i=0;i<tokens.length;i++) {
-        if (tokens[i] == address(0)) {
-          break;
-        }
-        priceToken = computePrice(tokens[i]);
-        if (priceToken == 0) {
-          price = 0;
-          return price;
-        }
-        tokenValue = priceToken*amounts[i]/10**precisionDecimals;
-        price = price + tokenValue;
+        if (tokens[i] == address(0)) break;
+        tokenPrice = computePrice(tokens[i]);
+        if (tokenPrice == 0) return 0;
+        tokenValue = tokenPrice *amounts[i]/10**precisionDecimals;
+        price += tokenValue;
       }
       return price;
     } else {
-      console.log('-computePrice'); //TODO remove
       return computePrice(token);
     }
   }
@@ -157,7 +152,6 @@ abstract contract OracleBase is Governable, Initializable  {
   function getSwapForPool(address token) public view returns(bool, SwapBase) {
     for (uint i=0; i<swaps.length; i++ ) {
       if (swaps[i].isPool(token)) {
-        console.log('-swap', i);
         return (true, swaps[i]);
       }
     }
@@ -200,8 +194,6 @@ abstract contract OracleBase is Governable, Initializable  {
         largestKeyToken = swapLargestKeyToken;
         largestPool = swapLargestPool;
         largestPoolSize = swapLargestPoolSize;
-        console.log('-largest',i, largestPoolSize );
-        console.log('-key, pool', largestKeyToken, swapLargestPool);
       }
     }
     return (largestSwap, largestKeyToken, largestPool);
@@ -217,12 +209,16 @@ abstract contract OracleBase is Governable, Initializable  {
       price = 10**precisionDecimals;
     } else if (isPricingToken) {
       price = swaps[0].getPriceVsToken(token, definedOutputToken, address(0)); // first swap is used
+      // as at original contract was used UniSwap OracleMainnet_old.sol:641
     } else {
       uint256 pricingTokenPrice;
       (SwapBase swap, address pricingToken, address pricingPool) = getLargestPool(token,pricingTokens);
-      if (pricingPool==address(0)) return 0; // when no pools was found
       priceVsPricingToken = swap.getPriceVsToken(token, pricingToken, pricingPool);
-      pricingTokenPrice = (pricingToken == definedOutputToken)? 10**precisionDecimals : swap.getPriceVsToken(pricingToken,definedOutputToken,pricingPool);
+//      pricingTokenPrice = (pricingToken == definedOutputToken)? 10**precisionDecimals : swap.getPriceVsToken(pricingToken,definedOutputToken,pricingPool);
+      // Like in original contract we use UniSwap - it must be first swap at the list (swaps[0])
+      // See OracleMainnet_old.js:634
+      //TODO improve this part
+      pricingTokenPrice = (pricingToken == definedOutputToken)? 10**precisionDecimals : swaps[0].getPriceVsToken(pricingToken,definedOutputToken,pricingPool);
       price = priceVsPricingToken*pricingTokenPrice/10**precisionDecimals;
     }
     return price;

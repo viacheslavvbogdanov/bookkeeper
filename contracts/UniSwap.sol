@@ -87,7 +87,6 @@ contract UniSwap is SwapBase {
 
   /// @dev Generic function giving the price of a given token vs another given token
   function getPriceVsToken(address token0, address token1, address poolAddress) public virtual override view returns (uint256){
-    //TODO use poolAddress
     address pairAddress = uniswapFactory.getPair(token0,token1);
     IUniswapV2Pair pair = IUniswapV2Pair(pairAddress);
     (uint256 reserve0, uint256 reserve1,) = pair.getReserves();

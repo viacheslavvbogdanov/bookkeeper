@@ -91,25 +91,26 @@ describe("Mainnet: Testing all functionality", function (){
     oneInchFactory = await IMooniFactory.at(oneInchFactoryAddress);
   });
 
-  it.only("Production Tokens", async function () {
-    const tokens = require("./config/production-tokens.js");
+  it.only("Production Tokens", async function () { //TODO remove .only
+    const tokens = require("./config/production-tokens-mainnet.js");
     // const oldOracle = await OracleMainnet_old.at('0x48dc32eca58106f06b41de514f29780ffa59c279')
     const oldOracle = await OracleMainnet_old.new(storage.address, {from: governance})
     for (const token in tokens) {
       const tokenName = tokens[token];
-      // console.log('token', token, tokenName);
+      console.log('token', token, tokenName);
       try {
         const oldPrice = await oldOracle.getPrice(token);
         const newPrice = await oracle.getPrice(token);
         const equal = newPrice.eq(oldPrice)
-        console.log(token, tokenName, equal ? '+ equal' : '-NOT EQUAL!!!')
+        console.log(equal ? '+ equal' : '-NOT EQUAL!!!')
         if (!equal) {
           console.log('newPrice', newPrice.toString());
           console.log('oldPrice', oldPrice.toString());
         }
-        // assert(equal, 'New oracle price must be equal old oracle price')
+        assert(equal, 'New oracle price must be equal old oracle price')
       } catch(e) {
         console.log('Exception:', e);
+        //TODO at production-tokens.js we have few addresses that treated as non-contract accounts
       }
       console.log('');
     }

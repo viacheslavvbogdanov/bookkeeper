@@ -129,7 +129,7 @@ contract CurveSwap is SwapBase {
         largestKeyToken = tokenList[i];
         largestPoolAddress = poolAddress;
         if (largestKeyToken == oracleBase.definedOutputToken()) {
-          return (largestKeyToken, largestPoolAddress, largestPoolSize);
+            return (largestKeyToken, largestPoolAddress, largestPoolSize);
         }
       }
     }
