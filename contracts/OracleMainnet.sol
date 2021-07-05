@@ -37,15 +37,17 @@ contract OracleMainnet is OracleBase {
     //The defined output token is the unit in which prices of input tokens are given.
     definedOutputToken = USDC;
 
-    UniSwap uniswapFactory     = new UniSwap( 0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f, _storage);
-    UniSwap sushiswapFactory   = new UniSwap( 0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac, _storage);
-    CurveSwap curveRegistry    = new CurveSwap( 0x7D86446dDb609eD0F5f8684AcF30380a356b2B4c, _storage, WETH, this);
+    UniSwap uniswapFactory     = new UniSwap(     0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f, _storage);
+    UniSwap sushiswapFactory   = new UniSwap(     0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac, _storage);
+    CurveSwap curveRegistry    = new CurveSwap(   0x7D86446dDb609eD0F5f8684AcF30380a356b2B4c, _storage, WETH, this);
     OneInchSwap oneInchFactory = new OneInchSwap( 0xbAF9A5d4b0052359326A6CDAb54BABAa3a3A9643, _storage, WETH);
 
-    swaps.push(uniswapFactory);
-    swaps.push(sushiswapFactory);
-    swaps.push(curveRegistry);
-    swaps.push(oneInchFactory);
+    swaps = [
+      SwapBase(uniswapFactory), // Primary swap, used in getKeyTokenPrice
+      SwapBase(sushiswapFactory),
+      SwapBase(curveRegistry),
+      SwapBase(oneInchFactory)
+    ];
 
   }
 

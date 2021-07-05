@@ -26,7 +26,7 @@ abstract contract SwapBase is Governable {
   function changeFactory(address newFactory) external onlyGovernance {
     address oldFactory = factoryAddress;
     factoryAddress = newFactory;
-    if (factoryAddress!=address(0)) initializeFactory();
+    initializeFactory();
     emit FactoryChanged(newFactory, oldFactory);
   }
 

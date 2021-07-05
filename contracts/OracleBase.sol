@@ -209,15 +209,17 @@ abstract contract OracleBase is Governable, Initializable  {
       price = 10**precisionDecimals;
     } else if (isPricingToken) {
       price = swaps[0].getPriceVsToken(token, definedOutputToken, address(0)); // first swap is used
-      // as at original contract was used UniSwap OracleMainnet_old.sol:641
+      // as at original contract was used
+      // mainnet: UniSwap OracleMainnet_old.sol:641
+      // bsc: Pancake OracleBSC_old.sol:449
     } else {
       uint256 pricingTokenPrice;
       (SwapBase swap, address pricingToken, address pricingPool) = getLargestPool(token,pricingTokens);
       priceVsPricingToken = swap.getPriceVsToken(token, pricingToken, pricingPool);
 //      pricingTokenPrice = (pricingToken == definedOutputToken)? 10**precisionDecimals : swap.getPriceVsToken(pricingToken,definedOutputToken,pricingPool);
       // Like in original contract we use UniSwap - it must be first swap at the list (swaps[0])
-      // See OracleMainnet_old.js:634
-      //TODO improve this part
+      // See OracleMainnet_old.js:634, OracleBSC_old.sol:458
+      //TODO improve this part?
       pricingTokenPrice = (pricingToken == definedOutputToken)? 10**precisionDecimals : swaps[0].getPriceVsToken(pricingToken,definedOutputToken,pricingPool);
       price = priceVsPricingToken*pricingTokenPrice/10**precisionDecimals;
     }

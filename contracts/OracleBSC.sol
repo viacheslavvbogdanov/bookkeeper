@@ -41,8 +41,10 @@ contract OracleBSC is OracleBase {
         PancakeSwap pancakeFactory = new PancakeSwap( 0xcA143Ce32Fe78f1f7019d7d551a6402fC5350c73, _storage);
         OneInchSwap oneInchFactory = new OneInchSwap( 0xD41B24bbA51fAc0E4827b6F94C0D6DDeB183cD64, _storage, WBNB);
 
-        swaps.push(pancakeFactory);
-        swaps.push(oneInchFactory);
+        swaps = [
+            SwapBase(pancakeFactory), // Primary swap, used in getKeyTokenPrice
+            SwapBase(oneInchFactory)
+        ];
 
     }
 

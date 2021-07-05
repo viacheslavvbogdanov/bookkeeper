@@ -1,6 +1,7 @@
 // Utilities
 const Utils = require("./utilities/Utils.js");
 const MFC = require("./config/mainnet-fork-test-config.js");
+const { artifacts } = require("hardhat");
 
 const { send } = require("@openzeppelin/test-helpers");
 const BigNumber = require("bignumber.js");
@@ -11,13 +12,13 @@ const IMooniFactory = artifacts.require("IMooniFactory")
 //const Strategy = artifacts.require("");
 const Storage = artifacts.require("Storage");
 const OracleBSC = artifacts.require("OracleBSC");
+const OracleBSC_old = artifacts.require("OracleBSC_old");
+
+const assert = require('assert');
 
 // Vanilla Mocha test. Increased compatibility with tools that integrate Mocha.
-describe("Testing all functionality", function (){
-
-  function sum(total,num) {
-    return BigNumber.sum(total,num);
-  }
+describe("BSC: Testing all functionality", function (){
+  
   let accounts;
   let precisionDecimals = 18;
   // parties in the protocol
@@ -56,7 +57,8 @@ describe("Testing all functionality", function (){
     "0x1AF3F329e8BE154074D8769D1FFa4eE058B1DBc3" //DAI
   ];
   let definedOutputToken = "0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56"; //BUSD
-
+  let governance;
+  
   before(async function () {
     console.log("Setting up contract")
     accounts = await web3.eth.getAccounts();
@@ -70,12 +72,39 @@ describe("Testing all functionality", function (){
     oneInchFactory = await IMooniFactory.at(oneInchFactoryAddress);
   });
 
-  it("Normal Tokens", async function () {
-    checkTokens = [
-      "0xfce146bf3146100cfe5db4129cf6c82b0ef4ad8c"
-    ]
+  it.only("Production Tokens", async function () { //TODO remove .only
+    const tokens = require("./config/production-tokens-bsc.js");
+    // const oldOracle = await OracleMainnet_old.at('0x48dc32eca58106f06b41de514f29780ffa59c279')
+    const oldOracle = await OracleBSC_old.new(storage.address, {from: governance})
+    for (const token in tokens) {
+      if (!tokens.hasOwnProperty(token)) continue;
+      const tokenName = tokens[token];
+      console.log('token', token, tokenName);
+      try {
+        const oldPrice = await oldOracle.getPrice(token);
+        const newPrice = await oracle.getPrice(token);
+        const equal = newPrice.eq(oldPrice)
+        console.log(equal ? '+ equal' : '-NOT EQUAL!!!')
+        if (!equal) {
+          console.log('newPrice', newPrice.toString());
+          console.log('oldPrice', oldPrice.toString());
+        }
+        // assert(equal, 'New oracle price must be equal old oracle price')
+      } catch(e) {
+        console.log('Exception:', e);
+        //TODO at production-tokens.js we have few addresses that treated as non-contract accounts
+      }
+      console.log('');
+    }
 
-    for (i=0;i<checkTokens.length;i++) {
+  })
+
+  it("Normal Tokens", async function () {
+    const checkTokens = [
+      "0xfce146bf3146100cfe5db4129cf6c82b0ef4ad8c"
+    ];
+
+    for (let i=0;i<checkTokens.length;i++) {
       console.log("Check Token",i,checkTokens[i]);
       try {
         console.time("getPrice");
@@ -89,29 +118,27 @@ describe("Testing all functionality", function (){
       console.log("");
     }
 
-    for (i=0;i<keyTokens.length;i++) {
+    for (let i=0;i<keyTokens.length;i++) {
       console.log("Key Token",i,keyTokens[i]);
       try {
         console.time("getPrice");
-        price = await oracle.getPrice(keyTokens[i]);
+        const price = await oracle.getPrice(keyTokens[i]);
         console.timeEnd("getPrice");
         console.log("price:", BigNumber(price).toFixed()/10**precisionDecimals);
       } catch (error) {
-        price = 0;
         console.log("Error at Token", i, keyTokens[i]);
       }
       console.log("");
     }
 
-    for (i=0;i<normalTokens.length;i++) {
+    for (let i=0;i<normalTokens.length;i++) {
       console.log("Token",i,normalTokens[i]);
       try {
         console.time("getPrice");
-        price = await oracle.getPrice(normalTokens[i]);
+        const price = await oracle.getPrice(normalTokens[i]);
         console.timeEnd("getPrice");
         console.log("price:", BigNumber(price).toFixed()/10**precisionDecimals);
       } catch (error) {
-        price = 0;
         console.log("Error at Token", i, normalTokens[i]);
       }
       console.log("");
@@ -119,11 +146,11 @@ describe("Testing all functionality", function (){
   });
 
   it("Pancake LPs Repeatable", async function() {
-    for (i=0;i<pancakeLPs.length;i++) {
+    for (let i=0;i<pancakeLPs.length;i++) {
       console.log("Pancake token",i,pancakeLPs[i]);
       try {
         console.time("getPrice");
-        price = await oracle.getPrice(pancakeLPs[i]);
+        const price = await oracle.getPrice(pancakeLPs[i]);
         console.timeEnd("getPrice");
         console.log("price:", BigNumber(price).toFixed()/10**precisionDecimals);
       } catch {
@@ -134,7 +161,7 @@ describe("Testing all functionality", function (){
   });
 
   it("1Inch LPs Repeatable", async function() {
-    for (i=0;i<oneInchLPs.length;i++) {
+    for (let i=0;i<oneInchLPs.length;i++) {
       console.log("OneInch token",i,oneInchLPs[i]);
       try {
         console.time("getPrice");

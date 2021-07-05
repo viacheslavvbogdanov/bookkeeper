@@ -37,8 +37,8 @@ contract OracleMatic is OracleBase {
     address quickswapFactoryAddress = 0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32;
     address sushiswapFactoryAddress = 0xc35DADB65012eC5796536bD9864eD8773aBc74C4;
 
-    swaps = [ // In priority order: from largest to smallest
-      SwapBase( new UniSwap( sushiswapFactoryAddress, _storage) ),
+    swaps = [
+      SwapBase( new UniSwap( sushiswapFactoryAddress, _storage) ), // Primary swap, used in getKeyTokenPrice
       SwapBase( new UniSwap( quickswapFactoryAddress, _storage) )
     ];
 
