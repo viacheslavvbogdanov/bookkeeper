@@ -13,11 +13,6 @@ contract OracleBSC is OracleBase {
     using Address for address;
 
     constructor(address _storage) OracleBase(_storage) public {
-    }
-
-    function initialize(address _storage) public virtual override initializer {
-        super.initialize(_storage);
-
         address USDC = 0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d;
         address ETH  = 0x2170Ed0880ac9A755fd29B2688956BD959F933F8;
         address DAI  = 0x1AF3F329e8BE154074D8769D1FFa4eE058B1DBc3;
@@ -45,7 +40,10 @@ contract OracleBSC is OracleBase {
             SwapBase(pancakeFactory), // Primary swap, used in getKeyTokenPrice
             SwapBase(oneInchFactory)
         ];
-
     }
 
+ /*   function initialize(address _storage) public virtual override initializer {
+        super.initialize(_storage);
+    }
+*/
 }

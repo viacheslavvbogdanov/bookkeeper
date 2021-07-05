@@ -12,11 +12,6 @@ contract OracleMatic is OracleBase {
   using Address for address;
 
   constructor(address _storage) OracleBase(_storage) public {
-  }
-
-  function initialize(address _storage) public virtual override initializer {
-    super.initialize(_storage);
-
     address WETH   = 0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619;
     address WMATIC = 0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270;
     address USDC   = 0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174;
@@ -39,11 +34,15 @@ contract OracleMatic is OracleBase {
     address waultswapFactoryAddress = 0xa98ea6356A316b44Bf710D5f9b6b4eA0081409Ef;
 
     swaps = [
-      SwapBase( new UniSwap( sushiswapFactoryAddress, _storage) ), // Primary swap, used in getKeyTokenPrice
-      SwapBase( new UniSwap( quickswapFactoryAddress, _storage) ),
-      SwapBase( new UniSwap( waultswapFactoryAddress, _storage) )
+    SwapBase( new UniSwap( sushiswapFactoryAddress, _storage) ), // Primary swap, used in getKeyTokenPrice
+    SwapBase( new UniSwap( quickswapFactoryAddress, _storage) ),
+    SwapBase( new UniSwap( waultswapFactoryAddress, _storage) )
     ];
-
   }
+
+/*  function initialize(address _storage) public virtual override initializer {
+    super.initialize(_storage);
+
+  }*/
 
 }

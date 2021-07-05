@@ -12,11 +12,6 @@ contract OracleRopsten is OracleBase {
   using Address for address;
 
   constructor(address _storage) OracleBase(_storage) public {
-  }
-
-  function initialize(address _storage) public virtual override initializer {
-    super.initialize(_storage);
-
     address WETH = 0xc778417E063141139Fce010982780140Aa0cD5Ab;
     address DAI  = 0xaD6D458402F60fD3Bd25163575031ACDce07538D;
     address WBTC = 0xc3778758D19A654fA6d0bb3593Cf26916fB3d114;
@@ -39,7 +34,11 @@ contract OracleRopsten is OracleBase {
     SwapBase( new UniSwap( uniswapFactoryAddress,   _storage) ),
     SwapBase( new UniSwap( sushiswapFactoryAddress, _storage) )
     ];
-
   }
+
+/*  function initialize(address _storage) public virtual override initializer {
+    super.initialize(_storage);
+
+  }*/
 
 }

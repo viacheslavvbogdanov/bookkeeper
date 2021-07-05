@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@pancakeswap/pancake-swap-lib/contracts/token/BEP20/IBEP20.sol";
 import "./interface/mooniswap/IMooniFactory.sol";
 import "./interface/mooniswap/IMooniswap.sol";
 import "./Governable.sol";
@@ -61,13 +62,65 @@ contract OneInchSwap is SwapBase {
 
   /// @dev Gives a pool with largest liquidity for a given token and a given tokenset (either keyTokens or pricingTokens)
   function getLargestPool(address token, address[] memory tokenList) public virtual override view returns (address, address, uint256) {
-    //    return (largestKeyToken, largestPoolAddress, largestPoolSize);
-    return (address(0), address(0), 0); //TODO ?
+    uint256 largestPoolSize = 0;
+    address largestKeyToken;
+    address largestPoolAddress;
+    address pairAddress;
+    uint256 poolSize;
+    uint256 i;
+    for (i = 0; i < tokenList.length; i++) {
+      pairAddress = oneInchFactory.pools(token, tokenList[i]);
+      if (pairAddress != address(0)) {
+        poolSize = get1InchPoolSize(pairAddress, token);
+      } else {
+        poolSize = 0;
+      }
+      if (poolSize > largestPoolSize) {
+        largestPoolSize = poolSize;
+        largestKeyToken = tokenList[i];
+        largestPoolAddress = pairAddress;
+      }
+    }
+    return (largestKeyToken, largestPoolAddress, largestPoolSize);
   }
+
+  function get1InchPoolSize(address pairAddress, address token) internal view returns (uint256) {
+    IMooniswap pair = IMooniswap(pairAddress);
+    address token0 = pair.token0();
+    address token1 = pair.token1();
+    uint256 poolSize0;
+    uint256 poolSize1;
+
+    try pair.getBalanceForRemoval(token0) returns (uint256 poolSize) {
+      poolSize0 = poolSize;
+    } catch {
+      poolSize0 = 0;
+    }
+
+    try pair.getBalanceForRemoval(token1) returns (uint256 poolSize) {
+      poolSize1 = poolSize;
+    } catch {
+      poolSize1 = 0;
+    }
+
+    if (token0 == address(0)) {
+      token0 = baseCurrency;
+    }
+    uint256 poolSize = (token == token0) ? poolSize0 : poolSize1;
+    return poolSize;
+  }
+
 
   /// @dev Generic function giving the price of a given token vs another given token
   function getPriceVsToken(address token0, address token1, address poolAddress) public virtual override view returns (uint256) {
-    return 0; //TODO ?
+    address pairAddress = oneInchFactory.pools(token0, token1);
+    IMooniswap pair = IMooniswap(pairAddress);
+    uint256 reserve0 = pair.getBalanceForRemoval(token0);
+    uint256 reserve1 = pair.getBalanceForRemoval(token1);
+    uint256 token0Decimals = IBEP20(token0).decimals(); // was IBEP20
+    uint256 token1Decimals = IBEP20(token1).decimals(); // was IBEP20
+    uint256 price = (reserve1 * 10 ** (token0Decimals - token1Decimals + precisionDecimals)) / reserve0;
+    return price;
   }
 
 }

@@ -11,6 +11,8 @@ const Storage = artifacts.require("Storage");
 const OracleMatic = artifacts.require("OracleMatic");
 const OracleMatic_old = artifacts.require("OracleMatic_old");
 
+const assert = require('assert');
+
 // Vanilla Mocha test. Increased compatibility with tools that integrate Mocha.
 describe("MATIC: Testing all functionality", function () {
 
@@ -25,6 +27,7 @@ describe("MATIC: Testing all functionality", function () {
   let quickswapFactoryAddress = "0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32";
   // noinspection SpellCheckingInspection
   let sushiswapFactoryAddress = "0xc35DADB65012eC5796536bD9864eD8773aBc74C4";
+  let waultswapFactoryAddress = "0xa98ea6356A316b44Bf710D5f9b6b4eA0081409Ef";
 
   let keyTokens = {
     'USDC': "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
@@ -34,7 +37,7 @@ describe("MATIC: Testing all functionality", function () {
     'WBTC': "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6",
   };
 
-  let sushiswapFactory, quickswapFactory;
+  let sushiswapFactory, quickswapFactory, waultswapFactory;
   let governance;
 
   before(async function () {
@@ -48,6 +51,7 @@ describe("MATIC: Testing all functionality", function () {
 
     sushiswapFactory = await IUniswapV2Factory.at(sushiswapFactoryAddress);
     quickswapFactory = await IUniswapV2Factory.at(quickswapFactoryAddress);
+    waultswapFactory = await IUniswapV2Factory.at(waultswapFactoryAddress);
   });
 
 
@@ -68,7 +72,7 @@ describe("MATIC: Testing all functionality", function () {
           console.log('newPrice', newPrice.toString());
           console.log('oldPrice', oldPrice.toString());
         }
-        // assert(equal, 'New oracle price must be equal old oracle price')
+        assert(equal, 'New oracle price must be equal old oracle price')
       } catch(e) {
         console.log('Exception:', e);
         //TODO at production-tokens.js we have few addresses that treated as non-contract accounts
@@ -138,6 +142,10 @@ describe("MATIC: Testing all functionality", function () {
 
   it("Quick LPs Repeatable", async function() {
     await testSwapFactory(quickswapFactory,1)
+  });
+
+  it("Waultswap LPs Repeatable", async function() {
+    await testSwapFactory(waultswapFactory,2)
   });
 
   it("Control functions", async function() {

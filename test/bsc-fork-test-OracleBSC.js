@@ -71,7 +71,7 @@ describe("BSC: Testing all functionality", function (){
     oneInchFactory = await IMooniFactory.at(oneInchFactoryAddress);
   });
 
-  it.only("Production Tokens", async function () { //TODO remove .only
+  it("Production Tokens", async function () {
     const tokens = require("./config/production-tokens-bsc.js");
     // const oldOracle = await OracleMainnet_old.at('0x48dc32eca58106f06b41de514f29780ffa59c279')
     const oldOracle = await OracleBSC_old.new(storage.address, {from: governance})

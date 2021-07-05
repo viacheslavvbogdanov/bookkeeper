@@ -9,7 +9,6 @@ import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "./Governable.sol";
 import "./SwapBase.sol";
 
-import "hardhat/console.sol";
 import "./UniSwap.sol";
 
 pragma solidity 0.6.12;
@@ -52,17 +51,17 @@ abstract contract OracleBase is Governable, Initializable  {
   event DefinedOutputChanged(address newOutputToken, address oldOutputToken);
 
   constructor(address _storage) Governable(_storage) public {
-    initialize(_storage); //TODO remove in proxy version?
+//    initialize(_storage);
   }
 
-  function initialize(address _storage) public virtual initializer {
+ /* function initialize(address _storage) public virtual initializer {
     setStorage(_storage);
     // at inherited contract you have to initialize:
     // - swaps array
     // - definedOutputToken address
     // - keyTokens[]
     // - pricingTokens[]
-  }
+  }*/
 
   function addKeyToken(address newToken) external onlyGovernance {
     require((checkKeyToken(newToken)==false), "Already a key token");
