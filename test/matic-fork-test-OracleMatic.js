@@ -1,26 +1,20 @@
 // Utilities
 // noinspection JSUndeclaredVariable
 
-const Utils = require("./utilities/Utils.js");
-const MFC = require("./mainnet-fork-test-config.js");
-const CoinGecko = require("coingecko-api");
-const CoinGeckoClient = new CoinGecko();
-
-const { send } = require("@openzeppelin/test-helpers");
+const MFC = require("./config/mainnet-fork-test-config.js");
+const { artifacts, web3 } = require("hardhat");
 const BigNumber = require("bignumber.js");
-const IERC20 = artifacts.require("@openzeppelin/contracts/token/ERC20/IERC20.sol:IERC20");
 const ERC20 = artifacts.require("ERC20")
 const IUniswapV2Factory = artifacts.require("IUniswapV2Factory");
-
+const SwapBase = artifacts.require("SwapBase")
 const Storage = artifacts.require("Storage");
 const OracleMatic = artifacts.require("OracleMatic");
+const OracleMatic_old = artifacts.require("OracleMatic_old");
+
+const assert = require('assert');
 
 // Vanilla Mocha test. Increased compatibility with tools that integrate Mocha.
-describe("Testing all functionality", function () {
-
-  function sum(total, num) {
-    return BigNumber.sum(total, num);
-  }
+describe("MATIC: Testing all functionality", function () {
 
   let accounts;
   let precisionDecimals = 18;
@@ -31,7 +25,9 @@ describe("Testing all functionality", function () {
   let oracle;
 
   let quickswapFactoryAddress = "0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32";
+  // noinspection SpellCheckingInspection
   let sushiswapFactoryAddress = "0xc35DADB65012eC5796536bD9864eD8773aBc74C4";
+  let waultswapFactoryAddress = "0xa98ea6356A316b44Bf710D5f9b6b4eA0081409Ef";
 
   let keyTokens = {
     'USDC': "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
@@ -41,9 +37,8 @@ describe("Testing all functionality", function () {
     'WBTC': "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6",
   };
 
-  let definedOutputToken = keyTokens['USDC'];
-
-  let sushiswapFactory, quickswapFactory;
+  let sushiswapFactory, quickswapFactory, waultswapFactory;
+  let governance;
 
   before(async function () {
     console.log("Setting up contract")
@@ -56,7 +51,36 @@ describe("Testing all functionality", function () {
 
     sushiswapFactory = await IUniswapV2Factory.at(sushiswapFactoryAddress);
     quickswapFactory = await IUniswapV2Factory.at(quickswapFactoryAddress);
+    waultswapFactory = await IUniswapV2Factory.at(waultswapFactoryAddress);
   });
+
+
+  it("Production Tokens", async function () {
+    const tokens = require("./config/production-tokens-matic.js");
+    // const oldOracle = await OracleMainnet_old.at('0x48dc32eca58106f06b41de514f29780ffa59c279')
+    const oldOracle = await OracleMatic_old.new(storage.address, {from: governance})
+    for (const token in tokens) {
+      if (!tokens.hasOwnProperty(token)) continue;
+      const tokenName = tokens[token];
+      console.log('token', token, tokenName);
+      try {
+        const oldPrice = await oldOracle.getPrice(token);
+        const newPrice = await oracle.getPrice(token);
+        const equal = newPrice.eq(oldPrice)
+        console.log(equal ? '+ equal' : '-NOT EQUAL!!!')
+        if (!equal) {
+          console.log('newPrice', newPrice.toString());
+          console.log('oldPrice', oldPrice.toString());
+        }
+        assert(equal, 'New oracle price must be equal old oracle price')
+      } catch(e) {
+        console.log('Exception:', e);
+        //TODO at production-tokens.js we have few addresses that treated as non-contract accounts
+      }
+      console.log('');
+    }
+
+  })
 
   it("Normal Tokens", async function () {
 
@@ -78,7 +102,7 @@ describe("Testing all functionality", function () {
 
   });
 
-  async function testSwapFactory(swapFactory) {
+  async function testSwapFactory(swapFactory, swapIndex) {
     const pairsLength = (await swapFactory.allPairsLength()).toNumber()
     console.log('swapFactory allPairsLength', pairsLength);
 
@@ -96,7 +120,9 @@ describe("Testing all functionality", function () {
         console.log("Uni", i, LP);
       }
 
-      underlying = await oracle.getUniUnderlying(LP);
+      const swapAddress = await oracle.swaps(swapIndex); // Swap at index 1 - SushiSwap
+      const swap = await SwapBase.at(swapAddress)
+      const underlying = await swap.getUnderlying(LP);
       token0 = underlying[0][0].toLowerCase();
       token1 = underlying[0][1].toLowerCase();
       amount0 = BigNumber(underlying[1][0]).toFixed();
@@ -111,18 +137,24 @@ describe("Testing all functionality", function () {
   }
 
   it("Sushi LPs Repeatable", async function() {
-    await testSwapFactory(sushiswapFactory)
+    await testSwapFactory(sushiswapFactory,0)
   });
 
   it("Quick LPs Repeatable", async function() {
-    await testSwapFactory(quickswapFactory)
+    await testSwapFactory(quickswapFactory,1)
+  });
+
+  it("Waultswap LPs Repeatable", async function() {
+    await testSwapFactory(waultswapFactory,2)
   });
 
   it("Control functions", async function() {
-    console.log("Change factories");
-    await oracle.changeSushiFactory(quickswapFactoryAddress, {from: governance});
+    console.log("Change factory address");
+    const sushiSwapAddress = await oracle.swaps(0); // Swap at index 0 - UniSwap
+    const sushiSwap = await SwapBase.at(sushiSwapAddress)
+    await sushiSwap.changeFactory(quickswapFactoryAddress, {from: governance});
     console.log("Change back");
-    await oracle.changeSushiFactory(sushiswapFactoryAddress, {from: governance});
+    await sushiSwap.changeFactory(sushiswapFactoryAddress, {from: governance});
     console.log("Add FARM as key token");
     await oracle.addKeyToken(MFC.FARM_ADDRESS, {from: governance});
     isKeyToken = await oracle.checkKeyToken(MFC.FARM_ADDRESS, {from: governance});

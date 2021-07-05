@@ -2,7 +2,7 @@
 if ( process.env.MAINNET_FORK ) {
 
   const Utils = require("./Utils.js");
-  const MFC = require("./mainnet-fork-test-config.js");
+  const MFC = require("./config/mainnet-fork-test-config.js");
   const { expectRevert, send, time } = require('@openzeppelin/test-helpers');
   const BigNumber = require('bignumber.js');
   const Controller = artifacts.require("Controller");

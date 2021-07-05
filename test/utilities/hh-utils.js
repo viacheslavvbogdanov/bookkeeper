@@ -1,5 +1,5 @@
 const makeVault = require("./make-vault.js");
-const addresses = require("../test-config.js");
+const addresses = require("../config/test-config.js");
 const IController = artifacts.require("IController");
 const IFeeRewardForwarder = artifacts.require("IFeeRewardForwarder");
 
