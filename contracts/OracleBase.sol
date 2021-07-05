@@ -181,14 +181,14 @@ abstract contract OracleBase is Governable, Initializable  {
   }
 
   //Checks the results of the different largest pool functions and returns the largest.
-  function getLargestPool(address token, address[] memory tokenList) public view returns (SwapBase, address, address) {
+  function getLargestPool(address token, address[] memory keyTokenList) public view returns (SwapBase, address, address) {
     address largestKeyToken = address(0);
     address largestPool = address(0);
     uint largestPoolSize = 0;
     SwapBase largestSwap;
     for (uint i=0;i<swaps.length;i++) {
       SwapBase swap = swaps[i];
-      (address swapLargestKeyToken, address swapLargestPool, uint swapLargestPoolSize) = swap.getLargestPool(token, tokenList);
+      (address swapLargestKeyToken, address swapLargestPool, uint swapLargestPoolSize) = swap.getLargestPool(token, keyTokenList);
       if (swapLargestPoolSize>largestPoolSize) {
         largestSwap = swap;
         largestKeyToken = swapLargestKeyToken;

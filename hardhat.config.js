@@ -103,5 +103,10 @@ module.exports = {
   gasReporter: {
     enabled: true,
     currency: 'USD',
+  },
+  contractSizer: {
+    alphaSort: true,
+    runOnCompile: true,
+    disambiguatePaths: false,
   }
 };

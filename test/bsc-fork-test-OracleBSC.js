@@ -1,12 +1,10 @@
 // Utilities
-const Utils = require("./utilities/Utils.js");
 const MFC = require("./config/mainnet-fork-test-config.js");
-const { artifacts } = require("hardhat");
+const { artifacts, web3 } = require("hardhat");
 
 const { send } = require("@openzeppelin/test-helpers");
 const BigNumber = require("bignumber.js");
 const IPancakeFactory = artifacts.require("IPancakeFactory");
-const IPancakePair = artifacts.require("IPancakePair");
 const IMooniFactory = artifacts.require("IMooniFactory")
 
 //const Strategy = artifacts.require("");
@@ -48,16 +46,17 @@ describe("BSC: Testing all functionality", function (){
     "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c", //WBNB
     "0x4BD17003473389A42DAF6a0a729f6Fdb328BbBd7" //VAI
   ];
-  let pricingTokens = [
-    "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c", //WBNB
-    "0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56", //BUSD
-    "0x55d398326f99059fF775485246999027B3197955", //USDT
-    "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d", //USDC
-    "0x4BD17003473389A42DAF6a0a729f6Fdb328BbBd7", //VAI
-    "0x1AF3F329e8BE154074D8769D1FFa4eE058B1DBc3" //DAI
-  ];
-  let definedOutputToken = "0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56"; //BUSD
+  // let pricingTokens = [
+  //   "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c", //WBNB
+  //   "0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56", //BUSD
+  //   "0x55d398326f99059fF775485246999027B3197955", //USDT
+  //   "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d", //USDC
+  //   "0x4BD17003473389A42DAF6a0a729f6Fdb328BbBd7", //VAI
+  //   "0x1AF3F329e8BE154074D8769D1FFa4eE058B1DBc3" //DAI
+  // ];
+  // let definedOutputToken = "0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56"; //BUSD
   let governance;
+  let pancakeFactory, oneInchFactory;
   
   before(async function () {
     console.log("Setting up contract")
@@ -68,7 +67,7 @@ describe("BSC: Testing all functionality", function (){
     //deploy Oracle
     oracle = await OracleBSC.new(storage.address, {from: governance});
 
-    pancakeswapFactory = await IPancakeFactory.at(pancakeFactoryAddress);
+    pancakeFactory = await IPancakeFactory.at(pancakeFactoryAddress);
     oneInchFactory = await IMooniFactory.at(oneInchFactoryAddress);
   });
 
