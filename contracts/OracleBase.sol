@@ -19,7 +19,8 @@ abstract contract OracleBase is Governable, Initializable  {
   using Address for address;
   using SafeMath for uint256;
 
-  uint256 public precisionDecimals = 18;
+  uint256 public PRECISION_DECIMALS = 18;
+  uint256 public ONE = 10**PRECISION_DECIMALS;
 
   //The defined output token is the unit in which prices of input tokens are given.
   address public definedOutputToken = address(0);
@@ -120,7 +121,7 @@ abstract contract OracleBase is Governable, Initializable  {
   //In case of LP token, the underlying tokens will be found and valued to get the price.
   function getPrice(address token) external view returns (uint256) {
     if (token == definedOutputToken)
-      return (10**precisionDecimals);
+      return (ONE);
 
     // if the token exists in the mapping, we'll swap it for the replacement
     // example btcb/renbtc pool -> btcb
@@ -139,7 +140,7 @@ abstract contract OracleBase is Governable, Initializable  {
         if (tokens[i] == address(0)) break;
         tokenPrice = computePrice(tokens[i]);
         if (tokenPrice == 0) return 0;
-        tokenValue = tokenPrice *amounts[i]/10**precisionDecimals;
+        tokenValue = tokenPrice *amounts[i]/ONE;
         price += tokenValue;
       }
       return price;
@@ -161,7 +162,7 @@ abstract contract OracleBase is Governable, Initializable  {
   function computePrice(address token) public view returns (uint256) {
     uint256 price;
     if (token == definedOutputToken) {
-      price = 10**precisionDecimals;
+      price = ONE;
     } else if (token == address(0)) {
       price = 0;
     } else {
@@ -173,7 +174,7 @@ abstract contract OracleBase is Governable, Initializable  {
       } else {
         priceVsKeyToken = swap.getPriceVsToken(token,keyToken,pool);
         keyTokenPrice = getKeyTokenPrice(keyToken);
-        price = priceVsKeyToken*keyTokenPrice/10**precisionDecimals;
+        price = priceVsKeyToken*keyTokenPrice/ONE;
       }
     }
     return (price);
@@ -205,7 +206,7 @@ abstract contract OracleBase is Governable, Initializable  {
     uint256 price;
     uint256 priceVsPricingToken;
     if (token == definedOutputToken) {
-      price = 10**precisionDecimals;
+      price = ONE;
     } else if (isPricingToken) {
       price = swaps[0].getPriceVsToken(token, definedOutputToken, address(0)); // first swap is used
       // as at original contract was used
@@ -215,12 +216,12 @@ abstract contract OracleBase is Governable, Initializable  {
       uint256 pricingTokenPrice;
       (SwapBase swap, address pricingToken, address pricingPool) = getLargestPool(token,pricingTokens);
       priceVsPricingToken = swap.getPriceVsToken(token, pricingToken, pricingPool);
-//      pricingTokenPrice = (pricingToken == definedOutputToken)? 10**precisionDecimals : swap.getPriceVsToken(pricingToken,definedOutputToken,pricingPool);
+//      pricingTokenPrice = (pricingToken == definedOutputToken)? ONE : swap.getPriceVsToken(pricingToken,definedOutputToken,pricingPool);
       // Like in original contract we use UniSwap - it must be first swap at the list (swaps[0])
       // See OracleMainnet_old.js:634, OracleBSC_old.sol:458
       //TODO improve this part?
-      pricingTokenPrice = (pricingToken == definedOutputToken)? 10**precisionDecimals : swaps[0].getPriceVsToken(pricingToken,definedOutputToken,pricingPool);
-      price = priceVsPricingToken*pricingTokenPrice/10**precisionDecimals;
+      pricingTokenPrice = (pricingToken == definedOutputToken)? ONE : swaps[0].getPriceVsToken(pricingToken,definedOutputToken,pricingPool);
+      price = priceVsPricingToken*pricingTokenPrice/ONE;
     }
     return price;
   }

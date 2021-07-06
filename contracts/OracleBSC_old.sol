@@ -24,7 +24,7 @@ contract OracleBSC_old is Governable {
     //Addresses for factories and registries for different DEX platforms. Functions will be added to allow to alter these when needed.
     address public pancakeFactoryAddress = 0xcA143Ce32Fe78f1f7019d7d551a6402fC5350c73;
     address public oneInchFactoryAddress = 0xD41B24bbA51fAc0E4827b6F94C0D6DDeB183cD64;
-    uint256 public precisionDecimals = 18;
+    uint256 public PRECISION_DECIMALS = 18;
 
     IPancakeFactory pancakeFactory = IPancakeFactory(pancakeFactoryAddress);
     IMooniFactory oneInchFactory = IMooniFactory(oneInchFactoryAddress);
@@ -164,7 +164,7 @@ contract OracleBSC_old is Governable {
     //In case of LP token, the underlying tokens will be found and valued to get the price.
     function getPrice(address token) external view returns (uint256) {
         if (token == definedOutputToken) {
-            return (10 ** precisionDecimals);
+            return (10 ** PRECISION_DECIMALS);
         }
 
         // if the token exists in the mapping, we'll swapp it for the replacement
@@ -195,7 +195,7 @@ contract OracleBSC_old is Governable {
                     price = 0;
                     return price;
                 }
-                tokenValue = priceToken * amounts[i] / 10 ** precisionDecimals;
+                tokenValue = priceToken * amounts[i] / 10 ** PRECISION_DECIMALS;
                 price = price + tokenValue;
             }
             return price;
@@ -262,8 +262,8 @@ contract OracleBSC_old is Governable {
             amounts[1] = 0;
             return (tokens, amounts);
         }
-        amounts[0] = reserve0 * 10 ** (supplyDecimals - token0Decimals + precisionDecimals) / totalSupply;
-        amounts[1] = reserve1 * 10 ** (supplyDecimals - token1Decimals + precisionDecimals) / totalSupply;
+        amounts[0] = reserve0 * 10 ** (supplyDecimals - token0Decimals + PRECISION_DECIMALS) / totalSupply;
+        amounts[1] = reserve1 * 10 ** (supplyDecimals - token1Decimals + PRECISION_DECIMALS) / totalSupply;
         return (tokens, amounts);
     }
 
@@ -285,8 +285,8 @@ contract OracleBSC_old is Governable {
             amounts[1] = 0;
             return (tokens, amounts);
         }
-        amounts[0] = reserve0 * 10 ** (supplyDecimals - token0Decimals + precisionDecimals) / totalSupply;
-        amounts[1] = reserve1 * 10 ** (supplyDecimals - token1Decimals + precisionDecimals) / totalSupply;
+        amounts[0] = reserve0 * 10 ** (supplyDecimals - token0Decimals + PRECISION_DECIMALS) / totalSupply;
+        amounts[1] = reserve1 * 10 ** (supplyDecimals - token1Decimals + PRECISION_DECIMALS) / totalSupply;
 
         //1INCH uses BNB, instead of WBNB in pools. For further calculations we continue with WBNB instead.
         //BNB will always be the first in the pair, so no need to check tokens[1]
@@ -300,7 +300,7 @@ contract OracleBSC_old is Governable {
     function computePrice(address token) public view returns (uint256) {
         uint256 price;
         if (token == definedOutputToken) {
-            price = 10 ** precisionDecimals;
+            price = 10 ** PRECISION_DECIMALS;
         } else if (token == address(0)) {
             price = 0;
         } else {
@@ -312,11 +312,11 @@ contract OracleBSC_old is Governable {
             } else if (pancake) {
                 priceVsKeyToken = getPriceVsTokenPancake(token, keyToken);
                 keyTokenPrice = getKeyTokenPrice(keyToken);
-                price = priceVsKeyToken * keyTokenPrice / 10 ** precisionDecimals;
+                price = priceVsKeyToken * keyTokenPrice / 10 ** PRECISION_DECIMALS;
             } else {
                 priceVsKeyToken = getPriceVsToken1Inch(token, keyToken);
                 keyTokenPrice = getKeyTokenPrice(keyToken);
-                price = priceVsKeyToken * keyTokenPrice / 10 ** precisionDecimals;
+                price = priceVsKeyToken * keyTokenPrice / 10 ** PRECISION_DECIMALS;
             }
         }
         return (price);
@@ -418,9 +418,9 @@ contract OracleBSC_old is Governable {
         uint256 token1Decimals = IBEP20(token1).decimals();
         uint256 price;
         if (token0 == pair.token0()) {
-            price = (reserve1 * 10 ** (token0Decimals - token1Decimals + precisionDecimals)) / reserve0;
+            price = (reserve1 * 10 ** (token0Decimals - token1Decimals + PRECISION_DECIMALS)) / reserve0;
         } else {
-            price = (reserve0 * 10 ** (token0Decimals - token1Decimals + precisionDecimals)) / reserve1;
+            price = (reserve0 * 10 ** (token0Decimals - token1Decimals + PRECISION_DECIMALS)) / reserve1;
         }
         return price;
     }
@@ -433,7 +433,7 @@ contract OracleBSC_old is Governable {
         uint256 reserve1 = pair.getBalanceForRemoval(token1);
         uint256 token0Decimals = IBEP20(token0).decimals();
         uint256 token1Decimals = IBEP20(token1).decimals();
-        uint256 price = (reserve1 * 10 ** (token0Decimals - token1Decimals + precisionDecimals)) / reserve0;
+        uint256 price = (reserve1 * 10 ** (token0Decimals - token1Decimals + PRECISION_DECIMALS)) / reserve0;
         return price;
     }
 
@@ -443,7 +443,7 @@ contract OracleBSC_old is Governable {
         uint256 price;
         uint256 priceVsPricingToken;
         if (token == definedOutputToken) {
-            price = 10 ** precisionDecimals;
+            price = 10 ** PRECISION_DECIMALS;
         } else if (isPricingToken) {
             price = getPriceVsTokenPancake(token, definedOutputToken);
         } else {
@@ -454,8 +454,8 @@ contract OracleBSC_old is Governable {
             } else {
                 priceVsPricingToken = getPriceVsToken1Inch(token, pricingToken);
             }
-            pricingTokenPrice = (pricingToken == definedOutputToken) ? 10 ** precisionDecimals : getPriceVsTokenPancake(pricingToken, definedOutputToken);
-            price = priceVsPricingToken * pricingTokenPrice / 10 ** precisionDecimals;
+            pricingTokenPrice = (pricingToken == definedOutputToken) ? 10 ** PRECISION_DECIMALS : getPriceVsTokenPancake(pricingToken, definedOutputToken);
+            price = priceVsPricingToken * pricingTokenPrice / 10 ** PRECISION_DECIMALS;
         }
         return price;
     }

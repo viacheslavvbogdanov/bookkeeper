@@ -19,7 +19,7 @@ contract OracleRopsten_old is Governable {
   //Addresses for factories and registries for different DEX platforms. Functions will be added to allow to alter these when needed.
   address public uniswapFactoryAddress = 0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f;
   address public sushiswapFactoryAddress = 0xaDe0ad525430cfe17218B679483c46B6c1d63fe2;
-  uint256 public precisionDecimals = 18;
+  uint256 public PRECISION_DECIMALS = 18;
 
   IUniswapV2Factory uniswapFactory = IUniswapV2Factory(uniswapFactoryAddress);
   IUniswapV2Factory sushiswapFactory = IUniswapV2Factory(sushiswapFactoryAddress);
@@ -126,7 +126,7 @@ contract OracleRopsten_old is Governable {
   //In case of LP token, the underlying tokens will be found and valued to get the price.
   function getPrice(address token) external view returns (uint256) {
     if (token == definedOutputToken) {
-      return (10**precisionDecimals);
+      return (10**PRECISION_DECIMALS);
     }
     bool uniSushiLP;
     uniSushiLP = isLPCheck(token);
@@ -144,7 +144,7 @@ contract OracleRopsten_old is Governable {
           price = 0;
           return price;
         }
-        tokenValue = priceToken*amounts[i]/10**precisionDecimals;
+        tokenValue = priceToken*amounts[i]/10**PRECISION_DECIMALS;
         price = price + tokenValue;
       }
       return price;
@@ -221,8 +221,8 @@ contract OracleRopsten_old is Governable {
       amounts[1] = 0;
       return (tokens, amounts);
     }
-    amounts[0] = reserve0*10**(supplyDecimals-token0Decimals+precisionDecimals)/totalSupply;
-    amounts[1] = reserve1*10**(supplyDecimals-token1Decimals+precisionDecimals)/totalSupply;
+    amounts[0] = reserve0*10**(supplyDecimals-token0Decimals+PRECISION_DECIMALS)/totalSupply;
+    amounts[1] = reserve1*10**(supplyDecimals-token1Decimals+PRECISION_DECIMALS)/totalSupply;
     return (tokens, amounts);
   }
 
@@ -230,7 +230,7 @@ contract OracleRopsten_old is Governable {
   function computePrice(address token) public view returns (uint256) {
     uint256 price;
     if (token == definedOutputToken) {
-      price = 10**precisionDecimals;
+      price = 10**PRECISION_DECIMALS;
     } else if (token == address(0)) {
       price = 0;
     } else {
@@ -240,11 +240,11 @@ contract OracleRopsten_old is Governable {
       } else if (uni) {
         uint256 priceVsKeyToken = getPriceVsTokenUni(token,keyToken);
         uint256 keyTokenPrice = getKeyTokenPrice(keyToken);
-        price = priceVsKeyToken*keyTokenPrice/10**precisionDecimals;
+        price = priceVsKeyToken*keyTokenPrice/10**PRECISION_DECIMALS;
       } else if (sushi) {
         uint256 priceVsKeyToken = getPriceVsTokenSushi(token,keyToken);
         uint256 keyTokenPrice = getKeyTokenPrice(keyToken);
-        price = priceVsKeyToken*keyTokenPrice/10**precisionDecimals;
+        price = priceVsKeyToken*keyTokenPrice/10**PRECISION_DECIMALS;
       }
     }
     return (price);
@@ -334,9 +334,9 @@ contract OracleRopsten_old is Governable {
     uint256 token1Decimals = ERC20(token1).decimals();
     uint256 price;
     if (token0 == pair.token0()) {
-      price = (reserve1*10**(token0Decimals-token1Decimals+precisionDecimals))/reserve0;
+      price = (reserve1*10**(token0Decimals-token1Decimals+PRECISION_DECIMALS))/reserve0;
     } else {
-      price = (reserve0*10**(token0Decimals-token1Decimals+precisionDecimals))/reserve1;
+      price = (reserve0*10**(token0Decimals-token1Decimals+PRECISION_DECIMALS))/reserve1;
     }
     return price;
   }
@@ -350,9 +350,9 @@ contract OracleRopsten_old is Governable {
     uint256 token1Decimals = ERC20(token1).decimals();
     uint256 price;
     if (token0 == pair.token0()) {
-      price = (reserve1*10**(token0Decimals-token1Decimals+precisionDecimals))/reserve0;
+      price = (reserve1*10**(token0Decimals-token1Decimals+PRECISION_DECIMALS))/reserve0;
     } else {
-      price = (reserve0*10**(token0Decimals-token1Decimals+precisionDecimals))/reserve1;
+      price = (reserve0*10**(token0Decimals-token1Decimals+PRECISION_DECIMALS))/reserve1;
     }
     return price;
   }
@@ -363,7 +363,7 @@ contract OracleRopsten_old is Governable {
     uint256 price;
     uint256 priceVsPricingToken;
     if (token == definedOutputToken) {
-      price = 10**precisionDecimals;
+      price = 10**PRECISION_DECIMALS;
     } else if (isPricingToken) {
       price = getPriceVsTokenUni(token,definedOutputToken);
     } else {
@@ -375,11 +375,11 @@ contract OracleRopsten_old is Governable {
         priceVsPricingToken = getPriceVsTokenSushi(token,pricingToken);
       }
       if (pricingToken == definedOutputToken) {
-        pricingTokenPrice = 10**precisionDecimals;
+        pricingTokenPrice = 10**PRECISION_DECIMALS;
       } else {
         pricingTokenPrice = getPriceVsTokenUni(pricingToken,definedOutputToken);
       }
-      price = priceVsPricingToken*pricingTokenPrice/10**precisionDecimals;
+      price = priceVsPricingToken*pricingTokenPrice/10**PRECISION_DECIMALS;
     }
     return price;
   }
@@ -415,11 +415,11 @@ contract OracleRopsten_old is Governable {
     uint256 amount0;
     uint256 amount1;
     if (token0 == pair.token0()) {
-      amount0 = reserve0*10**(precisionDecimals-token0Decimals);
-      amount1 = reserve1*10**(precisionDecimals-token1Decimals);
+      amount0 = reserve0*10**(PRECISION_DECIMALS-token0Decimals);
+      amount1 = reserve1*10**(PRECISION_DECIMALS-token1Decimals);
     } else {
-      amount0 = reserve1*10**(precisionDecimals-token0Decimals);
-      amount1 = reserve0*10**(precisionDecimals-token1Decimals);
+      amount0 = reserve1*10**(PRECISION_DECIMALS-token0Decimals);
+      amount1 = reserve0*10**(PRECISION_DECIMALS-token1Decimals);
     }
     return (amount0, amount1);
   }

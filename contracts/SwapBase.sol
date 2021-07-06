@@ -10,7 +10,7 @@ abstract contract SwapBase is Governable {
   using Address for address;
   using SafeMath for uint256;
 
-  uint256 public precisionDecimals = 18;
+  uint256 public PRECISION_DECIMALS = 18;
 
   address factoryAddress;
 

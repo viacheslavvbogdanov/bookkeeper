@@ -10,6 +10,8 @@ pragma solidity 0.6.12;
 
 contract CurveSwap is SwapBase {
 
+  uint256 public ONE = 10**PRECISION_DECIMALS;
+
   OracleBase oracleBase;
 
   ICurveRegistry public curveRegistry;
@@ -28,7 +30,7 @@ contract CurveSwap is SwapBase {
   ];
 
   address public ETH  = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
-  address public WETH = address(0);
+  address public baseCurrency = address(0);
 
   modifier validException(address exception){
     (bool check0, bool check1) = checkCurveException(exception);
@@ -39,8 +41,8 @@ contract CurveSwap is SwapBase {
   event CurveExceptionAdded(address newException, uint256 exceptionList);
   event CurveExceptionRemoved(address oldException, uint256 exceptionList);
 
-  constructor(address _factoryAddress, address _storage, address _WETH, OracleBase _oracleBase ) SwapBase(_factoryAddress, _storage) public {
-    WETH = _WETH;
+  constructor(address _factoryAddress, address _storage, address _baseCurrency, OracleBase _oracleBase ) SwapBase(_factoryAddress, _storage) public {
+    baseCurrency = _baseCurrency;
     oracleBase = _oracleBase;
   }
 
@@ -85,17 +87,17 @@ contract CurveSwap is SwapBase {
         break;
       } else if (tokens[i]==ETH){
         decimals[i] = 18;
-        tokens[i] = WETH;
-        returnTokens[i] = WETH;
+        tokens[i] = baseCurrency;
+        returnTokens[i] = baseCurrency;
       } else {
         decimals[i] = ERC20(tokens[i]).decimals();
       }
 
-      amounts[i] = reserves[i]*10**(supplyDecimals-decimals[i]+precisionDecimals)/totalSupply;
+      amounts[i] = reserves[i]*10**(supplyDecimals-decimals[i]+PRECISION_DECIMALS)/totalSupply;
       //Curve has errors in their registry, where amounts are stored with the wrong number of decimals
       //This steps accounts for this. In general there will never be more than 1 of any underlying token
       //per curve LP token. If it is more, the decimals are corrected.
-      if (amounts[i] > 10**precisionDecimals) {
+      if (amounts[i] > ONE) {
         amounts[i] = amounts[i]*10**(decimals[i]-18);
       }
     }
@@ -171,10 +173,10 @@ contract CurveSwap is SwapBase {
     uint256 price;
     if (underlying) {
       amount1 = pool.get_dy_underlying(indexFrom, indexTo, 10**decimals0);
-      price = amount1*10**(precisionDecimals-decimals1);
+      price = amount1*10**(PRECISION_DECIMALS-decimals1);
     } else {
       amount1 = pool.get_dy(indexFrom, indexTo, 10**decimals0);
-      price = amount1*10**(precisionDecimals-decimals1);
+      price = amount1*10**(PRECISION_DECIMALS-decimals1);
     }
     return price;
   }

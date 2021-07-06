@@ -53,8 +53,8 @@ contract PancakeSwap is SwapBase {
       amounts[1] = 0;
       return (tokens, amounts);
     }
-    amounts[0] = reserve0 * 10 ** (supplyDecimals - token0Decimals + precisionDecimals) / totalSupply;
-    amounts[1] = reserve1 * 10 ** (supplyDecimals - token1Decimals + precisionDecimals) / totalSupply;
+    amounts[0] = reserve0 * 10 ** (supplyDecimals - token0Decimals + PRECISION_DECIMALS) / totalSupply;
+    amounts[1] = reserve1 * 10 ** (supplyDecimals - token1Decimals + PRECISION_DECIMALS) / totalSupply;
     return (tokens, amounts);
   }
 
@@ -95,9 +95,9 @@ contract PancakeSwap is SwapBase {
     uint256 token1Decimals = IBEP20(token1).decimals();
     uint256 price;
     if (token0 == pair.token0()) {
-      price = (reserve1 * 10 ** (token0Decimals - token1Decimals + precisionDecimals)) / reserve0;
+      price = (reserve1 * 10 ** (token0Decimals - token1Decimals + PRECISION_DECIMALS)) / reserve0;
     } else {
-      price = (reserve0 * 10 ** (token0Decimals - token1Decimals + precisionDecimals)) / reserve1;
+      price = (reserve0 * 10 ** (token0Decimals - token1Decimals + PRECISION_DECIMALS)) / reserve1;
     }
     return price;
   }
