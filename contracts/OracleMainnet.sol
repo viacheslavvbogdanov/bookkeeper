@@ -23,7 +23,7 @@ contract OracleMainnet is OracleBase {
     address EURS = 0xdB25f211AB05b1c97D595516F45794528a807ad8;
     address LINK = 0x514910771AF9Ca656af840dff83E8264EcF986CA;
 
-    //Key tokens are used to find liquidity for any given token on Uni, Sushi and Curve.
+    //Key tokens are used to find liquidity for any given token on swaps.
     keyTokens = [ USDC, WETH, DAI, USDT, UST, WBTC, EURS, LINK ];
 
     //Pricing tokens are Key tokens with good liquidity with the defined output token on Uniswap.
@@ -34,14 +34,14 @@ contract OracleMainnet is OracleBase {
 
     UniSwap uniswapFactory     = new UniSwap(     0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f, _storage);
     UniSwap sushiswapFactory   = new UniSwap(     0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac, _storage);
-    CurveSwap curveRegistry    = new CurveSwap(   0x7D86446dDb609eD0F5f8684AcF30380a356b2B4c, _storage, WETH, this);
+    CurveSwap curveRegistry    = new CurveSwap(   0x7D86446dDb609eD0F5f8684AcF30380a356b2B4c, _storage, WETH, address(this));
     OneInchSwap oneInchFactory = new OneInchSwap( 0xbAF9A5d4b0052359326A6CDAb54BABAa3a3A9643, _storage, WETH);
 
     swaps = [
-    SwapBase(uniswapFactory), // Primary swap, used in getKeyTokenPrice
-    SwapBase(sushiswapFactory),
-    SwapBase(curveRegistry),
-    SwapBase(oneInchFactory)
+      address(uniswapFactory), // Primary swap, used in getKeyTokenPrice
+      address(sushiswapFactory),
+      address(curveRegistry),
+      address(oneInchFactory)
     ];
 
   }

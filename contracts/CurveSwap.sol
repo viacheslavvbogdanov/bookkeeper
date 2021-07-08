@@ -41,9 +41,9 @@ contract CurveSwap is SwapBase {
   event CurveExceptionAdded(address newException, uint256 exceptionList);
   event CurveExceptionRemoved(address oldException, uint256 exceptionList);
 
-  constructor(address _factoryAddress, address _storage, address _baseCurrency, OracleBase _oracleBase ) SwapBase(_factoryAddress, _storage) public {
+  constructor(address _factoryAddress, address _storage, address _baseCurrency, address _oracleBase ) SwapBase(_factoryAddress, _storage) public {
     baseCurrency = _baseCurrency;
-    oracleBase = _oracleBase;
+    oracleBase = OracleBase(_oracleBase);
   }
 
   function initializeFactory() public virtual override {

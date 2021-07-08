@@ -29,14 +29,14 @@ contract OracleMatic is OracleBase {
     definedOutputToken = USDC;
 
     //Addresses for factories and registries for different DEX platforms.
-    address quickswapFactoryAddress = 0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32;
     address sushiswapFactoryAddress = 0xc35DADB65012eC5796536bD9864eD8773aBc74C4;
+    address quickswapFactoryAddress = 0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32;
     address waultswapFactoryAddress = 0xa98ea6356A316b44Bf710D5f9b6b4eA0081409Ef;
 
     swaps = [
-    SwapBase( new UniSwap( sushiswapFactoryAddress, _storage) ), // Primary swap, used in getKeyTokenPrice
-    SwapBase( new UniSwap( quickswapFactoryAddress, _storage) ),
-    SwapBase( new UniSwap( waultswapFactoryAddress, _storage) )
+      address( new UniSwap( sushiswapFactoryAddress, _storage) ), // Primary swap, used in getKeyTokenPrice
+      address( new UniSwap( quickswapFactoryAddress, _storage) ),
+      address( new UniSwap( waultswapFactoryAddress, _storage) )
     ];
   }
 

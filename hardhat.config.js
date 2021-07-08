@@ -63,24 +63,24 @@ module.exports = {
       // url: "https://bsc-dataseed1.defibit.io/",
       url: "https://bsc-dataseed1.ninicoin.io/",
       // url: "wss://bsc-ws-node.nariox.org:443",
-      // url: "wss://bsc.getblock.io/mainnet/?api_key=" + keys.getblockKey, //TODO remove
       chainId: 56,
     },
     matic: {
       url: maticForkUrl,
       chainId: 137,
-      //accounts: [`0x${keys.MATIC_PRIVATE_KEY}`]
+      //accounts: [`0x${keys.DEPLOY_PRIVATE_KEY}`]
     },
     maticTestnet: {
       url: maticTestnetForkUrl,
       chainId: 80001,
-      // accounts: [`0x${keys.MATIC_PRIVATE_KEY}`]
+      // accounts: [`0x${keys.DEPLOY_PRIVATE_KEY}`]
     },
   },
   namedAccounts: {
     deployer: {
       default: 0, // here this will by default take the first account as deployer
-    }
+    },
+
   },
   etherscan: {
     apiKey: (process.env.BSC) ? keys.bscscanAPI : (process.env.ETH)?  keys.etherscanAPI : keys.polygonscanAPI
@@ -106,7 +106,7 @@ module.exports = {
   },
   contractSizer: {
     alphaSort: true,
-    runOnCompile: true,
+    runOnCompile: false, // set to true to print sizes
     disambiguatePaths: false,
   }
 };

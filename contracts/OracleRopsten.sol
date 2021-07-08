@@ -31,14 +31,9 @@ contract OracleRopsten is OracleBase {
     address sushiswapFactoryAddress = 0xaDe0ad525430cfe17218B679483c46B6c1d63fe2;
 
     swaps = [ // In priority order: from largest to smallest
-    SwapBase( new UniSwap( uniswapFactoryAddress,   _storage) ),
-    SwapBase( new UniSwap( sushiswapFactoryAddress, _storage) )
+      address( new UniSwap( uniswapFactoryAddress,   _storage) ),
+      address( new UniSwap( sushiswapFactoryAddress, _storage) )
     ];
   }
-
-/*  function initialize(address _storage) public virtual override initializer {
-    super.initialize(_storage);
-
-  }*/
 
 }
