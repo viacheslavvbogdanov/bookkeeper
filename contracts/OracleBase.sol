@@ -80,7 +80,7 @@ contract OracleBase is Governable, Initializable  {
 
   function addSwaps(address[] memory newSwaps) external onlyGovernance {
     for(uint i=0; i<newSwaps.length; i++) {
-      addSwap(newSwaps[i]);
+      if (!checkSwap(newSwaps[i])) addSwap(newSwaps[i]);
     }
   }
 
@@ -92,7 +92,7 @@ contract OracleBase is Governable, Initializable  {
 
   function addKeyTokens(address[] memory newTokens) external onlyGovernance {
     for(uint i=0; i<newTokens.length; i++) {
-      addKeyToken(newTokens[i]);
+      if (!checkKeyToken(newTokens[i])) addKeyToken(newTokens[i]);
     }
   }
 
@@ -104,7 +104,7 @@ contract OracleBase is Governable, Initializable  {
 
   function addPricingTokens(address[] memory newTokens) external onlyGovernance {
     for(uint i=0; i<newTokens.length; i++) {
-      addPricingToken(newTokens[i]);
+      if (!checkPricingToken(newTokens[i])) addPricingToken(newTokens[i]);
     }
   }
 

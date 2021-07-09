@@ -2,13 +2,13 @@
 // noinspection JSUndeclaredVariable
 
 const MFC = require("./config/mainnet-fork-test-config.js");
-const { artifacts, web3 } = require("hardhat");
+const { artifacts, deployments } = require("hardhat");
 const BigNumber = require("bignumber.js");
 const ERC20 = artifacts.require("ERC20")
 const IUniswapV2Factory = artifacts.require("IUniswapV2Factory");
 const SwapBase = artifacts.require("SwapBase")
 const Storage = artifacts.require("Storage");
-const OracleMatic = artifacts.require("OracleMatic");
+const OracleBase = artifacts.require("OracleBase");
 const OracleMatic_old = artifacts.require("OracleMatic_old");
 
 const assert = require('assert');
@@ -42,12 +42,12 @@ describe("MATIC: Testing all functionality", function () {
 
   before(async function () {
     console.log("Setting up contract")
-    accounts = await web3.eth.getAccounts();
-    governance = accounts[1];
-    // deploy storage
-    storage = await Storage.new({ from: governance });
-    // deploy Oracle
-    oracle = await OracleMatic.new(storage.address, {from: governance});
+    const {deployer} = await getNamedAccounts();
+    governance = deployer;
+    await deployments.fixture(); // Execute deployment
+    // Oracle
+    const Oracle = await deployments.get('OracleBase'); // Oracle is available because the fixture was executed
+    oracle = await OracleBase.at(Oracle.address);
 
     sushiswapFactory = await IUniswapV2Factory.at(sushiswapFactoryAddress);
     quickswapFactory = await IUniswapV2Factory.at(quickswapFactoryAddress);
@@ -57,7 +57,7 @@ describe("MATIC: Testing all functionality", function () {
 
   it("Production Tokens", async function () {
     const tokens = require("./config/production-tokens-matic.js");
-    // const oldOracle = await OracleMainnet_old.at('0x48dc32eca58106f06b41de514f29780ffa59c279')
+    storage = await Storage.new({ from: governance });
     const oldOracle = await OracleMatic_old.new(storage.address, {from: governance})
     for (const token in tokens) {
       if (!tokens.hasOwnProperty(token)) continue;

@@ -1,0 +1,11 @@
+{
+  "etherscanAPI": "",
+  "alchemyKeyMainnet": "",
+  "alchemyKeyRopsten": "",
+  "alchemyKey": "",
+  "bscscanAPI": "",
+  "getblockKey": "",
+  "// fork-possible-values":"mainnet,bsc,matic",
+  "fork":"mainnet",
+  "DEPLOY_PRIVATE_KEY": ""
+}

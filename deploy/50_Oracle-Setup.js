@@ -31,7 +31,7 @@ module.exports = async ({getNamedAccounts, deployments, network}) => {
             keyTokens = [a.USDC, a.ETH, a.DAI, a.USDT, a.UST, a.BTCB, a.BUSD, a.WBNB, a.VAI, a.ONEINCH];
             pricingTokens = [a.WBNB, a.BUSD, a.UST, a.USDT, a.USDC, a.VAI, a.DAI];
             swaps = [
-                await getSwapAddress('PanakeSwap'), // Primary swap, used in getKeyTokenPrice
+                await getSwapAddress('PancakeSwap'), // Primary swap, used in getKeyTokenPrice
                 await getSwapAddress('OneInchSwap'),
             ];
             break

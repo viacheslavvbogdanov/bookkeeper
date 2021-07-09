@@ -1,6 +1,6 @@
 // Utilities
 const MFC = require("./config/mainnet-fork-test-config.js");
-const { artifacts, web3 } = require("hardhat");
+const { artifacts, deployments } = require("hardhat");
 
 const { send } = require("@openzeppelin/test-helpers");
 const BigNumber = require("bignumber.js");
@@ -9,7 +9,7 @@ const IMooniFactory = artifacts.require("IMooniFactory")
 
 //const Strategy = artifacts.require("");
 const Storage = artifacts.require("Storage");
-const OracleBSC = artifacts.require("OracleBSC");
+const OracleBase = artifacts.require("OracleBase");
 const OracleBSC_old = artifacts.require("OracleBSC_old");
 
 const assert = require('assert');
@@ -60,12 +60,12 @@ describe("BSC: Testing all functionality", function (){
   
   before(async function () {
     console.log("Setting up contract")
-    accounts = await web3.eth.getAccounts();
-    governance = accounts[1];
-    // deploy storage
-    storage = await Storage.new({ from: governance });
-    //deploy Oracle
-    oracle = await OracleBSC.new(storage.address, {from: governance});
+    const {deployer} = await getNamedAccounts();
+    governance = deployer;
+    await deployments.fixture(); // Execute deployment
+    // Oracle
+    const Oracle = await deployments.get('OracleBase'); // Oracle is available because the fixture was executed
+    oracle = await OracleBase.at(Oracle.address);
 
     pancakeFactory = await IPancakeFactory.at(pancakeFactoryAddress);
     oneInchFactory = await IMooniFactory.at(oneInchFactoryAddress);
@@ -73,7 +73,7 @@ describe("BSC: Testing all functionality", function (){
 
   it("Production Tokens", async function () {
     const tokens = require("./config/production-tokens-bsc.js");
-    // const oldOracle = await OracleMainnet_old.at('0x48dc32eca58106f06b41de514f29780ffa59c279')
+    storage = await Storage.new({ from: governance });
     const oldOracle = await OracleBSC_old.new(storage.address, {from: governance})
     for (const token in tokens) {
       if (!tokens.hasOwnProperty(token)) continue;

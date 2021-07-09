@@ -33,6 +33,7 @@ if (process.env.FORK_BSC || keys.fork==='bsc') {
   blockNumber = undefined // use last block number (no caching)
 }
 
+const accounts = keys.DEPLOY_PRIVATE_KEY ? [`0x${keys.DEPLOY_PRIVATE_KEY}`] : undefined
 // console.log('forkUrl', forkUrl);
 // console.log('chainId', chainId);
 
@@ -53,10 +54,11 @@ module.exports = {
     ropsten: {
       allowUnlimitedContractSize: true,
       url: "https://eth-ropsten.alchemyapi.io/v2/" + keys.alchemyKeyRopsten,
-      // accounts: ["0x" + keys.ropstenPrivateKey],
+      accounts
     },
     mainnet: {
       url: "https://eth-mainnet.alchemyapi.io/v2/" + keys.alchemyKeyMainnet,
+      accounts
     },
     bsc: {
       // url: "https://bsc-dataseed.binance.org/",
@@ -64,16 +66,17 @@ module.exports = {
       url: "https://bsc-dataseed1.ninicoin.io/",
       // url: "wss://bsc-ws-node.nariox.org:443",
       chainId: 56,
+      accounts
     },
     matic: {
       url: maticForkUrl,
       chainId: 137,
-      //accounts: [`0x${keys.DEPLOY_PRIVATE_KEY}`]
+      accounts
     },
     maticTestnet: {
       url: maticTestnetForkUrl,
       chainId: 80001,
-      // accounts: [`0x${keys.DEPLOY_PRIVATE_KEY}`]
+      accounts
     },
   },
   namedAccounts: {
