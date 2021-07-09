@@ -112,7 +112,7 @@ contract OneInchSwap is SwapBase {
 
 
   /// @dev Generic function giving the price of a given token vs another given token
-  function getPriceVsToken(address token0, address token1, address poolAddress) public virtual override view returns (uint256) {
+  function getPriceVsToken(address token0, address token1, address /*poolAddress*/) public virtual override view returns (uint256) {
     address pairAddress = oneInchFactory.pools(token0, token1);
     IMooniswap pair = IMooniswap(pairAddress);
     uint256 reserve0 = pair.getBalanceForRemoval(token0);

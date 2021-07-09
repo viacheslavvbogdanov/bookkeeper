@@ -46,7 +46,7 @@ contract PancakeSwap is SwapBase {
     uint256 token0Decimals = IBEP20(tokens[0]).decimals();
     uint256 token1Decimals = IBEP20(tokens[1]).decimals();
     uint256 supplyDecimals = IBEP20(token).decimals();
-    (uint256 reserve0, uint256 reserve1, uint32 blockTimestampLast) = pair.getReserves();
+    (uint256 reserve0, uint256 reserve1, ) = pair.getReserves();
     uint256 totalSupply = pairToken.totalSupply();
     if (reserve0 == 0 || reserve1 == 0 || totalSupply == 0) {
       amounts[0] = 0;
@@ -87,7 +87,7 @@ contract PancakeSwap is SwapBase {
   }
 
   /// @dev Generic function giving the price of a given token vs another given token
-  function getPriceVsToken(address token0, address token1, address poolAddress) public virtual override view returns (uint256){
+  function getPriceVsToken(address token0, address token1, address /*poolAddress*/) public virtual override view returns (uint256){
     address pairAddress = pancakeFactory.getPair(token0, token1);
     IPancakePair pair = IPancakePair(pairAddress);
     (uint256 reserve0, uint256 reserve1,) = pair.getReserves();

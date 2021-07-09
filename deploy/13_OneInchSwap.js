@@ -6,7 +6,7 @@ module.exports = async (hre) => {
         console.log('-  No OneInchSwapBaseCurrency for', hre.network.name, 'Skipping...');
         return;
     }
-    return await deploySwap(hre, 'OneInchSwap', 'OneInchSwap',[baseCurrency]);
+    return await deploySwap(hre, 'OneInchSwap', [baseCurrency]);
 };
 module.exports.tags = ['Swap'];
 module.exports.dependencies = ['Storage'];

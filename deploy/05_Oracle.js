@@ -11,7 +11,7 @@ module.exports = async ({getNamedAccounts, deployments, network}) => {
             args: [Storage.address],
             proxy: {
                 owner: deployer,
-                // methodName: 'initialize',
+                methodName: 'initialize',
             },
             log: true,
         })

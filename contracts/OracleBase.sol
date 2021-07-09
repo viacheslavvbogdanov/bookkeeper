@@ -62,8 +62,9 @@ contract OracleBase is Governable, Initializable  {
     initialize(_storage);
   }
 
-  function initialize(address _storage) public virtual initializer {
-    setStorage(_storage);
+  function initialize(address _storage) public virtual override initializer onlyGovernance{
+    super.initialize(_storage);
+
     // after contract deploy you have to set:
     // - swaps
     // - keyTokens
@@ -84,7 +85,7 @@ contract OracleBase is Governable, Initializable  {
   }
 
   function addKeyToken(address newToken) public onlyGovernance {
-    require(!checkKeyToken(newToken)==false, "Already a key token");
+    require(!checkKeyToken(newToken), "Already a key token");
     keyTokens.push(newToken);
     emit KeyTokenAdded(newToken);
   }
@@ -96,7 +97,7 @@ contract OracleBase is Governable, Initializable  {
   }
 
   function addPricingToken(address newToken) public onlyGovernance validKeyToken(newToken) {
-    require(!checkPricingToken(newToken)==false, "Already a pricing token");
+    require(!checkPricingToken(newToken), "Already a pricing token");
     pricingTokens.push(newToken);
     emit PricingTokenAdded(newToken);
   }

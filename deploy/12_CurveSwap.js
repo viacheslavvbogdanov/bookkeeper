@@ -7,7 +7,7 @@ module.exports = async (hre) => {
         return;
     }
     const Oracle = await hre.deployments.get('OracleBase');
-    return await deploySwap(hre, 'CurveSwap', 'CurveSwap', [baseCurrency, Oracle.address])
+    return await deploySwap(hre, 'CurveSwap',[baseCurrency, Oracle.address])
 };
 module.exports.tags = ['Swap'];
 module.exports.dependencies = ['Storage'];
