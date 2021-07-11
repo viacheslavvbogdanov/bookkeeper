@@ -45,8 +45,8 @@ contract OneInchSwap is SwapBase {
       amounts[1] = 0;
       return (tokens, amounts);
     }
-    amounts[0] = reserve0*10**(supplyDecimals-token0Decimals+precisionDecimals)/totalSupply;
-    amounts[1] = reserve1*10**(supplyDecimals-token1Decimals+precisionDecimals)/totalSupply;
+    amounts[0] = reserve0*10**(supplyDecimals-token0Decimals+PRECISION_DECIMALS)/totalSupply;
+    amounts[1] = reserve1*10**(supplyDecimals-token1Decimals+PRECISION_DECIMALS)/totalSupply;
 
     //MAINNET:
     //1INCH uses ETH, instead of WETH in pools. For further calculations we continue with WETH instead.
@@ -112,14 +112,14 @@ contract OneInchSwap is SwapBase {
 
 
   /// @dev Generic function giving the price of a given token vs another given token
-  function getPriceVsToken(address token0, address token1, address poolAddress) public virtual override view returns (uint256) {
+  function getPriceVsToken(address token0, address token1, address /*poolAddress*/) public virtual override view returns (uint256) {
     address pairAddress = oneInchFactory.pools(token0, token1);
     IMooniswap pair = IMooniswap(pairAddress);
     uint256 reserve0 = pair.getBalanceForRemoval(token0);
     uint256 reserve1 = pair.getBalanceForRemoval(token1);
     uint256 token0Decimals = IBEP20(token0).decimals(); // was IBEP20
     uint256 token1Decimals = IBEP20(token1).decimals(); // was IBEP20
-    uint256 price = (reserve1 * 10 ** (token0Decimals - token1Decimals + precisionDecimals)) / reserve0;
+    uint256 price = (reserve1 * 10 ** (token0Decimals - token1Decimals + PRECISION_DECIMALS)) / reserve0;
     return price;
   }
 

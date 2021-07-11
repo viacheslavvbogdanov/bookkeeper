@@ -25,7 +25,7 @@ contract OracleMainnet_old is Governable {
   address public sushiswapFactoryAddress = 0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac;
   address public curveRegistryAddress = 0x7D86446dDb609eD0F5f8684AcF30380a356b2B4c;
   address public oneInchFactoryAddress = 0xbAF9A5d4b0052359326A6CDAb54BABAa3a3A9643;
-  uint256 public precisionDecimals = 18;
+  uint256 public PRECISION_DECIMALS = 18;
 
   IUniswapV2Factory uniswapFactory = IUniswapV2Factory(uniswapFactoryAddress);
   IUniswapV2Factory sushiswapFactory = IUniswapV2Factory(sushiswapFactoryAddress);
@@ -218,7 +218,7 @@ contract OracleMainnet_old is Governable {
   //In case of LP token, the underlying tokens will be found and valued to get the price.
   function getPrice(address token) external view returns (uint256) {
     if (token == definedOutputToken) {
-      return (10**precisionDecimals);
+      return (10**PRECISION_DECIMALS);
     }
     bool uniSushiLP;
     bool curveLP;
@@ -238,7 +238,7 @@ contract OracleMainnet_old is Governable {
           price = 0;
           return price;
         }
-        tokenValue = priceToken*amounts[i]/10**precisionDecimals;
+        tokenValue = priceToken*amounts[i]/10**PRECISION_DECIMALS;
         price = price + tokenValue;
       }
       return price;
@@ -255,7 +255,7 @@ contract OracleMainnet_old is Governable {
           price = 0;
           return price;
         }
-        tokenValue = priceToken*amounts[i]/10**precisionDecimals;
+        tokenValue = priceToken*amounts[i]/10**PRECISION_DECIMALS;
         price = price + tokenValue;
       }
       return price;
@@ -331,8 +331,8 @@ contract OracleMainnet_old is Governable {
       amounts[1] = 0;
       return (tokens, amounts);
     }
-    amounts[0] = reserve0*10**(supplyDecimals-token0Decimals+precisionDecimals)/totalSupply;
-    amounts[1] = reserve1*10**(supplyDecimals-token1Decimals+precisionDecimals)/totalSupply;
+    amounts[0] = reserve0*10**(supplyDecimals-token0Decimals+PRECISION_DECIMALS)/totalSupply;
+    amounts[1] = reserve1*10**(supplyDecimals-token1Decimals+PRECISION_DECIMALS)/totalSupply;
     return (tokens, amounts);
   }
 
@@ -354,8 +354,8 @@ contract OracleMainnet_old is Governable {
       amounts[1] = 0;
       return (tokens, amounts);
     }
-    amounts[0] = reserve0*10**(supplyDecimals-token0Decimals+precisionDecimals)/totalSupply;
-    amounts[1] = reserve1*10**(supplyDecimals-token1Decimals+precisionDecimals)/totalSupply;
+    amounts[0] = reserve0*10**(supplyDecimals-token0Decimals+PRECISION_DECIMALS)/totalSupply;
+    amounts[1] = reserve1*10**(supplyDecimals-token1Decimals+PRECISION_DECIMALS)/totalSupply;
 
     //1INCH uses ETH, instead of WETH in pools. For further calculations we continue with WETH instead.
     //ETH will always be the first in the pair, so no need to check tokens[1]
@@ -398,11 +398,11 @@ contract OracleMainnet_old is Governable {
         decimals[i] = ERC20(tokens[i]).decimals();
       }
 
-      amounts[i] = reserves[i]*10**(supplyDecimals-decimals[i]+precisionDecimals)/totalSupply;
+      amounts[i] = reserves[i]*10**(supplyDecimals-decimals[i]+PRECISION_DECIMALS)/totalSupply;
       //Curve has errors in their registry, where amounts are stored with the wrong number of decimals
       //This steps accounts for this. In general there will never be more than 1 of any underlying token
       //per curve LP token. If it is more, the decimals are corrected.
-      if (amounts[i] > 10**precisionDecimals) {
+      if (amounts[i] > 10**PRECISION_DECIMALS) {
         amounts[i] = amounts[i]*10**(decimals[i]-18);
       }
     }
@@ -429,7 +429,7 @@ contract OracleMainnet_old is Governable {
   function computePrice(address token) public view returns (uint256) {
     uint256 price;
     if (token == definedOutputToken) {
-      price = 10**precisionDecimals;
+      price = 10**PRECISION_DECIMALS;
     } else if (token == address(0)) {
       price = 0;
     } else {
@@ -441,15 +441,15 @@ contract OracleMainnet_old is Governable {
       } else if (uni) {
         priceVsKeyToken = getPriceVsTokenUni(token,keyToken);
         keyTokenPrice = getKeyTokenPrice(keyToken);
-        price = priceVsKeyToken*keyTokenPrice/10**precisionDecimals;
+        price = priceVsKeyToken*keyTokenPrice/10**PRECISION_DECIMALS;
       } else if (sushi) {
         priceVsKeyToken = getPriceVsTokenSushi(token,keyToken);
         keyTokenPrice = getKeyTokenPrice(keyToken);
-        price = priceVsKeyToken*keyTokenPrice/10**precisionDecimals;
+        price = priceVsKeyToken*keyTokenPrice/10**PRECISION_DECIMALS;
       } else {
         priceVsKeyToken = getPriceVsTokenCurve(token,keyToken,pool);
         keyTokenPrice = getKeyTokenPrice(keyToken);
-        price = priceVsKeyToken*keyTokenPrice/10**precisionDecimals;
+        price = priceVsKeyToken*keyTokenPrice/10**PRECISION_DECIMALS;
       }
     }
     return (price);
@@ -565,9 +565,9 @@ contract OracleMainnet_old is Governable {
     uint256 token1Decimals = ERC20(token1).decimals();
     uint256 price;
     if (token0 == pair.token0()) {
-      price = (reserve1*10**(token0Decimals-token1Decimals+precisionDecimals))/reserve0;
+      price = (reserve1*10**(token0Decimals-token1Decimals+PRECISION_DECIMALS))/reserve0;
     } else {
-      price = (reserve0*10**(token0Decimals-token1Decimals+precisionDecimals))/reserve1;
+      price = (reserve0*10**(token0Decimals-token1Decimals+PRECISION_DECIMALS))/reserve1;
     }
     return price;
   }
@@ -581,9 +581,9 @@ contract OracleMainnet_old is Governable {
     uint256 token1Decimals = ERC20(token1).decimals();
     uint256 price;
     if (token0 == pair.token0()) {
-      price = (reserve1*10**(token0Decimals-token1Decimals+precisionDecimals))/reserve0;
+      price = (reserve1*10**(token0Decimals-token1Decimals+PRECISION_DECIMALS))/reserve0;
     } else {
-      price = (reserve0*10**(token0Decimals-token1Decimals+precisionDecimals))/reserve1;
+      price = (reserve0*10**(token0Decimals-token1Decimals+PRECISION_DECIMALS))/reserve1;
     }
     return price;
   }
@@ -604,10 +604,10 @@ contract OracleMainnet_old is Governable {
     uint256 price;
     if (underlying) {
       amount1 = pool.get_dy_underlying(indexFrom, indexTo, 10**decimals0);
-      price = amount1*10**(precisionDecimals-decimals1);
+      price = amount1*10**(PRECISION_DECIMALS-decimals1);
     } else {
       amount1 = pool.get_dy(indexFrom, indexTo, 10**decimals0);
-      price = amount1*10**(precisionDecimals-decimals1);
+      price = amount1*10**(PRECISION_DECIMALS-decimals1);
     }
     return price;
   }
@@ -618,7 +618,7 @@ contract OracleMainnet_old is Governable {
     uint256 price;
     uint256 priceVsPricingToken;
     if (token == definedOutputToken) {
-      price = 10**precisionDecimals;
+      price = 10**PRECISION_DECIMALS;
     } else if (isPricingToken) {
       price = getPriceVsTokenUni(token,definedOutputToken);
     } else {
@@ -631,8 +631,8 @@ contract OracleMainnet_old is Governable {
       } else {
         priceVsPricingToken = getPriceVsTokenCurve(token,pricingToken,pricingPool);
       }
-      pricingTokenPrice = (pricingToken == definedOutputToken)? 10**precisionDecimals:getPriceVsTokenUni(pricingToken,definedOutputToken);
-      price = priceVsPricingToken*pricingTokenPrice/10**precisionDecimals;
+      pricingTokenPrice = (pricingToken == definedOutputToken)? 10**PRECISION_DECIMALS:getPriceVsTokenUni(pricingToken,definedOutputToken);
+      price = priceVsPricingToken*pricingTokenPrice/10**PRECISION_DECIMALS;
     }
     return price;
   }

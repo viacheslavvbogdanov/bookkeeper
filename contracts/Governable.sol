@@ -8,12 +8,12 @@ contract Governable {
   Storage public store;
 
   constructor(address _store) public {
-    require(_store != address(0), "new storage shouldn't be empty");
-    store = Storage(_store);
+    setStorage(_store);
   }
 
   modifier onlyGovernance() {
-    require(store.isGovernance(msg.sender), "Not governance");
+    // pass check while store is not initialized
+    require((address(store)==address(0)) || store.isGovernance(msg.sender), "Not governance");
     _;
   }
 

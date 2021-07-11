@@ -5,7 +5,7 @@ const MFC = require("./config/mainnet-fork-test-config.js");
 const CoinGecko = require("coingecko-api");
 const CoinGeckoClient = new CoinGecko();
 
-const { artifacts, web3 } = require("hardhat");
+const { artifacts, deployments } = require("hardhat");
 const BigNumber = require("bignumber.js");
 const IUniswapV2Factory = artifacts.require("IUniswapV2Factory");
 const ICurveRegistry = artifacts.require("ICurveRegistry");
@@ -14,7 +14,7 @@ const SwapBase = artifacts.require("SwapBase")
 
 //const Strategy = artifacts.require("");
 const Storage = artifacts.require("Storage");
-const OracleMainnet = artifacts.require("OracleMainnet");
+const OracleBase = artifacts.require("OracleBase");
 const OracleMainnet_old = artifacts.require("OracleMainnet_old");
 const assert = require('assert');
 
@@ -22,7 +22,6 @@ const assert = require('assert');
 // noinspection SpellCheckingInspection
 describe("Mainnet: Testing all functionality", function (){
 
-  let accounts;
   let precisionDecimals = 18;
   // parties in the protocol
 
@@ -76,12 +75,12 @@ describe("Mainnet: Testing all functionality", function (){
 
   before(async function () {
     console.log("Setting up contract")
-    accounts = await web3.eth.getAccounts();
-    governance = accounts[1];
-    // deploy storage
-    storage = await Storage.new({ from: governance });
-    //deploy Oracle
-    oracle = await OracleMainnet.new(storage.address, {from: governance});
+    const {deployer} = await getNamedAccounts();
+    governance = deployer;
+    await deployments.fixture(); // Execute deployment
+    // Oracle
+    const Oracle = await deployments.get('OracleBase'); // Oracle is available because the fixture was executed
+    oracle = await OracleBase.at(Oracle.address);
 
     uniswapFactory   = await IUniswapV2Factory.at(uniswapFactoryAddress);
     sushiswapFactory = await IUniswapV2Factory.at(sushiswapFactoryAddress);
@@ -91,7 +90,7 @@ describe("Mainnet: Testing all functionality", function (){
 
   it("Production Tokens", async function () {
     const tokens = require("./config/production-tokens-mainnet.js");
-    // const oldOracle = await OracleMainnet_old.at('0x48dc32eca58106f06b41de514f29780ffa59c279')
+    storage = await Storage.new({ from: governance });
     const oldOracle = await OracleMainnet_old.new(storage.address, {from: governance})
     for (const token in tokens) {
       if (!tokens.hasOwnProperty(token)) continue;
@@ -413,7 +412,7 @@ describe("Mainnet: Testing all functionality", function (){
     }
   });
 
-  it.only("Control functions", async function() {
+  it("Control functions", async function() {
     console.log("Change factory address");
     const uniSwapAddress = await oracle.swaps(0); // Swap at index 0 - UniSwap
     const uniSwap = await SwapBase.at(uniSwapAddress)

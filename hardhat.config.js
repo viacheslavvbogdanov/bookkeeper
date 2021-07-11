@@ -33,6 +33,7 @@ if (process.env.FORK_BSC || keys.fork==='bsc') {
   blockNumber = undefined // use last block number (no caching)
 }
 
+const accounts = keys.DEPLOY_PRIVATE_KEY ? [`0x${keys.DEPLOY_PRIVATE_KEY}`] : undefined
 // console.log('forkUrl', forkUrl);
 // console.log('chainId', chainId);
 
@@ -53,34 +54,36 @@ module.exports = {
     ropsten: {
       allowUnlimitedContractSize: true,
       url: "https://eth-ropsten.alchemyapi.io/v2/" + keys.alchemyKeyRopsten,
-      // accounts: ["0x" + keys.ropstenPrivateKey],
+      accounts
     },
     mainnet: {
       url: "https://eth-mainnet.alchemyapi.io/v2/" + keys.alchemyKeyMainnet,
+      accounts
     },
     bsc: {
       // url: "https://bsc-dataseed.binance.org/",
       // url: "https://bsc-dataseed1.defibit.io/",
       url: "https://bsc-dataseed1.ninicoin.io/",
       // url: "wss://bsc-ws-node.nariox.org:443",
-      // url: "wss://bsc.getblock.io/mainnet/?api_key=" + keys.getblockKey, //TODO remove
       chainId: 56,
+      accounts
     },
     matic: {
       url: maticForkUrl,
       chainId: 137,
-      //accounts: [`0x${keys.MATIC_PRIVATE_KEY}`]
+      accounts
     },
     maticTestnet: {
       url: maticTestnetForkUrl,
       chainId: 80001,
-      // accounts: [`0x${keys.MATIC_PRIVATE_KEY}`]
+      accounts
     },
   },
   namedAccounts: {
     deployer: {
       default: 0, // here this will by default take the first account as deployer
-    }
+    },
+
   },
   etherscan: {
     apiKey: (process.env.BSC) ? keys.bscscanAPI : (process.env.ETH)?  keys.etherscanAPI : keys.polygonscanAPI
@@ -106,7 +109,7 @@ module.exports = {
   },
   contractSizer: {
     alphaSort: true,
-    runOnCompile: true,
+    runOnCompile: false, // set to true to print sizes
     disambiguatePaths: false,
   }
 };

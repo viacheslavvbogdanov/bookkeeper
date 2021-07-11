@@ -1,3 +1,7 @@
+#DEPRICATED - USE hardhat deploy
+
+TODO cleanup unused scripts 
+
 # Deployment scripts
 
 This directory contains deployment scripts that allow deployment of contracts to live networks. In order to do this you will have to give the deployer private key and a chosen password once to initialize. This will encrypt your private key. When deploying, you need to give the password to decrypt your private key.

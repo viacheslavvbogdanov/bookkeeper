@@ -22,7 +22,7 @@ contract OracleMatic_old is Governable {
   address public quickswapFactoryAddress = 0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32;  //QUICK swap address
   address public sushiswapFactoryAddress = 0xc35DADB65012eC5796536bD9864eD8773aBc74C4;
 
-  uint256 public precisionDecimals = 18;
+  uint256 public PRECISION_DECIMALS = 18;
 
   IUniswapV2Factory quickswapFactory = IUniswapV2Factory(quickswapFactoryAddress);
   IUniswapV2Factory sushiswapFactory = IUniswapV2Factory(sushiswapFactoryAddress);
@@ -139,7 +139,7 @@ contract OracleMatic_old is Governable {
   //In case of LP token, the underlying tokens will be found and valued to get the price.
   function getPrice(address token) external view returns (uint256) {
     if (token == definedOutputToken) {
-      return (10**precisionDecimals);
+      return (10**PRECISION_DECIMALS);
     }
     bool quickSushiLP = isQuickSushiCheck(token);
     uint256 priceToken;
@@ -156,7 +156,7 @@ contract OracleMatic_old is Governable {
           price = 0;
           return price;
         }
-        tokenValue = priceToken*amounts[i]/10**precisionDecimals;
+        tokenValue = priceToken*amounts[i]/10**PRECISION_DECIMALS;
         price = price + tokenValue;
       }
       return price;
@@ -203,8 +203,8 @@ contract OracleMatic_old is Governable {
       amounts[1] = 0;
       return (tokens, amounts);
     }
-    amounts[0] = reserve0*10**(supplyDecimals-token0Decimals+precisionDecimals)/totalSupply;
-    amounts[1] = reserve1*10**(supplyDecimals-token1Decimals+precisionDecimals)/totalSupply;
+    amounts[0] = reserve0*10**(supplyDecimals-token0Decimals+PRECISION_DECIMALS)/totalSupply;
+    amounts[1] = reserve1*10**(supplyDecimals-token1Decimals+PRECISION_DECIMALS)/totalSupply;
     return (tokens, amounts);
   }
 
@@ -212,7 +212,7 @@ contract OracleMatic_old is Governable {
   function computePrice(address token) public view returns (uint256) {
     uint256 price;
     if (token == definedOutputToken) {
-      price = 10**precisionDecimals;
+      price = 10**PRECISION_DECIMALS;
     } else if (token == address(0)) {
       price = 0;
     } else {
@@ -224,11 +224,11 @@ contract OracleMatic_old is Governable {
       } else if (quick) {
         priceVsKeyToken = getPriceVsToken(token,keyToken);
         keyTokenPrice = getKeyTokenPrice(keyToken);
-        price = priceVsKeyToken*keyTokenPrice/10**precisionDecimals;
+        price = priceVsKeyToken*keyTokenPrice/10**PRECISION_DECIMALS;
       } else {
         priceVsKeyToken = getPriceVsTokenSushi(token,keyToken);
         keyTokenPrice = getKeyTokenPrice(keyToken);
-        price = priceVsKeyToken*keyTokenPrice/10**precisionDecimals;
+        price = priceVsKeyToken*keyTokenPrice/10**PRECISION_DECIMALS;
       }
     }
     return (price);
@@ -280,9 +280,9 @@ function getPriceVsToken(address token0, address token1) internal view returns (
   uint256 token1Decimals = ERC20(token1).decimals();
   uint256 price;
   if (token0 == pair.token0()) {
-    price = (reserve1*10**(token0Decimals-token1Decimals+precisionDecimals))/reserve0;
+    price = (reserve1*10**(token0Decimals-token1Decimals+PRECISION_DECIMALS))/reserve0;
   } else {
-    price = (reserve0*10**(token0Decimals-token1Decimals+precisionDecimals))/reserve1;
+    price = (reserve0*10**(token0Decimals-token1Decimals+PRECISION_DECIMALS))/reserve1;
   }
   return price;
 }
@@ -296,9 +296,9 @@ function getPriceVsToken(address token0, address token1) internal view returns (
     uint256 token1Decimals = ERC20(token1).decimals();
     uint256 price;
     if (token0 == pair.token0()) {
-      price = (reserve1*10**(token0Decimals-token1Decimals+precisionDecimals))/reserve0;
+      price = (reserve1*10**(token0Decimals-token1Decimals+PRECISION_DECIMALS))/reserve0;
     } else {
-      price = (reserve0*10**(token0Decimals-token1Decimals+precisionDecimals))/reserve1;
+      price = (reserve0*10**(token0Decimals-token1Decimals+PRECISION_DECIMALS))/reserve1;
     }
     return price;
   }
@@ -309,7 +309,7 @@ function getPriceVsToken(address token0, address token1) internal view returns (
     uint256 price;
     uint256 priceVsPricingToken;
     if (token == definedOutputToken) {
-      price = 10**precisionDecimals;
+      price = 10**PRECISION_DECIMALS;
     } else if (isPricingToken) {
 //      price = getPriceVsTokenQuick(token,definedOutputToken);
       price = getPriceVsTokenSushi(token,definedOutputToken);
@@ -322,8 +322,8 @@ function getPriceVsToken(address token0, address token1) internal view returns (
         priceVsPricingToken = getPriceVsTokenSushi(token,pricingToken);
       }
 
-      pricingTokenPrice = (pricingToken == definedOutputToken)? 10**precisionDecimals:getPriceVsTokenSushi(pricingToken,definedOutputToken);
-      price = priceVsPricingToken*pricingTokenPrice/10**precisionDecimals;
+      pricingTokenPrice = (pricingToken == definedOutputToken)? 10**PRECISION_DECIMALS:getPriceVsTokenSushi(pricingToken,definedOutputToken);
+      price = priceVsPricingToken*pricingTokenPrice/10**PRECISION_DECIMALS;
     }
     return price;
   }

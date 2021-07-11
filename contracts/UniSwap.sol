@@ -52,8 +52,8 @@ contract UniSwap is SwapBase {
       amounts[1] = 0;
       return (tokens, amounts);
     }
-    amounts[0] = reserve0*10**(supplyDecimals-token0Decimals+precisionDecimals)/totalSupply;
-    amounts[1] = reserve1*10**(supplyDecimals-token1Decimals+precisionDecimals)/totalSupply;
+    amounts[0] = reserve0*10**(supplyDecimals-token0Decimals+PRECISION_DECIMALS)/totalSupply;
+    amounts[1] = reserve1*10**(supplyDecimals-token1Decimals+PRECISION_DECIMALS)/totalSupply;
     return (tokens, amounts);
   }
 
@@ -86,7 +86,7 @@ contract UniSwap is SwapBase {
   }
 
   /// @dev Generic function giving the price of a given token vs another given token
-  function getPriceVsToken(address token0, address token1, address poolAddress) public virtual override view returns (uint256){
+  function getPriceVsToken(address token0, address token1, address /*poolAddress*/) public virtual override view returns (uint256){
     address pairAddress = uniswapFactory.getPair(token0,token1);
     IUniswapV2Pair pair = IUniswapV2Pair(pairAddress);
     (uint256 reserve0, uint256 reserve1,) = pair.getReserves();
@@ -94,9 +94,9 @@ contract UniSwap is SwapBase {
     uint256 token1Decimals = ERC20(token1).decimals();
     uint256 price;
     if (token0 == pair.token0()) {
-      price = (reserve1*10**(token0Decimals-token1Decimals+precisionDecimals))/reserve0;
+      price = (reserve1*10**(token0Decimals-token1Decimals+PRECISION_DECIMALS))/reserve0;
     } else {
-      price = (reserve0*10**(token0Decimals-token1Decimals+precisionDecimals))/reserve1;
+      price = (reserve0*10**(token0Decimals-token1Decimals+PRECISION_DECIMALS))/reserve1;
     }
     return price;
   }

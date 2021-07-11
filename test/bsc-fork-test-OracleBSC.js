@@ -1,6 +1,6 @@
 // Utilities
 const MFC = require("./config/mainnet-fork-test-config.js");
-const { artifacts, web3 } = require("hardhat");
+const { artifacts, deployments } = require("hardhat");
 
 const { send } = require("@openzeppelin/test-helpers");
 const BigNumber = require("bignumber.js");
@@ -9,15 +9,15 @@ const IMooniFactory = artifacts.require("IMooniFactory")
 
 //const Strategy = artifacts.require("");
 const Storage = artifacts.require("Storage");
-const OracleBSC = artifacts.require("OracleBSC");
+const OracleBase = artifacts.require("OracleBase");
+const SwapBase = artifacts.require("SwapBase")
 const OracleBSC_old = artifacts.require("OracleBSC_old");
 
-const assert = require('assert');
+// const assert = require('assert');
 
 // Vanilla Mocha test. Increased compatibility with tools that integrate Mocha.
 describe("BSC: Testing all functionality", function (){
   
-  let accounts;
   let precisionDecimals = 18;
   // parties in the protocol
 
@@ -60,12 +60,12 @@ describe("BSC: Testing all functionality", function (){
   
   before(async function () {
     console.log("Setting up contract")
-    accounts = await web3.eth.getAccounts();
-    governance = accounts[1];
-    // deploy storage
-    storage = await Storage.new({ from: governance });
-    //deploy Oracle
-    oracle = await OracleBSC.new(storage.address, {from: governance});
+    const {deployer} = await getNamedAccounts();
+    governance = deployer;
+    await deployments.fixture(); // Execute deployment
+    // Oracle
+    const Oracle = await deployments.get('OracleBase'); // Oracle is available because the fixture was executed
+    oracle = await OracleBase.at(Oracle.address);
 
     pancakeFactory = await IPancakeFactory.at(pancakeFactoryAddress);
     oneInchFactory = await IMooniFactory.at(oneInchFactoryAddress);
@@ -73,7 +73,7 @@ describe("BSC: Testing all functionality", function (){
 
   it("Production Tokens", async function () {
     const tokens = require("./config/production-tokens-bsc.js");
-    // const oldOracle = await OracleMainnet_old.at('0x48dc32eca58106f06b41de514f29780ffa59c279')
+    storage = await Storage.new({ from: governance });
     const oldOracle = await OracleBSC_old.new(storage.address, {from: governance})
     for (const token in tokens) {
       if (!tokens.hasOwnProperty(token)) continue;
@@ -175,12 +175,13 @@ describe("BSC: Testing all functionality", function (){
   });
 
   it("Control functions", async function() {
+    let isKeyToken, isPricingToken;
     console.log("Change factories");
-    await oracle.changePancakeFactory(oneInchFactoryAddress, {from: governance});
-    await oracle.changeOneInchFactory(pancakeFactoryAddress, {from: governance});
+    const panakeAddress = await oracle.swaps(0); // Swap at index 0 - UniSwap
+    const swap = await SwapBase.at(panakeAddress)
+    await swap.changeFactory(oneInchFactoryAddress, {from: governance});
     console.log("Change back");
-    await oracle.changePancakeFactory(pancakeFactoryAddress, {from: governance});
-    await oracle.changeOneInchFactory(oneInchFactoryAddress, {from: governance});
+    await swap.changeFactory(pancakeFactoryAddress, {from: governance});
     console.log("Add FARM as key token");
     await oracle.addKeyToken(MFC.FARM_ADDRESS, {from: governance});
     isKeyToken = await oracle.checkKeyToken(MFC.FARM_ADDRESS, {from: governance});
@@ -197,9 +198,9 @@ describe("BSC: Testing all functionality", function (){
     console.log("FARM is pricing token:", isPricingToken);
     console.log("Change defined output to WBNB");
     await oracle.changeDefinedOutput("0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c", {from: governance});
-    bnbPrice = await oracle.getPrice("0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c", {from: governance});
+    const bnbPrice = await oracle.getPrice("0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c", {from: governance});
     console.log("WBNB price:", BigNumber(bnbPrice).toFixed()/10**precisionDecimals);
-    busdPrice = await oracle.getPrice("0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56", {from: governance});
+    const busdPrice = await oracle.getPrice("0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56", {from: governance});
     console.log("BUSD price:", BigNumber(busdPrice).toFixed()/10**precisionDecimals);
   });
 

@@ -39,15 +39,27 @@ The project uses Hardhat to compile, test and deploy solidity smart contracts.
   "MATIC_PRIVATE_KEY":""
 }
 ```
-fork may be "matic","bsc" or "main" (used in [hardhat.config.js]())
+fork may be "matic","bsc" or "mainnet" (used in [hardhat.config.js]())
 
 ## Run
 
-To run use the commands available in [Hardhat](https://hardhat.org/). You can compile the contracts using `npx hardhat compile` and run tests using `npx hardhat test [test file]`. 
+To run use the commands available in [Hardhat](https://hardhat.org/). 
+You can compile the contracts using `npx hardhat compile` 
+and run tests using `npx hardhat test [test file]`. 
 
-## Deployment to MATIC
-1.Add ```MATIC_PRIVATE_KEY``` to the [dev-keys.json](dev-keys.json).
+## Deployment 
+All addresses for tokens and factories defined at [deployment-tools/address-book.js](deployment-tools/address-book.js)
 
+```deployments``` folder must be added to the repository, 
+to store all previous contracts, and their proxies, so later it shoud update changed contracts only.
+
+To test deployment, first set "fork" at the [dev-keys.json](dev-keys.json) to needed network (ex."matic")
+Check deployment:```hardhat deploy```
+Run test for this network (hardhat will deploy all changed contracts automatically):  
+```npx hardhat test test/matic-fork-test-OracleMatic.js```
+
+### Deploy to production
+1.Add ```DEPLOY_PRIVATE_KEY``` to the [dev-keys.json](dev-keys.json) 
 Key **should NOT** start with ```0x```. It will be added automatically.
 
 2.Run
@@ -59,8 +71,3 @@ or for Mumbai Testnet
 ```hardhat --network maticTestnet deploy```
 
 3.Do not forget to remove private key after deployment from the [dev-keys.json](dev-keys.json)
-
-For deployment to other networks see [deployment/README.md]() 
-or you can consider to use same procedure, 
-then extend [deploy/02_deploy_Oracle.js]() (add contract names for networks) 
-and [hardhat.config.js]() (add private key refs for other networks).
