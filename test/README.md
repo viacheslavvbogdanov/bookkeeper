@@ -9,3 +9,7 @@ To get most accurate results in comparison with CoinGecko, change the blockNumbe
 To run the Oracle test, use the command `npx hardhat test test/mainnet-fork-test-Oracle.js`.
 
 Note that the first run of the test may take a while, as all relevant contracts will have to be loaded locally. Repeated runs will be much quicker.
+
+### Errors
+Returned error: missing trie node : too many requests to node. 
+Consider running tests one-by-one or use private node witout limits for requests.

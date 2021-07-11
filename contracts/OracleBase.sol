@@ -58,18 +58,19 @@ contract OracleBase is Governable, Initializable  {
   event SwapRemoved(address newSwap);
   event DefinedOutputChanged(address newOutputToken, address oldOutputToken);
 
-  constructor(address _storage) Governable(_storage) public {
-    initialize(_storage);
+  constructor(address _storage, address[] memory _keyTokens, address[] memory _pricingTokens, address _outputToken)
+  public Governable(_storage) {
+    initialize(_storage, _keyTokens, _pricingTokens, _outputToken);
   }
 
-  function initialize(address _storage) public virtual override initializer onlyGovernance{
-    super.initialize(_storage);
+  function initialize(address _storage, address[] memory _keyTokens, address[] memory _pricingTokens, address _outputToken)
+  public initializer {
+    Governable.setStorage(_storage);
 
-    // after contract deploy you have to set:
-    // - swaps
-    // - keyTokens
-    // - pricingTokens
-    // - definedOutputToken address
+    addKeyTokens(_keyTokens);
+    addPricingTokens(_pricingTokens);
+    changeDefinedOutput(_outputToken);
+    // after contract deploy you have to set swaps
   }
 
   function addSwap(address newSwap) public onlyGovernance {
@@ -78,10 +79,14 @@ contract OracleBase is Governable, Initializable  {
     emit SwapAdded(newSwap);
   }
 
-  function addSwaps(address[] memory newSwaps) external onlyGovernance {
+  function addSwaps(address[] memory newSwaps) public onlyGovernance {
     for(uint i=0; i<newSwaps.length; i++) {
       if (!checkSwap(newSwaps[i])) addSwap(newSwaps[i]);
     }
+  }
+  function setSwaps(address[] memory newSwaps) external onlyGovernance {
+    delete swaps;
+    addSwaps(newSwaps);
   }
 
   function addKeyToken(address newToken) public onlyGovernance {
@@ -90,7 +95,7 @@ contract OracleBase is Governable, Initializable  {
     emit KeyTokenAdded(newToken);
   }
 
-  function addKeyTokens(address[] memory newTokens) external onlyGovernance {
+  function addKeyTokens(address[] memory newTokens) public onlyGovernance {
     for(uint i=0; i<newTokens.length; i++) {
       if (!checkKeyToken(newTokens[i])) addKeyToken(newTokens[i]);
     }
@@ -102,7 +107,7 @@ contract OracleBase is Governable, Initializable  {
     emit PricingTokenAdded(newToken);
   }
 
-  function addPricingTokens(address[] memory newTokens) external onlyGovernance {
+  function addPricingTokens(address[] memory newTokens) public onlyGovernance {
     for(uint i=0; i<newTokens.length; i++) {
       if (!checkPricingToken(newTokens[i])) addPricingToken(newTokens[i]);
     }
@@ -140,7 +145,7 @@ contract OracleBase is Governable, Initializable  {
     emit SwapRemoved(swap);
   }
 
-  function changeDefinedOutput(address newOutputToken) external onlyGovernance validKeyToken(newOutputToken) {
+  function changeDefinedOutput(address newOutputToken) public onlyGovernance validKeyToken(newOutputToken) {
     address oldOutputToken = definedOutputToken;
     definedOutputToken = newOutputToken;
     emit DefinedOutputChanged(newOutputToken, oldOutputToken);

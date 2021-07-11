@@ -10,14 +10,14 @@ const IMooniFactory = artifacts.require("IMooniFactory")
 //const Strategy = artifacts.require("");
 const Storage = artifacts.require("Storage");
 const OracleBase = artifacts.require("OracleBase");
+const SwapBase = artifacts.require("SwapBase")
 const OracleBSC_old = artifacts.require("OracleBSC_old");
 
-const assert = require('assert');
+// const assert = require('assert');
 
 // Vanilla Mocha test. Increased compatibility with tools that integrate Mocha.
 describe("BSC: Testing all functionality", function (){
   
-  let accounts;
   let precisionDecimals = 18;
   // parties in the protocol
 
@@ -175,12 +175,13 @@ describe("BSC: Testing all functionality", function (){
   });
 
   it("Control functions", async function() {
+    let isKeyToken, isPricingToken;
     console.log("Change factories");
-    await oracle.changePancakeFactory(oneInchFactoryAddress, {from: governance});
-    await oracle.changeOneInchFactory(pancakeFactoryAddress, {from: governance});
+    const panakeAddress = await oracle.swaps(0); // Swap at index 0 - UniSwap
+    const swap = await SwapBase.at(panakeAddress)
+    await swap.changeFactory(oneInchFactoryAddress, {from: governance});
     console.log("Change back");
-    await oracle.changePancakeFactory(pancakeFactoryAddress, {from: governance});
-    await oracle.changeOneInchFactory(oneInchFactoryAddress, {from: governance});
+    await swap.changeFactory(pancakeFactoryAddress, {from: governance});
     console.log("Add FARM as key token");
     await oracle.addKeyToken(MFC.FARM_ADDRESS, {from: governance});
     isKeyToken = await oracle.checkKeyToken(MFC.FARM_ADDRESS, {from: governance});
@@ -197,9 +198,9 @@ describe("BSC: Testing all functionality", function (){
     console.log("FARM is pricing token:", isPricingToken);
     console.log("Change defined output to WBNB");
     await oracle.changeDefinedOutput("0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c", {from: governance});
-    bnbPrice = await oracle.getPrice("0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c", {from: governance});
+    const bnbPrice = await oracle.getPrice("0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c", {from: governance});
     console.log("WBNB price:", BigNumber(bnbPrice).toFixed()/10**precisionDecimals);
-    busdPrice = await oracle.getPrice("0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56", {from: governance});
+    const busdPrice = await oracle.getPrice("0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56", {from: governance});
     console.log("BUSD price:", BigNumber(busdPrice).toFixed()/10**precisionDecimals);
   });
 

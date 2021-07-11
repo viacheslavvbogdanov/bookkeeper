@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.5.16;
 
-//import "@openzeppelin/contracts/proxy/Initializable.sol"; //TODO do not compiled for some reason (Identifier already declared.)
 import "./Storage.sol";
 
 contract Governable {
@@ -9,10 +8,6 @@ contract Governable {
   Storage public store;
 
   constructor(address _store) public {
-    initialize(_store);
-  }
-
-  function initialize(address _store) public virtual onlyGovernance /*initializer*/ { //TODO enable initializer directive
     setStorage(_store);
   }
 
