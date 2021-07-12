@@ -10,4 +10,4 @@ module.exports = async (hre) => {
     return await deploySwap(hre, 'CurveSwap',[baseCurrency, Oracle.address])
 };
 module.exports.tags = ['Swap'];
-module.exports.dependencies = ['Storage'];
+module.exports.dependencies = ['OracleBase'];

@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: MIT
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "./Governable.sol";
 
 pragma solidity 0.6.12;
 
-abstract contract SwapBase is Governable {
+abstract contract SwapBase {
 
   using Address for address;
   using SafeMath for uint256;
@@ -14,21 +13,13 @@ abstract contract SwapBase is Governable {
 
   address factoryAddress;
 
-  event FactoryChanged(address newFactory, address oldFactory);
-
-  constructor(address _factoryAddress, address _storage) Governable(_storage) public {
+  constructor(address _factoryAddress) public {
+    require(_factoryAddress!=address(0), "Factory must be set");
     factoryAddress = _factoryAddress;
-    if (factoryAddress!=address(0)) initializeFactory();
+    initializeFactory();
   }
 
   function initializeFactory() internal virtual;
-
-  function changeFactory(address newFactory) external onlyGovernance {
-    address oldFactory = factoryAddress;
-    factoryAddress = newFactory;
-    initializeFactory();
-    emit FactoryChanged(newFactory, oldFactory);
-  }
 
   /// @dev Check what token is pool of this Swap
   function isPool(address token) public virtual view returns(bool);

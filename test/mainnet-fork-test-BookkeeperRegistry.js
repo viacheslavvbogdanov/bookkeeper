@@ -41,10 +41,8 @@ if ( process.env.MAINNET_FORK ) {
 
       beforeEach(async function () {
         console.log("Setting up Harvest Finance contracts")
-        // deploy storage
-        storage = await Storage.new({ from: governance });
         //deploy Viewer
-        bookkeeperRegistry = await BookkeeperRegistry.new(storage.address, {from: governance});
+        bookkeeperRegistry = await BookkeeperRegistry.new({from: governance});
 
       });
 

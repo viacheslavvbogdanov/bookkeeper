@@ -13,7 +13,6 @@ const IMooniFactory = artifacts.require("IMooniFactory")
 const SwapBase = artifacts.require("SwapBase")
 
 //const Strategy = artifacts.require("");
-const Storage = artifacts.require("Storage");
 const OracleBase = artifacts.require("OracleBase");
 const OracleMainnet_old = artifacts.require("OracleMainnet_old");
 const assert = require('assert');
@@ -26,7 +25,6 @@ describe("Mainnet: Testing all functionality", function (){
   // parties in the protocol
 
   // Core protocol contracts
-  let storage;
   let oracle;
 
   let uniswapFactoryAddress = "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f";
@@ -90,8 +88,7 @@ describe("Mainnet: Testing all functionality", function (){
 
   it("Production Tokens", async function () {
     const tokens = require("./config/production-tokens-mainnet.js");
-    storage = await Storage.new({ from: governance });
-    const oldOracle = await OracleMainnet_old.new(storage.address, {from: governance})
+    const oldOracle = await OracleMainnet_old.new({from: governance})
     for (const token in tokens) {
       if (!tokens.hasOwnProperty(token)) continue;
       const tokenName = tokens[token];

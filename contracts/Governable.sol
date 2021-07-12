@@ -1,28 +1,23 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.5.16;
 
-import "./Storage.sol";
-
 contract Governable {
 
-  Storage public store;
+  address public governance;
 
-  constructor(address _store) public {
-    setStorage(_store);
+  constructor(address _governance) public {
+    setGovernance(_governance);
   }
 
   modifier onlyGovernance() {
-    // pass check while store is not initialized
-    require((address(store)==address(0)) || store.isGovernance(msg.sender), "Not governance");
+    // pass check while governance might not initialized (i.e. in proxy)
+    require((governance==address(0)) || (msg.sender==governance), "Not governance");
     _;
   }
 
-  function setStorage(address _store) public onlyGovernance {
-    require(_store != address(0), "new storage shouldn't be empty");
-    store = Storage(_store);
+  function setGovernance(address _governance) public onlyGovernance {
+    require(_governance != address(0), "new governance shouldn't be empty");
+    governance = _governance;
   }
 
-  function governance() public view returns (address) {
-    return store.governance();
-  }
 }
