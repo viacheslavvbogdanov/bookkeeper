@@ -173,12 +173,6 @@ describe("BSC: Testing all functionality", function (){
 
   it("Control functions", async function() {
     let isKeyToken, isPricingToken;
-    console.log("Change factories");
-    const panakeAddress = await oracle.swaps(0); // Swap at index 0 - UniSwap
-    const swap = await SwapBase.at(panakeAddress)
-    await swap.changeFactory(oneInchFactoryAddress, {from: governance});
-    console.log("Change back");
-    await swap.changeFactory(pancakeFactoryAddress, {from: governance});
     console.log("Add FARM as key token");
     await oracle.addKeyToken(MFC.FARM_ADDRESS, {from: governance});
     isKeyToken = await oracle.checkKeyToken(MFC.FARM_ADDRESS, {from: governance});

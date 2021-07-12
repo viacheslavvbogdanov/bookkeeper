@@ -376,16 +376,6 @@ describe("Testing all functionality", function (){
   });
 
   it("Control functions", async function() {
-    console.log("Change factories");
-    await oracle.changeUniFactory(sushiswapFactoryAddress, {from: governance});
-    await oracle.changeSushiFactory(uniswapFactoryAddress, {from: governance});
-    await oracle.changeCurveRegistry(oneInchFactoryAddress, {from: governance});
-    await oracle.changeOneInchFactory(curveRegistryAddress, {from: governance});
-    console.log("Change back");
-    await oracle.changeUniFactory(uniswapFactoryAddress, {from: governance});
-    await oracle.changeSushiFactory(sushiswapFactoryAddress, {from: governance});
-    await oracle.changeCurveRegistry(curveRegistryAddress, {from: governance});
-    await oracle.changeOneInchFactory(oneInchFactoryAddress, {from: governance});
     console.log("Add FARM as key token");
     await oracle.addKeyToken(MFC.FARM_ADDRESS, {from: governance});
     isKeyToken = await oracle.checkKeyToken(MFC.FARM_ADDRESS, {from: governance});

@@ -146,12 +146,6 @@ describe("MATIC: Testing all functionality", function () {
   });
 
   it("Control functions", async function() {
-    console.log("Change factory address");
-    const sushiSwapAddress = await oracle.swaps(0); // Swap at index 0 - UniSwap
-    const sushiSwap = await SwapBase.at(sushiSwapAddress)
-    await sushiSwap.changeFactory(quickswapFactoryAddress, {from: governance});
-    console.log("Change back");
-    await sushiSwap.changeFactory(sushiswapFactoryAddress, {from: governance});
     console.log("Add FARM as key token");
     await oracle.addKeyToken(MFC.FARM_ADDRESS, {from: governance});
     isKeyToken = await oracle.checkKeyToken(MFC.FARM_ADDRESS, {from: governance});

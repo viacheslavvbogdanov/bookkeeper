@@ -410,12 +410,6 @@ describe("Mainnet: Testing all functionality", function (){
   });
 
   it("Control functions", async function() {
-    console.log("Change factory address");
-    const uniSwapAddress = await oracle.swaps(0); // Swap at index 0 - UniSwap
-    const uniSwap = await SwapBase.at(uniSwapAddress)
-    await uniSwap.changeFactory(sushiswapFactoryAddress, {from: governance});
-    console.log("Change back");
-    await uniSwap.changeFactory(uniswapFactoryAddress, {from: governance});
     console.log("Add FARM as key token");
     await oracle.addKeyToken(MFC.FARM_ADDRESS, {from: governance});
     isKeyToken = await oracle.checkKeyToken(MFC.FARM_ADDRESS, {from: governance});
