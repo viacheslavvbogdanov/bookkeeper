@@ -20,13 +20,12 @@ const deploySwap = async ({getNamedAccounts, deployments, network}, contractName
         return;
     }
 
-    const Storage = await deployments.get('Storage');
     console.log('+', contractName, ' factory:', factoryAddress);
     if (!additionalParams) additionalParams = [];
     await catchUnknownSigner(
         deploy(contractName, {
             from: deployer,
-            args: [factoryAddress, Storage.address, ...additionalParams],
+            args: [factoryAddress, ...additionalParams],
             log: true,
         })
     );

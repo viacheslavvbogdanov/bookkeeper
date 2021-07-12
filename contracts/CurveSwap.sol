@@ -2,7 +2,6 @@
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./interface/curve/ICurvePool.sol";
 import "./interface/curve/ICurveRegistry.sol";
-import "./Governable.sol";
 import "./SwapBase.sol";
 import "./OracleBase.sol";
 
@@ -41,12 +40,12 @@ contract CurveSwap is SwapBase {
   event CurveExceptionAdded(address newException, uint256 exceptionList);
   event CurveExceptionRemoved(address oldException, uint256 exceptionList);
 
-  constructor(address _factoryAddress, address _storage, address _baseCurrency, address _oracleBase ) SwapBase(_factoryAddress, _storage) public {
+  constructor(address _factoryAddress, address _baseCurrency, address _oracleBase ) SwapBase(_factoryAddress) public {
     baseCurrency = _baseCurrency;
     oracleBase = OracleBase(_oracleBase);
   }
 
-  function initializeFactory() public virtual override {
+  function initializeFactory() internal virtual override {
     curveRegistry =  ICurveRegistry(factoryAddress);
   }
 
@@ -181,7 +180,7 @@ contract CurveSwap is SwapBase {
     return price;
   }
 
-  function addCurveException(address newException, uint256 exceptionList) external onlyGovernance {
+ /* function addCurveException(address newException, uint256 exceptionList) external {
     (bool check0, bool check1) = checkCurveException(newException);
     require(check0==false && check1 == false, "Already an exception");
     require(exceptionList <= 1, 'Only accepts 0 or 1');
@@ -223,7 +222,7 @@ contract CurveSwap is SwapBase {
       curveExceptionList1.pop();
     }
     emit CurveExceptionRemoved(exception, list);
-  }
+  }*/
   /// @dev Check address for the Curve exception lists.
   function checkCurveException(address token) internal view returns (bool, bool) {
     uint256 i;

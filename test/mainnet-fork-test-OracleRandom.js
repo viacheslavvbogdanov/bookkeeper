@@ -15,7 +15,6 @@ const ICurvePool = artifacts.require("ICurvePool")
 const IMooniFactory = artifacts.require("IMooniFactory")
 
 //const Strategy = artifacts.require("");
-const Storage = artifacts.require("Storage");
 const OracleMainnet = artifacts.require("OracleMainnet");
 
 // Vanilla Mocha test. Increased compatibility with tools that integrate Mocha.
@@ -29,7 +28,6 @@ describe("Testing all functionality", function (){
   // parties in the protocol
 
   // Core protocol contracts
-  let storage;
   let oracle;
 
   let uniswapFactoryAddress = "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f";
@@ -68,10 +66,8 @@ describe("Testing all functionality", function (){
     console.log("Setting up contract")
     accounts = await web3.eth.getAccounts();
     governance = accounts[1];
-    // deploy storage
-    storage = await Storage.new({ from: governance });
     //deploy Oracle
-    oracle = await OracleMainnet.new(storage.address, {from: governance});
+    oracle = await OracleMainnet.new({from: governance});
 
     uniswapFactory = await IUniswapV2Factory.at(uniswapFactoryAddress);
     sushiswapFactory = await IUniswapV2Factory.at(sushiswapFactoryAddress);
@@ -380,16 +376,6 @@ describe("Testing all functionality", function (){
   });
 
   it("Control functions", async function() {
-    console.log("Change factories");
-    await oracle.changeUniFactory(sushiswapFactoryAddress, {from: governance});
-    await oracle.changeSushiFactory(uniswapFactoryAddress, {from: governance});
-    await oracle.changeCurveRegistry(oneInchFactoryAddress, {from: governance});
-    await oracle.changeOneInchFactory(curveRegistryAddress, {from: governance});
-    console.log("Change back");
-    await oracle.changeUniFactory(uniswapFactoryAddress, {from: governance});
-    await oracle.changeSushiFactory(sushiswapFactoryAddress, {from: governance});
-    await oracle.changeCurveRegistry(curveRegistryAddress, {from: governance});
-    await oracle.changeOneInchFactory(oneInchFactoryAddress, {from: governance});
     console.log("Add FARM as key token");
     await oracle.addKeyToken(MFC.FARM_ADDRESS, {from: governance});
     isKeyToken = await oracle.checkKeyToken(MFC.FARM_ADDRESS, {from: governance});

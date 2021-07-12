@@ -5,7 +5,6 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "./interface/IStrategy.sol";
 import "./interface/IVault.sol";
-import "./Storage.sol";
 import "./Governable.sol";
 import "./interface/IRewardPool.sol";
 
@@ -80,8 +79,8 @@ contract BookkeeperRegistry is Governable {
     event StrategyRemoved(address strategy, address vault);
     event RewardPoolRemoved(address rewardPool, address vault);
 
-    constructor(address _storage)
-    Governable(_storage) public {}
+    constructor()
+    Governable(msg.sender) public {}
 
     //Add a vault. RewardPool can be address(0).
     function addVault(address _vault, address _rewardPool, bool _multipleStrategies) external onlyGovernance {
@@ -451,7 +450,7 @@ contract BookkeeperRegistry is Governable {
 
     // transfers token in the controller contract to the governance
     function salvage(address _token, uint256 _amount) external onlyGovernance {
-        IERC20(_token).safeTransfer(governance(), _amount);
+        IERC20(_token).safeTransfer(governance, _amount);
     }
 
 }

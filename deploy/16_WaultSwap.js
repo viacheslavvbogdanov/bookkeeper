@@ -3,4 +3,4 @@ module.exports = async (hre) => {
     return await deploySwap(hre, 'WaultSwap' )
 };
 module.exports.tags = ['Swap'];
-module.exports.dependencies = ['Storage','Oracle'];
+module.exports.dependencies = [];

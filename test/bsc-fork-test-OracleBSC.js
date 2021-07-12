@@ -8,7 +8,6 @@ const IPancakeFactory = artifacts.require("IPancakeFactory");
 const IMooniFactory = artifacts.require("IMooniFactory")
 
 //const Strategy = artifacts.require("");
-const Storage = artifacts.require("Storage");
 const OracleBase = artifacts.require("OracleBase");
 const SwapBase = artifacts.require("SwapBase")
 const OracleBSC_old = artifacts.require("OracleBSC_old");
@@ -22,7 +21,6 @@ describe("BSC: Testing all functionality", function (){
   // parties in the protocol
 
   // Core protocol contracts
-  let storage;
   let oracle;
 
   let pancakeFactoryAddress = "0xBCfCcbde45cE874adCB698cC183deBcF17952812";
@@ -73,8 +71,7 @@ describe("BSC: Testing all functionality", function (){
 
   it("Production Tokens", async function () {
     const tokens = require("./config/production-tokens-bsc.js");
-    storage = await Storage.new({ from: governance });
-    const oldOracle = await OracleBSC_old.new(storage.address, {from: governance})
+    const oldOracle = await OracleBSC_old.new({from: governance})
     for (const token in tokens) {
       if (!tokens.hasOwnProperty(token)) continue;
       const tokenName = tokens[token];
@@ -176,12 +173,6 @@ describe("BSC: Testing all functionality", function (){
 
   it("Control functions", async function() {
     let isKeyToken, isPricingToken;
-    console.log("Change factories");
-    const panakeAddress = await oracle.swaps(0); // Swap at index 0 - UniSwap
-    const swap = await SwapBase.at(panakeAddress)
-    await swap.changeFactory(oneInchFactoryAddress, {from: governance});
-    console.log("Change back");
-    await swap.changeFactory(pancakeFactoryAddress, {from: governance});
     console.log("Add FARM as key token");
     await oracle.addKeyToken(MFC.FARM_ADDRESS, {from: governance});
     isKeyToken = await oracle.checkKeyToken(MFC.FARM_ADDRESS, {from: governance});

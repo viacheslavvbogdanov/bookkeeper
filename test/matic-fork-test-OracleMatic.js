@@ -7,7 +7,6 @@ const BigNumber = require("bignumber.js");
 const ERC20 = artifacts.require("ERC20")
 const IUniswapV2Factory = artifacts.require("IUniswapV2Factory");
 const SwapBase = artifacts.require("SwapBase")
-const Storage = artifacts.require("Storage");
 const OracleBase = artifacts.require("OracleBase");
 const OracleMatic_old = artifacts.require("OracleMatic_old");
 
@@ -21,7 +20,6 @@ describe("MATIC: Testing all functionality", function () {
   // parties in the protocol
 
   // Core protocol contracts
-  let storage;
   let oracle;
 
   let quickswapFactoryAddress = "0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32";
@@ -57,8 +55,7 @@ describe("MATIC: Testing all functionality", function () {
 
   it("Production Tokens", async function () {
     const tokens = require("./config/production-tokens-matic.js");
-    storage = await Storage.new({ from: governance });
-    const oldOracle = await OracleMatic_old.new(storage.address, {from: governance})
+    const oldOracle = await OracleMatic_old.new({from: governance})
     for (const token in tokens) {
       if (!tokens.hasOwnProperty(token)) continue;
       const tokenName = tokens[token];
@@ -149,12 +146,6 @@ describe("MATIC: Testing all functionality", function () {
   });
 
   it("Control functions", async function() {
-    console.log("Change factory address");
-    const sushiSwapAddress = await oracle.swaps(0); // Swap at index 0 - UniSwap
-    const sushiSwap = await SwapBase.at(sushiSwapAddress)
-    await sushiSwap.changeFactory(quickswapFactoryAddress, {from: governance});
-    console.log("Change back");
-    await sushiSwap.changeFactory(sushiswapFactoryAddress, {from: governance});
     console.log("Add FARM as key token");
     await oracle.addKeyToken(MFC.FARM_ADDRESS, {from: governance});
     isKeyToken = await oracle.checkKeyToken(MFC.FARM_ADDRESS, {from: governance});

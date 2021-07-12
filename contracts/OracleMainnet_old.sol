@@ -92,8 +92,8 @@ contract OracleMainnet_old is Governable {
   event CurveExceptionAdded(address newException, uint256 exceptionList);
   event CurveExceptionRemoved(address oldException, uint256 exceptionList);
 
-  constructor(address _storage)
-  Governable(_storage) public {}
+  constructor()
+  Governable(msg.sender) public {}
 
   function changeUniFactory(address newFactory) external onlyGovernance {
     address oldFactory = uniswapFactoryAddress;
@@ -293,7 +293,7 @@ contract OracleMainnet_old is Governable {
     }
   }
 
-  function isEqualString(string memory arg1, string memory arg2) internal view returns (bool) {
+  function isEqualString(string memory arg1, string memory arg2) internal pure returns (bool) {
     bool check = (keccak256(abi.encodePacked(arg1)) == keccak256(abi.encodePacked(arg2)))? true:false;
     return check;
   }

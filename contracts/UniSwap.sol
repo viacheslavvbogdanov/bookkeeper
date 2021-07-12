@@ -2,7 +2,6 @@
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./interface/uniswap/IUniswapV2Factory.sol";
 import "./interface/uniswap/IUniswapV2Pair.sol";
-import "./Governable.sol";
 import "./SwapBase.sol";
 
 pragma solidity 0.6.12;
@@ -11,11 +10,11 @@ contract UniSwap is SwapBase {
 
   IUniswapV2Factory uniswapFactory;
 
-  constructor(address _factoryAddress, address _storage) SwapBase(_factoryAddress, _storage) public {
+  constructor(address _factoryAddress) SwapBase(_factoryAddress) public {
 
   }
 
-  function initializeFactory() public virtual override {
+  function initializeFactory() internal virtual override {
     uniswapFactory = IUniswapV2Factory(factoryAddress);
   }
 

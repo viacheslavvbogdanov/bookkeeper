@@ -50,4 +50,4 @@ module.exports = async ({getNamedAccounts, deployments, network}) => {
 
 };
 module.exports.tags = ['Setup'];
-module.exports.dependencies = ['Storage','Oracle'];
+module.exports.dependencies = ['Oracle'];

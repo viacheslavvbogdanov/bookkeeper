@@ -2,7 +2,6 @@
 import "@pancakeswap/pancake-swap-lib/contracts/token/BEP20/IBEP20.sol";
 import "./interface/pancakeswap/IPancakeFactory.sol";
 import "./interface/pancakeswap/IPancakePair.sol";
-import "./Governable.sol";
 import "./SwapBase.sol";
 
 pragma solidity 0.6.12;
@@ -11,11 +10,11 @@ contract PancakeSwap is SwapBase {
 
   IPancakeFactory pancakeFactory;
 
-  constructor(address _factoryAddress, address _storage) SwapBase(_factoryAddress, _storage) public {
+  constructor(address _factoryAddress) SwapBase(_factoryAddress) public {
 
   }
 
-  function initializeFactory() public virtual override {
+  function initializeFactory() internal virtual override {
     pancakeFactory = IPancakeFactory(factoryAddress);
   }
 

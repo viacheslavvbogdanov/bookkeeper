@@ -23,7 +23,7 @@ contract OracleBase is Governable, Initializable  {
   uint256 public constant ONE = 10**PRECISION_DECIMALS;
 
   //The defined output token is the unit in which prices of input tokens are given.
-  address public definedOutputToken = address(0);
+  bytes32 internal constant _DEFINED_OUTPUT_TOKEN_SLOT = bytes32(uint256(keccak256("eip1967.OracleBase.definedOutputToken")) - 1);
 
   //Key tokens are used to find liquidity for any given token on Uni, Sushi and Curve.
   address[] public keyTokens;
@@ -58,14 +58,14 @@ contract OracleBase is Governable, Initializable  {
   event SwapRemoved(address newSwap);
   event DefinedOutputChanged(address newOutputToken, address oldOutputToken);
 
-  constructor(address _storage, address[] memory _keyTokens, address[] memory _pricingTokens, address _outputToken)
-  public Governable(_storage) {
-    initialize(_storage, _keyTokens, _pricingTokens, _outputToken);
+  constructor(address[] memory _keyTokens, address[] memory _pricingTokens, address _outputToken)
+  public Governable(msg.sender) {
+    initialize( _keyTokens, _pricingTokens, _outputToken);
   }
 
-  function initialize(address _storage, address[] memory _keyTokens, address[] memory _pricingTokens, address _outputToken)
+  function initialize(address[] memory _keyTokens, address[] memory _pricingTokens, address _outputToken)
   public initializer {
-    Governable.setStorage(_storage);
+    Governable.setGovernance(msg.sender);
 
     addKeyTokens(_keyTokens);
     addPricingTokens(_pricingTokens);
@@ -145,9 +145,20 @@ contract OracleBase is Governable, Initializable  {
     emit SwapRemoved(swap);
   }
 
+  function definedOutputToken() public view returns (address value) {
+    bytes32 slot = _DEFINED_OUTPUT_TOKEN_SLOT;
+    assembly {
+      value := sload(slot)
+    }
+  }
+
   function changeDefinedOutput(address newOutputToken) public onlyGovernance validKeyToken(newOutputToken) {
-    address oldOutputToken = definedOutputToken;
-    definedOutputToken = newOutputToken;
+    require(newOutputToken != address(0), "zero address");
+    address oldOutputToken = definedOutputToken();
+    bytes32 slot = _DEFINED_OUTPUT_TOKEN_SLOT;
+    assembly {
+      sstore(slot, newOutputToken)
+    }
     emit DefinedOutputChanged(newOutputToken, oldOutputToken);
   }
 
@@ -159,7 +170,7 @@ contract OracleBase is Governable, Initializable  {
   //The contract allows for input tokens to be LP tokens from Uniswap, Sushiswap, Curve and 1Inch.
   //In case of LP token, the underlying tokens will be found and valued to get the price.
   function getPrice(address token) external view returns (uint256) {
-    if (token == definedOutputToken)
+    if (token == definedOutputToken())
       return (ONE);
 
     // if the token exists in the mapping, we'll swap it for the replacement
@@ -200,7 +211,7 @@ contract OracleBase is Governable, Initializable  {
   //General function to compute the price of a token vs the defined output token.
   function computePrice(address token) public view returns (uint256) {
     uint256 price;
-    if (token == definedOutputToken) {
+    if (token == definedOutputToken()) {
       price = ONE;
     } else if (token == address(0)) {
       price = 0;
@@ -220,6 +231,10 @@ contract OracleBase is Governable, Initializable  {
   }
 
   //Checks the results of the different largest pool functions and returns the largest.
+  function getLargestPool(address token) public view returns (address, address, address) {
+    return getLargestPool(token, keyTokens);
+  }
+
   function getLargestPool(address token, address[] memory keyTokenList) public view returns (address, address, address) {
     address largestKeyToken = address(0);
     address largestPool = address(0);
@@ -243,10 +258,10 @@ contract OracleBase is Governable, Initializable  {
     bool isPricingToken = checkPricingToken(token);
     uint256 price;
     uint256 priceVsPricingToken;
-    if (token == definedOutputToken) {
+    if (token == definedOutputToken()) {
       price = ONE;
     } else if (isPricingToken) {
-      price = SwapBase(swaps[0]).getPriceVsToken(token, definedOutputToken, address(0)); // first swap is used
+      price = SwapBase(swaps[0]).getPriceVsToken(token, definedOutputToken(), address(0)); // first swap is used
       // as at original contract was used
       // mainnet: UniSwap OracleMainnet_old.sol:641
       // bsc: Pancake OracleBSC_old.sol:449
@@ -254,11 +269,11 @@ contract OracleBase is Governable, Initializable  {
       uint256 pricingTokenPrice;
       (address swap, address pricingToken, address pricingPool) = getLargestPool(token,pricingTokens);
       priceVsPricingToken = SwapBase(swap).getPriceVsToken(token, pricingToken, pricingPool);
-//      pricingTokenPrice = (pricingToken == definedOutputToken)? ONE : SwapBase(swap).getPriceVsToken(pricingToken,definedOutputToken,pricingPool);
+//      pricingTokenPrice = (pricingToken == definedOutputToken())? ONE : SwapBase(swap).getPriceVsToken(pricingToken,definedOutputToken(),pricingPool);
       // Like in original contract we use UniSwap - it must be first swap at the list (swaps[0])
       // See OracleMainnet_old.js:634, OracleBSC_old.sol:458
       //TODO improve this part?
-      pricingTokenPrice = (pricingToken == definedOutputToken)? ONE : SwapBase(swaps[0]).getPriceVsToken(pricingToken,definedOutputToken,pricingPool);
+      pricingTokenPrice = (pricingToken == definedOutputToken())? ONE : SwapBase(swaps[0]).getPriceVsToken(pricingToken,definedOutputToken(),pricingPool);
       price = priceVsPricingToken*pricingTokenPrice/ONE;
     }
     return price;

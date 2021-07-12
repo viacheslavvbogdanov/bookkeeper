@@ -13,7 +13,6 @@ const IMooniFactory = artifacts.require("IMooniFactory")
 const SwapBase = artifacts.require("SwapBase")
 
 //const Strategy = artifacts.require("");
-const Storage = artifacts.require("Storage");
 const OracleBase = artifacts.require("OracleBase");
 const OracleMainnet_old = artifacts.require("OracleMainnet_old");
 const assert = require('assert');
@@ -26,7 +25,6 @@ describe("Mainnet: Testing all functionality", function (){
   // parties in the protocol
 
   // Core protocol contracts
-  let storage;
   let oracle;
 
   let uniswapFactoryAddress = "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f";
@@ -90,8 +88,7 @@ describe("Mainnet: Testing all functionality", function (){
 
   it("Production Tokens", async function () {
     const tokens = require("./config/production-tokens-mainnet.js");
-    storage = await Storage.new({ from: governance });
-    const oldOracle = await OracleMainnet_old.new(storage.address, {from: governance})
+    const oldOracle = await OracleMainnet_old.new({from: governance})
     for (const token in tokens) {
       if (!tokens.hasOwnProperty(token)) continue;
       const tokenName = tokens[token];
@@ -413,12 +410,6 @@ describe("Mainnet: Testing all functionality", function (){
   });
 
   it("Control functions", async function() {
-    console.log("Change factory address");
-    const uniSwapAddress = await oracle.swaps(0); // Swap at index 0 - UniSwap
-    const uniSwap = await SwapBase.at(uniSwapAddress)
-    await uniSwap.changeFactory(sushiswapFactoryAddress, {from: governance});
-    console.log("Change back");
-    await uniSwap.changeFactory(uniswapFactoryAddress, {from: governance});
     console.log("Add FARM as key token");
     await oracle.addKeyToken(MFC.FARM_ADDRESS, {from: governance});
     isKeyToken = await oracle.checkKeyToken(MFC.FARM_ADDRESS, {from: governance});

@@ -55,8 +55,8 @@ contract OracleRopsten_old is Governable {
   event PricingTokenRemoved(address pricingToken);
   event DefinedOutuptChanged(address newOutputToken, address oldOutputToken);
 
-  constructor(address _storage)
-  Governable(_storage) public {}
+  constructor()
+  Governable(msg.sender) public {}
 
   function changeUniFactory(address newFactory) external onlyGovernance {
     address oldFactory = uniswapFactoryAddress;
@@ -234,7 +234,7 @@ contract OracleRopsten_old is Governable {
     } else if (token == address(0)) {
       price = 0;
     } else {
-      (address keyToken, address pool, bool uni, bool sushi) = getLargestPool(token,keyTokens);
+      (address keyToken, , bool uni, bool sushi) = getLargestPool(token,keyTokens);
       if (keyToken == address(0)) {
         price = 0;
       } else if (uni) {
@@ -368,7 +368,7 @@ contract OracleRopsten_old is Governable {
       price = getPriceVsTokenUni(token,definedOutputToken);
     } else {
       uint256 pricingTokenPrice;
-      (address pricingToken, address pricingPool, bool uni, bool sushi) = getLargestPool(token,pricingTokens);
+      (address pricingToken, , bool uni, bool sushi) = getLargestPool(token,pricingTokens);
       if (uni) {
         priceVsPricingToken = getPriceVsTokenUni(token,pricingToken);
       } else if (sushi) {

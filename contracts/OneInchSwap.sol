@@ -3,7 +3,6 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@pancakeswap/pancake-swap-lib/contracts/token/BEP20/IBEP20.sol";
 import "./interface/mooniswap/IMooniFactory.sol";
 import "./interface/mooniswap/IMooniswap.sol";
-import "./Governable.sol";
 import "./SwapBase.sol";
 
 pragma solidity 0.6.12;
@@ -14,11 +13,11 @@ contract OneInchSwap is SwapBase {
 
   address public baseCurrency = address(0);
 
-  constructor(address _factoryAddress, address _storage, address _baseCurrency) SwapBase(_factoryAddress, _storage) public {
+  constructor(address _factoryAddress, address _baseCurrency) SwapBase(_factoryAddress) public {
     baseCurrency = _baseCurrency;
   }
 
-  function initializeFactory() public virtual override {
+  function initializeFactory() internal virtual override {
     oneInchFactory =  IMooniFactory(factoryAddress);
   }
 

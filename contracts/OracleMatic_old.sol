@@ -67,8 +67,8 @@ contract OracleMatic_old is Governable {
   event CurveExceptionAdded(address newException, uint256 exceptionList);
   event CurveExceptionRemoved(address oldException, uint256 exceptionList);
 
-  constructor(address _storage)
-  Governable(_storage) public {}
+  constructor()
+  Governable(msg.sender) public {}
 
   function changeQuickFactory(address newFactory) external onlyGovernance {
     address oldFactory = quickswapFactoryAddress;

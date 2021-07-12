@@ -83,8 +83,8 @@ contract OracleBSC_old is Governable {
     event PricingTokenRemoved(address pricingToken);
     event DefinedOutuptChanged(address newOutputToken, address oldOutputToken);
 
-    constructor(address _storage)
-    Governable(_storage) public {}
+    constructor()
+    Governable(msg.sender) public {}
 
     function changePancakeFactory(address newFactory) external onlyGovernance {
         address oldFactory = pancakeFactoryAddress;
@@ -230,7 +230,7 @@ contract OracleBSC_old is Governable {
         }
     }
 
-    function isEqualString(string memory arg1, string memory arg2) internal view returns (bool) {
+    function isEqualString(string memory arg1, string memory arg2) internal pure returns (bool) {
         bool check = (keccak256(abi.encodePacked(arg1)) == keccak256(abi.encodePacked(arg2))) ? true : false;
         return check;
     }

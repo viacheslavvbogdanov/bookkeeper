@@ -8,13 +8,12 @@ module.exports = async ({getNamedAccounts, deployments, network}) => {
     const {deploy, catchUnknownSigner} = deployments;
     const {deployer} = await getNamedAccounts();
     const networkName = network.name;
-    const Storage = await deployments.get('Storage');
     const contractName = 'OracleBase';
     console.log('+', contractName, 'for network:', networkName);
     await catchUnknownSigner(
         deploy(contractName, {
             from: deployer,
-            args: [Storage.address, a.keyTokens, a.pricingTokens, a.outputToken],
+            args: [a.keyTokens, a.pricingTokens, a.outputToken],
             proxy: {
                 owner: deployer,
                 methodName: 'initialize',
@@ -24,4 +23,4 @@ module.exports = async ({getNamedAccounts, deployments, network}) => {
     );
 };
 module.exports.tags = ['Oracle'];
-module.exports.dependencies = ['Storage'];
+module.exports.dependencies = [];
