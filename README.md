@@ -54,7 +54,7 @@ All addresses for tokens and factories defined at [deployment-tools/address-book
 to store all previous contracts, and their proxies, so later it shoud update changed contracts only.
 
 To test deployment, first set "fork" at the [dev-keys.json](dev-keys.json) to needed network (ex."matic")
-Check deployment:```hardhat deploy```
+Check deployment:```npx hardhat deploy```
 Run test for this network (hardhat will deploy all changed contracts automatically):  
 ```npx hardhat test test/matic-fork-test-OracleMatic.js```
 
@@ -64,10 +64,19 @@ Key **should NOT** start with ```0x```. It will be added automatically.
 
 2.Run
 
-```hardhat --network matic deploy```
+```npx hardhat --network matic deploy```
 
 or for Mumbai Testnet
 
-```hardhat --network maticTestnet deploy```
+```npx hardhat --network maticTestnet deploy```
 
 3.Do not forget to remove private key after deployment from the [dev-keys.json](dev-keys.json)
+
+### Verification
+
+Run
+```npx hardhat --network mainnet etherscan-verify```
+
+Deploy plugin executes etherscan-verify command - 
+it will automatically verify all deployed contracts with their proxy.
+Details: [hardhat-etherscan-verify](https://hardhat.org/plugins/hardhat-deploy.html#_4-hardhat-etherscan-verify)
