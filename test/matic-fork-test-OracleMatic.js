@@ -6,26 +6,28 @@ const { artifacts, deployments } = require("hardhat");
 const BigNumber = require("bignumber.js");
 const ERC20 = artifacts.require("ERC20")
 const IUniswapV2Factory = artifacts.require("IUniswapV2Factory");
+const ICurveRegistry = artifacts.require("ICurveRegistry");
 const SwapBase = artifacts.require("SwapBase")
 const OracleBase = artifacts.require("OracleBase");
 const OracleMatic_old = artifacts.require("OracleMatic_old");
+// const { describe, it, before } = require('mocha');
 
 const assert = require('assert');
 
 // Vanilla Mocha test. Increased compatibility with tools that integrate Mocha.
 describe("MATIC: Testing all functionality", function () {
 
-  let accounts;
   let precisionDecimals = 18;
   // parties in the protocol
 
   // Core protocol contracts
   let oracle;
 
-  let quickswapFactoryAddress = "0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32";
+  let quickswapFactoryAddress  = "0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32";
   // noinspection SpellCheckingInspection
-  let sushiswapFactoryAddress = "0xc35DADB65012eC5796536bD9864eD8773aBc74C4";
-  let waultswapFactoryAddress = "0xa98ea6356A316b44Bf710D5f9b6b4eA0081409Ef";
+  let sushiswapFactoryAddress  = "0xc35DADB65012eC5796536bD9864eD8773aBc74C4";
+  let waultswapFactoryAddress  = "0xa98ea6356A316b44Bf710D5f9b6b4eA0081409Ef";
+  let curveswapRegistryAddress = "0x094d12e5b541784701fd8d65f11fc0598fbc6332";
 
   let keyTokens = {
     'USDC': "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
@@ -35,7 +37,7 @@ describe("MATIC: Testing all functionality", function () {
     'WBTC': "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6",
   };
 
-  let sushiswapFactory, quickswapFactory, waultswapFactory;
+  let sushiswapFactory, quickswapFactory, waultswapFactory, curveRegistry;
   let governance;
 
   before(async function () {
@@ -50,6 +52,7 @@ describe("MATIC: Testing all functionality", function () {
     sushiswapFactory = await IUniswapV2Factory.at(sushiswapFactoryAddress);
     quickswapFactory = await IUniswapV2Factory.at(quickswapFactoryAddress);
     waultswapFactory = await IUniswapV2Factory.at(waultswapFactoryAddress);
+    curveRegistry    = await ICurveRegistry.at(curveswapRegistryAddress);
   });
 
 
@@ -143,6 +146,54 @@ describe("MATIC: Testing all functionality", function () {
 
   it("Waultswap LPs Repeatable", async function() {
     await testSwapFactory(waultswapFactory,2)
+  });
+
+
+  it("Curve LPs Repeatable", async function() {
+    console.log("Curve: fetching LP tokens from registry");
+    const curveLPs = [
+        // '0x8096ac61db23291252574D49f036f0f9ed8ab390',
+        // '0xf8a57c1d3b9629b77b6726a042ca48990A84Fb49',
+        // '0xE7a24EF0C5e95Ffb0f6684b813A78F2a3AD7D171', //no exeption it in the registry
+    ];
+    const count = (await curveRegistry.pool_count()).toNumber();
+    console.log('count', count);
+    const max = Math.min(count, 10)
+    for (i=0;i<max;i++) {
+      pool = await curveRegistry.pool_list(i);
+      console.log('pool', pool);
+      lpToken = await curveRegistry.get_lp_token(pool);
+      curveLPs.push(lpToken);
+      console.log('lpToken', lpToken);
+    }
+    console.log("Curve setup done");
+
+    for (i=0;i<curveLPs.length;i++) {
+      let price;
+      console.log("Curve token",i, curveLPs[i]);
+      try {
+        console.time("getPrice");
+        price = await oracle.getPrice(curveLPs[i]);
+        console.timeEnd("getPrice");
+        console.log("price:", BigNumber(price).toFixed()/10**precisionDecimals);
+      } catch {
+        console.log("Uni", i, curveLPs[i]);
+      }
+
+      const swapAddress = await oracle.swaps(3); // Swap at index 3 - CurveSwap
+      const swap = await SwapBase.at(swapAddress)
+      const underlying = await swap.getUnderlying(curveLPs[i]);
+      for (j=0;j<8;j++) {
+        token = underlying[0][j].toLowerCase();
+        if (token === MFC.ZERO_ADDRESS) {
+          break;
+        }
+        amount = underlying[1][j].toString();
+        console.log('   underlying token', token, 'amount', amount);
+      }
+
+      console.log("")
+    }
   });
 
   it("Control functions", async function() {

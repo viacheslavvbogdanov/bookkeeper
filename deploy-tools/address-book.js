@@ -64,6 +64,7 @@ function getMaticAddresses() {
         SushiSwap = '0xc35DADB65012eC5796536bD9864eD8773aBc74C4',
         QuickSwap = '0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32',
         WaultSwap = '0xa98ea6356A316b44Bf710D5f9b6b4eA0081409Ef',
+        CurveSwap = '0x094d12e5b541784701fd8d65f11fc0598fbc6332',
 
         WETH   = '0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619',
         WMATIC = '0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270',
@@ -72,8 +73,12 @@ function getMaticAddresses() {
         USDT   = '0xc2132D05D31c914a87C6611C10748AEb04B58e8F',
         WBTC   = '0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6';
 
+    const
+        CurveSwapBaseCurrency =   WETH;
+
     return {
-        SushiSwap, QuickSwap, WaultSwap,
+        SushiSwap, QuickSwap, WaultSwap, CurveSwap,
+        CurveSwapBaseCurrency,
         WETH, WMATIC, USDC, DAI, USDT, WBTC,
         
         keyTokens: [WMATIC, USDC, DAI, USDT, WBTC, WETH],
