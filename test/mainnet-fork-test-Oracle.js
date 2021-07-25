@@ -12,9 +12,12 @@ const ICurveRegistry = artifacts.require("ICurveRegistry");
 const IMooniFactory = artifacts.require("IMooniFactory")
 const SwapBase = artifacts.require("SwapBase")
 
+const ERC20 = artifacts.require("ERC20")
+
 //const Strategy = artifacts.require("");
 const OracleBase = artifacts.require("OracleBase");
 const OracleMainnet_old = artifacts.require("OracleMainnet_old");
+const UniSwapV3 = artifacts.require("UniSwapV3");
 const assert = require('assert');
 
 // Vanilla Mocha test. Increased compatibility with tools that integrate Mocha.
@@ -48,6 +51,7 @@ describe("Mainnet: Testing all functionality", function (){
   ];
 
   // noinspection SpellCheckingInspection
+  const USDC = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
   let keyTokens = [
   "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", //USDC
   "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2", //WETH
@@ -111,7 +115,6 @@ describe("Mainnet: Testing all functionality", function (){
     }
 
   })
-
   it("Normal Tokens", async function () {
     checkTokens = [
     ]
@@ -200,6 +203,49 @@ describe("Mainnet: Testing all functionality", function (){
       }
       console.log("");
     }
+  });
+
+
+  it.only("UniswapV3 Key Tokens", async function () { //TODO remove .only
+    address0 = "0x0000000000000000000000000000000000000000"
+    const univ3swapAddress = await oracle.swaps(4); // uniswapV3 5th at the swaps list
+    console.log('univ3swapAddress', univ3swapAddress);
+    const univ3 = await UniSwapV3.at(univ3swapAddress);
+    let refPrice, price;
+    for (i=1;i<keyTokens.length;i++) {
+      const token = keyTokens[i];
+      const erc = await ERC20.at(token)
+      const symbol = await erc.symbol()
+      console.log(symbol, "Key Token",i,token);
+      try {
+        console.time("getPrice");
+        // price = await oracle.getPrice(keyTokens[i]);
+        price = await univ3.getPriceVsToken(USDC,token,address0);
+        console.timeEnd("getPrice");
+        console.log("uniV3 price:", BigNumber(price).toFixed()/10**precisionDecimals);
+      } catch (error) {
+        console.log('error', error);
+        price = 0;
+        console.log("Error at Token", i, keyTokens[i]);
+      }
+      try {
+        refPriceRaw = await CoinGeckoClient.simple.fetchTokenPrice({
+          contract_addresses: token,
+          vs_currencies: "usd",
+        })
+        address = token.toLowerCase();
+        refPrice = refPriceRaw["data"][address]["usd"];
+      } catch (error) {
+        refPrice = undefined;
+      }
+      console.log("Coingecko price:", refPrice);
+      if (refPrice && price){
+        const diff = (price/10**precisionDecimals-refPrice)/refPrice*100;
+        console.log("Diff:", diff.toFixed(2)+"%", Math.abs(diff)<15 ? 'ok' : 'TOO BIG');
+      }
+      console.log("");
+    }
+
   });
 
   it("Uni LPs Repeatable", async function() {

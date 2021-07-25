@@ -16,7 +16,8 @@ module.exports = async ({getNamedAccounts, deployments, network}) => {
                 await getSwapAddress('UniSwap'), // Primary swap, used in getKeyTokenPrice
                 await getSwapAddress('SushiSwap'),
                 await getSwapAddress('CurveSwap'),
-                await getSwapAddress('OneInchSwap')
+                await getSwapAddress('OneInchSwap'),
+                await getSwapAddress('UniSwapV3')
             ];
             break
 

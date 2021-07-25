@@ -6,17 +6,24 @@ import "./interface/uniswapV3/IUniswapV3Factory.sol";
 import "./interface/uniswapV3/IUniswapV3Pool.sol";
 import "./SwapBase.sol";
 
+import "hardhat/console.sol"; //TODO remove
+
 pragma solidity 0.6.12;
 
 contract UniSwapV3 is SwapBase {
 
+  uint256 public constant ONE = 10**PRECISION_DECIMALS;
+  uint256 public constant ONE2 = ONE**2;
+
   IUniswapV3Factory uniswapFactory;
 
   // @dev array of fee rate tiers
-  uint24[] public fees = [500, 3000, 10000]; // The initially supported fee tiers are 0.05%, 0.30%, and 1%. UNI governance is able to add additional values to this set.
+  // The initially supported fee tiers are 0.05%, 0.30%, and 1%.
+  // UNI governance is able to add additional values to this set.
+  // denominated in hundredths of a bip
+  uint24[] public fees = [500, 3000, 10000];
 
   constructor(address _factoryAddress) SwapBase(_factoryAddress) public {
-
   }
 
   function initializeFactory() internal virtual override {
@@ -87,22 +94,53 @@ contract UniSwapV3 is SwapBase {
     return (largestKeyToken, largestPool, largestPoolSize);
   }
 
-  /// @dev Generic function giving the price of a given token vs another given token
-  function getPriceVsToken(address token0, address token1, address poolAddress) public virtual override view returns (uint256){
-    address pairAddress;
-    if (poolAddress==address(0))
-      for (uint256 f=0;f<fees.length;f++) { // iterate fees pools from lowest to highest
-        pairAddress = uniswapFactory.getPool(token0, token1, fees[f]);
-        if (poolAddress!=address(0)) break;
+  function sqrt(uint y) internal pure returns (uint z) {
+    if (y > 3) {
+      z = y;
+      uint x = y / 2 + 1;
+      while (x < z) {
+        z = x;
+        x = (y / x + x) / 2;
       }
-    else pairAddress = poolAddress;
-    if (poolAddress==address(0)) return 0;
-    IUniswapV3Pool pair = IUniswapV3Pool(pairAddress);
+    } else if (y != 0) {
+      z = 1;
+    } else z = 0;
+  }
+
+  /// @dev Generic function giving the price of a given token vs another given token
+  function getPriceVsToken(address token0, address token1, address _poolAddress)
+  public virtual override view returns (uint256)
+  {
+    address poolAddress;
+    if (_poolAddress!=address(0))
+      poolAddress = _poolAddress;
+    else {
+      for (uint256 f=0;f<fees.length;f++) { // iterate fees pools from lowest to highest
+        poolAddress = uniswapFactory.getPool(token0, token1, fees[f]);
+        if (poolAddress !=address(0)) break;
+      }
+    }
+
+    if (poolAddress ==address(0)) return 0;
+
+    IUniswapV3Pool pair = IUniswapV3Pool(poolAddress);
     uint256 token0Decimals = ERC20(token0).decimals();
     uint256 token1Decimals = ERC20(token1).decimals();
+
     (uint160 sqrtPriceX96,,,,,,) = pair.slot0();
-    uint256 price = ((sqrtPriceX96**2)*10**(token0Decimals-token1Decimals+PRECISION_DECIMALS));
-    if (token0 == pair.token1()) price = 1/price;
+
+    bool reverse = token0 == pair.token0();
+
+    uint decimals = reverse ?
+      PRECISION_DECIMALS + token0Decimals - token1Decimals :
+      PRECISION_DECIMALS + token1Decimals - token0Decimals;
+    uint multiplier = (10**decimals);
+
+    uint256 sqrtPrice = uint(sqrtPriceX96).mul(sqrt(multiplier)) >> 96;
+    uint256 price = sqrtPrice.mul(sqrtPrice);
+
+    if (reverse) price = ONE2.div(price);
+
     return price;
   }
 

@@ -1,9 +1,10 @@
 function getMainNetAddresses() {
     const
-        UniSwap =     '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f',
-        SushiSwap =   '0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac',
-        CurveSwap =   '0x7D86446dDb609eD0F5f8684AcF30380a356b2B4c',
+        UniSwap     = '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f',
+        SushiSwap   = '0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac',
+        CurveSwap   = '0x7D86446dDb609eD0F5f8684AcF30380a356b2B4c',
         OneInchSwap = '0xbAF9A5d4b0052359326A6CDAb54BABAa3a3A9643',
+        UniSwapV3   = '0x1F98431c8aD98523631AE4a59f267346ea31F984', //https://github.com/Uniswap/uniswap-v3-periphery/blob/main/deploys.md
 
         USDC = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
         WETH = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
@@ -14,15 +15,15 @@ function getMainNetAddresses() {
         EURS = '0xdB25f211AB05b1c97D595516F45794528a807ad8',
         LINK = '0x514910771AF9Ca656af840dff83E8264EcF986CA';
 
-        const 
+        const
             CurveSwapBaseCurrency =   WETH,
             OneInchSwapBaseCurrency = WETH;
-    
+
     return {
-        UniSwap, SushiSwap, CurveSwap, OneInchSwap,
+        UniSwap, SushiSwap, CurveSwap, OneInchSwap, UniSwapV3,
         CurveSwapBaseCurrency, OneInchSwapBaseCurrency,
         USDC, WETH, DAI, USDT, UST, WBTC, EURS, LINK,
-        
+
         keyTokens: [USDC, WETH, DAI, USDT, UST, WBTC, EURS, LINK],
         pricingTokens: [USDC, WETH, DAI, USDT, WBTC, EURS],
         outputToken: USDC
@@ -44,15 +45,15 @@ function getBSCAddresses() {
         WBNB = '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c',
         VAI  = '0x4BD17003473389A42DAF6a0a729f6Fdb328BbBd7',
         ONEINCH = '0x111111111117dC0aa78b770fA6A738034120C302';
-    
+
     const
         OneInchSwapBaseCurrency = WBNB;
 
     return {
         PancakeSwap, OneInchSwap,
-        OneInchSwapBaseCurrency, 
+        OneInchSwapBaseCurrency,
         USDC, ETH, DAI, USDT, UST, BTCB, BUSD, WBNB, VAI, ONEINCH,
-        
+
         keyTokens: [USDC, ETH, DAI, USDT, UST, BTCB, BUSD, WBNB, VAI, ONEINCH],
         pricingTokens: [WBNB, BUSD, UST, USDT, USDC, VAI, DAI],
         outputToken: BUSD
@@ -80,12 +81,12 @@ function getMaticAddresses() {
         SushiSwap, QuickSwap, WaultSwap, CurveSwap,
         CurveSwapBaseCurrency,
         WETH, WMATIC, USDC, DAI, USDT, WBTC,
-        
+
         keyTokens: [WMATIC, USDC, DAI, USDT, WBTC, WETH],
         pricingTokens: [WMATIC, USDC, DAI, USDT, WBTC, WETH],
-        outputToken: USDC     
+        outputToken: USDC
     }
-}        
+}
 
 const addressBook = {
     mainnet: getMainNetAddresses(),
