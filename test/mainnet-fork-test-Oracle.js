@@ -17,7 +17,6 @@ const ERC20 = artifacts.require("ERC20")
 //const Strategy = artifacts.require("");
 const OracleBase = artifacts.require("OracleBase");
 const OracleMainnet_old = artifacts.require("OracleMainnet_old");
-const UniSwapV3 = artifacts.require("UniSwapV3");
 const assert = require('assert');
 
 // Vanilla Mocha test. Increased compatibility with tools that integrate Mocha.
@@ -206,12 +205,14 @@ describe("Mainnet: Testing all functionality", function (){
   });
 
 
-  it.only("UniswapV3 Key Tokens", async function () { //TODO remove .only
+  it("UniswapV3 Key Tokens", async function () {
     address0 = "0x0000000000000000000000000000000000000000"
+    const univ2swapAddress = await oracle.swaps(0); // uniswapV2 1st at the swaps list
     const univ3swapAddress = await oracle.swaps(4); // uniswapV3 5th at the swaps list
     console.log('univ3swapAddress', univ3swapAddress);
-    const univ3 = await UniSwapV3.at(univ3swapAddress);
-    let refPrice, price;
+    const univ3 = await SwapBase.at(univ3swapAddress);
+    const univ2 = await SwapBase.at(univ2swapAddress);
+    let refPrice, price, price2;
     for (i=1;i<keyTokens.length;i++) {
       const token = keyTokens[i];
       const erc = await ERC20.at(token)
@@ -220,9 +221,13 @@ describe("Mainnet: Testing all functionality", function (){
       try {
         console.time("getPrice");
         // price = await oracle.getPrice(keyTokens[i]);
-        price = await univ3.getPriceVsToken(USDC,token,address0);
+        price  = await univ3.getPriceVsToken(token, USDC,address0);
+        price2 = await univ2.getPriceVsToken(token, USDC,address0);
         console.timeEnd("getPrice");
-        console.log("uniV3 price:", BigNumber(price).toFixed()/10**precisionDecimals);
+        console.log("uniV2 price:", (BigNumber(price2)/10**precisionDecimals).toFixed(4));
+        console.log("uniV3 price:", (BigNumber(price )/10**precisionDecimals).toFixed(4));
+        const diff = ((price-price2)/price2)*100;
+        console.log("v2/v3 Diff:", diff.toFixed(2)+"%", Math.abs(diff)<15 ? 'ok' : 'TOO BIG!!!!!!!');
       } catch (error) {
         console.log('error', error);
         price = 0;
@@ -241,7 +246,7 @@ describe("Mainnet: Testing all functionality", function (){
       console.log("Coingecko price:", refPrice);
       if (refPrice && price){
         const diff = (price/10**precisionDecimals-refPrice)/refPrice*100;
-        console.log("Diff:", diff.toFixed(2)+"%", Math.abs(diff)<15 ? 'ok' : 'TOO BIG');
+        console.log("Diff:", diff.toFixed(2)+"%", Math.abs(diff)<15 ? 'ok' : 'TOO BIG!!!!!!!');
       }
       console.log("");
     }

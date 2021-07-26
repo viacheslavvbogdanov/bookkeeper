@@ -6,8 +6,6 @@ import "./interface/uniswapV3/IUniswapV3Factory.sol";
 import "./interface/uniswapV3/IUniswapV3Pool.sol";
 import "./SwapBase.sol";
 
-import "hardhat/console.sol"; //TODO remove
-
 pragma solidity 0.6.12;
 
 contract UniSwapV3 is SwapBase {
@@ -46,7 +44,7 @@ contract UniSwapV3 is SwapBase {
     return checkFactory(pair, factoryAddress);
   }
 
-  /// @dev Get underlying tokens and amounts
+  /// @dev Get underlying tokens and amounts. In UniV3 pool address should be passed instead token address
   function getUnderlying(address token) public virtual override view returns (address[] memory, uint256[] memory){
     IUniswapV3Pool pair = IUniswapV3Pool(token);
     address[] memory tokens  = new address[](2);
@@ -61,8 +59,8 @@ contract UniSwapV3 is SwapBase {
       amounts[1] = 0;
       return (tokens, amounts);
     }
-    amounts[0] = liquidity*10**(token0Decimals);
-    amounts[1] = liquidity*10**(token1Decimals);
+    amounts[0] = liquidity; //TODO How we have to do with liquidity in comparison with UniSwap.sol (V2)?
+    amounts[1] = liquidity;
     return (tokens, amounts);
   }
 
@@ -81,7 +79,7 @@ contract UniSwapV3 is SwapBase {
     address largestPool;
     uint256 poolSize;
     for (uint256 i=0;i<tokenList.length;i++) {
-      for (uint256 f=0;f<fees.length;f++) {
+      for (uint256 f=0;f<fees.length;f++) { // iterate fees pools from lowest to highest
         address poolAddress = uniswapFactory.getPool(token,tokenList[i], fees[f]);
         poolSize = poolAddress !=address(0) ? getPoolSize(poolAddress) : 0;
         if (poolSize > largestPoolSize) {
@@ -108,7 +106,7 @@ contract UniSwapV3 is SwapBase {
   }
 
   /// @dev Generic function giving the price of a given token vs another given token
-  function getPriceVsToken(address token0, address token1, address _poolAddress)
+  function getPriceVsToken(address token1, address token0, address _poolAddress) // to have same result as uniV2, token0 and token1 was swapped here
   public virtual override view returns (uint256)
   {
     address poolAddress;
