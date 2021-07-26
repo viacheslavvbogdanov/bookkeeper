@@ -59,7 +59,8 @@ describe("Mainnet: Testing all functionality", function (){
   "0xa47c8bf37f92aBed4A126BDA807A7b7498661acD", //UST
   "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599", //WBTC
   "0xdB25f211AB05b1c97D595516F45794528a807ad8", //EURS
-  "0x514910771AF9Ca656af840dff83E8264EcF986CA"  //LINK
+  "0x514910771AF9Ca656af840dff83E8264EcF986CA", //LINK
+  "0x531261a091F31bFd93dd393a6CA447ed6Fb2043C"  //fCASH
 
   ];
   // noinspection SpellCheckingInspection
@@ -205,7 +206,7 @@ describe("Mainnet: Testing all functionality", function (){
   });
 
 
-  it("UniswapV3 Key Tokens", async function () {
+  it.only("UniswapV3 Key Tokens", async function () {  //TODO remove
     address0 = "0x0000000000000000000000000000000000000000"
     const univ2swapAddress = await oracle.swaps(0); // uniswapV2 1st at the swaps list
     const univ3swapAddress = await oracle.swaps(4); // uniswapV3 5th at the swaps list
@@ -231,7 +232,7 @@ describe("Mainnet: Testing all functionality", function (){
       } catch (error) {
         console.log('error', error);
         price = 0;
-        console.log("Error at Token", i, keyTokens[i]);
+        console.log("Error at Token", i, token);
       }
       try {
         refPriceRaw = await CoinGeckoClient.simple.fetchTokenPrice({

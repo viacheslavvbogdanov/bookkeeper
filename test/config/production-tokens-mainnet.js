@@ -1,6 +1,7 @@
 // noinspection SpellCheckingInspection
 
 module.exports = {
+  '0x531261a091F31bFd93dd393a6CA447ed6Fb2043C': 'fCASH',
   '0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e': 'YFI',
   '0x45f24baeef268bb6d63aee5129015d69702bcdfa': 'YFV',
   '0xa1d0e215a23d7030842fc67ce582a6afa3ccab83': 'YFII',
