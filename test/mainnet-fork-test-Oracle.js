@@ -12,6 +12,8 @@ const ICurveRegistry = artifacts.require("ICurveRegistry");
 const IMooniFactory = artifacts.require("IMooniFactory")
 const SwapBase = artifacts.require("SwapBase")
 
+const ERC20 = artifacts.require("ERC20")
+
 //const Strategy = artifacts.require("");
 const OracleBase = artifacts.require("OracleBase");
 const OracleMainnet_old = artifacts.require("OracleMainnet_old");
@@ -48,6 +50,7 @@ describe("Mainnet: Testing all functionality", function (){
   ];
 
   // noinspection SpellCheckingInspection
+  const USDC = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
   let keyTokens = [
   "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", //USDC
   "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2", //WETH
@@ -56,7 +59,8 @@ describe("Mainnet: Testing all functionality", function (){
   "0xa47c8bf37f92aBed4A126BDA807A7b7498661acD", //UST
   "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599", //WBTC
   "0xdB25f211AB05b1c97D595516F45794528a807ad8", //EURS
-  "0x514910771AF9Ca656af840dff83E8264EcF986CA"  //LINK
+  "0x514910771AF9Ca656af840dff83E8264EcF986CA", //LINK
+  "0x531261a091F31bFd93dd393a6CA447ed6Fb2043C"  //fCASH
 
   ];
   // noinspection SpellCheckingInspection
@@ -111,7 +115,6 @@ describe("Mainnet: Testing all functionality", function (){
     }
 
   })
-
   it("Normal Tokens", async function () {
     checkTokens = [
     ]
@@ -200,6 +203,55 @@ describe("Mainnet: Testing all functionality", function (){
       }
       console.log("");
     }
+  });
+
+
+  it.only("UniswapV3 Key Tokens", async function () {  //TODO remove
+    address0 = "0x0000000000000000000000000000000000000000"
+    const univ2swapAddress = await oracle.swaps(0); // uniswapV2 1st at the swaps list
+    const univ3swapAddress = await oracle.swaps(4); // uniswapV3 5th at the swaps list
+    console.log('univ3swapAddress', univ3swapAddress);
+    const univ3 = await SwapBase.at(univ3swapAddress);
+    const univ2 = await SwapBase.at(univ2swapAddress);
+    let refPrice, price, price2;
+    for (i=1;i<keyTokens.length;i++) {
+      const token = keyTokens[i];
+      const erc = await ERC20.at(token)
+      const symbol = await erc.symbol()
+      console.log(symbol, "Key Token",i,token);
+      try {
+        console.time("getPrice");
+        // price = await oracle.getPrice(keyTokens[i]);
+        price  = await univ3.getPriceVsToken(token, USDC,address0);
+        price2 = await univ2.getPriceVsToken(token, USDC,address0);
+        console.timeEnd("getPrice");
+        console.log("uniV2 price:", (BigNumber(price2)/10**precisionDecimals).toFixed(4));
+        console.log("uniV3 price:", (BigNumber(price )/10**precisionDecimals).toFixed(4));
+        const diff = ((price-price2)/price2)*100;
+        console.log("v2/v3 Diff:", diff.toFixed(2)+"%", Math.abs(diff)<15 ? 'ok' : 'TOO BIG!!!!!!!');
+      } catch (error) {
+        console.log('error', error);
+        price = 0;
+        console.log("Error at Token", i, token);
+      }
+      try {
+        refPriceRaw = await CoinGeckoClient.simple.fetchTokenPrice({
+          contract_addresses: token,
+          vs_currencies: "usd",
+        })
+        address = token.toLowerCase();
+        refPrice = refPriceRaw["data"][address]["usd"];
+      } catch (error) {
+        refPrice = undefined;
+      }
+      console.log("Coingecko price:", refPrice);
+      if (refPrice && price){
+        const diff = (price/10**precisionDecimals-refPrice)/refPrice*100;
+        console.log("Diff:", diff.toFixed(2)+"%", Math.abs(diff)<15 ? 'ok' : 'TOO BIG!!!!!!!');
+      }
+      console.log("");
+    }
+
   });
 
   it("Uni LPs Repeatable", async function() {
