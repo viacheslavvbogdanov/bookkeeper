@@ -90,4 +90,8 @@ Details: [hardhat-etherscan-verify](https://hardhat.org/plugins/hardhat-deploy.h
 ```coverage --testfiles "test/contract-registry.js"```
 
 ###Deploy
+Deployed with proxy.
+
 ```hardhat deploy --tags Registry```
+
+Warning! Do not forget to commit deployments changes after deploy to save proxy state.

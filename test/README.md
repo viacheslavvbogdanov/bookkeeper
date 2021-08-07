@@ -22,4 +22,4 @@ Consider running tests one-by-one or use private node witout limits for requests
 ```coverage --testfiles "test/contract-registry.js"``` 
 
 ###Deploy
-```hardhat deploy --tags Registry```
+see [..\README.md](..\README.md)
