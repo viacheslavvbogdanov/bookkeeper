@@ -5,12 +5,14 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/proxy/Initializable.sol";
 
 import "./Governable.sol";
-import "./AddressArray.sol";
 
 contract ContractRegistry is Governable, Initializable {
     using Address for address;
 
-    AddressArray private addresses;
+    address[] public addresses;
+
+    event AddressAdded(address _address);
+    event AddressRemoved(address _address);
 
     constructor()
     public Governable(msg.sender) {
@@ -22,24 +24,45 @@ contract ContractRegistry is Governable, Initializable {
         Governable.setGovernance(msg.sender);
     }
 
-    function list() external view returns (address[] memory) {
-        return addresses.list();
+    function list() public view returns (address[] memory) {
+        return addresses;
     }
 
-    function add(address _address) external onlyGovernance {
-        addresses.add(_address);
+    function inArray(address _address) public view returns (bool) {
+        if (addresses.length>0)
+            for (uint i=addresses.length-1; i>=0; i--)
+                if (addresses[i]==_address) return true;
+        return false;
     }
 
-    function remove(address _address) external onlyGovernance {
-        addresses.remove(_address);
+    function add(address _address) public onlyGovernance {
+        require(_address!=address(0));
+        require(!inArray(_address), 'Already in list');
+
+        addresses.push(_address);
+        emit AddressAdded(_address);
     }
 
-    function addMany(address[] memory _addresses) external onlyGovernance {
-        addresses.addMany(_addresses);
+    function remove(address _address) public onlyGovernance {
+        require(inArray(_address), 'Not in list');
+        uint last = addresses.length-1;
+        for (uint i=last; i>=0; i--)
+            if (addresses[i]==_address) {
+                addresses[i] = addresses[last]; // copy last address in array to removed element place
+                addresses.pop();
+                emit AddressRemoved(_address);
+                return;
+            }
     }
 
-    function removeMany(address[] memory _addresses) external onlyGovernance {
-        addresses.removeMany(_addresses);
+    function addArray(address[] memory _addresses) external onlyGovernance {
+        for (uint i=_addresses.length-1; i>=0; i--)
+            add(_addresses[i]);
+    }
+
+    function removeArray(address[] memory _addresses) external onlyGovernance {
+        for (uint i=_addresses.length-1; i>=0; i--)
+            remove(_addresses[i]);
     }
 
 }
