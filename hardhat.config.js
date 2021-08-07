@@ -8,6 +8,7 @@ require("@nomiclabs/hardhat-ethers");
 require("@typechain/hardhat");
 require('@openzeppelin/hardhat-upgrades');
 require('hardhat-contract-sizer');
+require("solidity-coverage");
 
 const keys = require('./dev-keys.json');
 const ethForkUrl = "https://eth-mainnet.alchemyapi.io/v2/" + keys.alchemyKeyMainnet;
@@ -17,11 +18,15 @@ const maticForkUrl = "https://matic-mainnet.chainstacklabs.com";
 const maticTestnetForkUrl = "https://matic-mumbai.chainstacklabs.com";
 
 let chainId = 1
-let forkUrl = ethForkUrl
-// let blockNumber = undefined // use last block number (no caching)
-let blockNumber = 12625928 //TODO update to latest from etherscan to test with caching
+let forkUrl, blockNumber
 
-if (process.env.FORK_BSC || keys.fork==='bsc') {
+if (process.env.FORK_BSC || keys.fork==='mainnet') {
+  chainId = 1
+  forkUrl = ethForkUrl
+  // blockNumber = undefined // use last block number (no caching)
+  let blockNumber = 12625928 //TODO update to latest from etherscan to test with caching
+
+} else if (process.env.FORK_BSC || keys.fork==='bsc') {
   chainId = 56
   forkUrl = bscForkUrl
   blockNumber = undefined // use last block number (no caching)
@@ -33,7 +38,20 @@ if (process.env.FORK_BSC || keys.fork==='bsc') {
   blockNumber = undefined // use last block number (no caching)
 }
 
-const accounts = keys.DEPLOY_PRIVATE_KEY ? [`0x${keys.DEPLOY_PRIVATE_KEY}`] : undefined
+let forking;
+if (forkUrl) forking = {
+  url: forkUrl,
+  blockNumber: blockNumber,
+}
+
+// just couple of random private keys for testing purposes
+const account1 = '0x4c9efe74ac899b09cba9bf1029b797ea250db03636d5b026c06157c84121c93c'
+const account2 = '0x4c9efe74ac899b09cba9bf1029b797ea250db03636d5b026c06157c84121c93d'
+
+const accounts = keys.DEPLOY_PRIVATE_KEY ?
+    [`0x${keys.DEPLOY_PRIVATE_KEY}`,account2] :
+    [account1,account2];
+
 // console.log('forkUrl', forkUrl);
 // console.log('chainId', chainId);
 
@@ -46,10 +64,14 @@ module.exports = {
     hardhat: {
       allowUnlimitedContractSize: true,
       chainId: chainId,
-      forking: {
-        url: forkUrl,
-        blockNumber: blockNumber,
-      }
+      forking: forking,
+      accounts: [{
+        privateKey:account1,
+        balance:(10**18).toString()
+      },{
+        privateKey:account2,
+        balance:(10**18).toString()
+      }]
     },
     ropsten: {
       allowUnlimitedContractSize: true,
@@ -82,6 +104,9 @@ module.exports = {
   namedAccounts: {
     deployer: {
       default: 0, // here this will by default take the first account as deployer
+    },
+    account2: {
+      default: 1,
     },
 
   },

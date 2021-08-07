@@ -13,3 +13,10 @@ Note that the first run of the test may take a while, as all relevant contracts 
 ### Errors
 Returned error: missing trie node : too many requests to node. 
 Consider running tests one-by-one or use private node witout limits for requests.
+
+## Contract Registry
+Testing
+```hardhat test test/contract-registry.js```
+
+Coverage
+```coverage --testfiles "test/contract-registry.js"``` 

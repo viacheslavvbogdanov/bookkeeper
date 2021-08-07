@@ -29,9 +29,9 @@ contract ContractRegistry is Governable, Initializable {
     }
 
     function inArray(address _address) public view returns (bool) {
-        if (addresses.length>0)
-            for (uint i=addresses.length-1; i>=0; i--)
-                if (addresses[i]==_address) return true;
+        uint len = addresses.length;
+        for (uint i=0; i<len; i++)
+            if (addresses[i]==_address) return true;
         return false;
     }
 
@@ -46,7 +46,7 @@ contract ContractRegistry is Governable, Initializable {
     function remove(address _address) public onlyGovernance {
         require(inArray(_address), 'Not in list');
         uint last = addresses.length-1;
-        for (uint i=last; i>=0; i--)
+        for (uint i=0; i<=last; i++)
             if (addresses[i]==_address) {
                 addresses[i] = addresses[last]; // copy last address in array to removed element place
                 addresses.pop();
@@ -55,13 +55,15 @@ contract ContractRegistry is Governable, Initializable {
             }
     }
 
-    function addArray(address[] memory _addresses) external onlyGovernance {
-        for (uint i=_addresses.length-1; i>=0; i--)
+    function addArray(address[] memory _addresses) public onlyGovernance {
+        uint len = _addresses.length;
+        for (uint i=0; i<len; i++)
             add(_addresses[i]);
     }
 
-    function removeArray(address[] memory _addresses) external onlyGovernance {
-        for (uint i=_addresses.length-1; i>=0; i--)
+    function removeArray(address[] memory _addresses) public onlyGovernance {
+        uint len = _addresses.length;
+        for (uint i=0; i<len; i++)
             remove(_addresses[i]);
     }
 

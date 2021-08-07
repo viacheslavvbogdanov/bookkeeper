@@ -42,6 +42,7 @@
     "hardhat-deploy": "^0.8.8",
     "hardhat-gas-reporter": "^1.0.4",
     "mocha": "^9.0.2",
+    "solidity-coverage": "^0.7.16",
     "typechain": "^5.1.1"
   }
 }
