@@ -80,3 +80,18 @@ Run
 Deploy plugin executes etherscan-verify command - 
 it will automatically verify all deployed contracts with their proxy.
 Details: [hardhat-etherscan-verify](https://hardhat.org/plugins/hardhat-deploy.html#_4-hardhat-etherscan-verify)
+
+
+# Contract Registry
+###Testing
+```hardhat test test/contract-registry.js```
+
+###Coverage
+```coverage --testfiles "test/contract-registry.js"```
+
+###Deploy
+Deployed with proxy.
+
+```hardhat deploy --tags Registry```
+
+Warning! Do not forget to commit deployments changes after deploy to save proxy state.
