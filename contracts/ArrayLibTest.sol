@@ -11,7 +11,7 @@ contract ArrayLibTest  {
     address[] public addresses;
     uint256[] public numbers;
 
-    function listAddress() public view returns (address[] memory) {
+    function listAddresses() public view returns (address[] memory) {
         return addresses;
     }
 
@@ -24,7 +24,7 @@ contract ArrayLibTest  {
     }
 
     function addAddressArray(address[] memory _addresses) public {
-        addresses.addArray(_addresses);
+        addresses.addArrayUnique(_addresses);
     }
 
     function removeAddressArray(address[] memory _addresses) public {
@@ -45,11 +45,11 @@ contract ArrayLibTest  {
         numbers.removeFirst(_number);
     }
 
-    function addNumbersArray(uint[] memory _numbers) public {
-        numbers.addArray(_numbers);
+    function addNumberArray(uint[] memory _numbers) public {
+        numbers.addArrayUnique(_numbers);
     }
 
-    function removeNumbersArray(uint[] memory _numbers) public {
+    function removeNumberArray(uint[] memory _numbers) public {
         numbers.removeArrayFirst(_numbers);
     }
 

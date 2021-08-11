@@ -55,7 +55,7 @@ contract ContractRegistry is Governable, Initializable {
     }
 
     function addArray(uint folder, address[] memory _addresses) public onlyGovernance {
-        addresses[folder].addArray(_addresses);
+        addresses[folder].addArrayUnique(_addresses);
         emit AddressesAdded(_addresses);
     }
 
@@ -70,14 +70,14 @@ contract ContractRegistry is Governable, Initializable {
         return addresses[POOLS_FOLDER];
     }
 
-    function addPools(address _address) public onlyGovernance {
+    function addPool(address _address) public onlyGovernance {
         addresses[POOLS_FOLDER].addUnique(_address);
 
         singleAddress[0] = _address;
         emit PoolsAdded(singleAddress);
     }
 
-    function removePools(address _address) public onlyGovernance {
+    function removePool(address _address) public onlyGovernance {
         addresses[POOLS_FOLDER].removeFirst(_address);
 
         singleAddress[0] = _address;
@@ -85,7 +85,7 @@ contract ContractRegistry is Governable, Initializable {
     }
 
     function addPoolsArray(address[] memory _addresses) public onlyGovernance {
-        addresses[POOLS_FOLDER].addArray(_addresses);
+        addresses[POOLS_FOLDER].addArrayUnique(_addresses);
         emit PoolsAdded(_addresses);
     }
 
@@ -101,14 +101,14 @@ contract ContractRegistry is Governable, Initializable {
         return addresses[VAULTS_FOLDER];
     }
 
-    function addVaults(address _address) public onlyGovernance {
+    function addVault(address _address) public onlyGovernance {
         addresses[VAULTS_FOLDER].addUnique(_address);
 
         singleAddress[0] = _address;
         emit VaultsAdded(singleAddress);
     }
 
-    function removeVaults(address _address) public onlyGovernance {
+    function removeVault(address _address) public onlyGovernance {
         addresses[VAULTS_FOLDER].removeFirst(_address);
 
         singleAddress[0] = _address;
@@ -116,7 +116,7 @@ contract ContractRegistry is Governable, Initializable {
     }
 
     function addVaultsArray(address[] memory _addresses) public onlyGovernance {
-        addresses[VAULTS_FOLDER].addArray(_addresses);
+        addresses[VAULTS_FOLDER].addArrayUnique(_addresses);
         emit VaultsAdded(_addresses);
     }
 
