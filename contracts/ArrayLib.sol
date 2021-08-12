@@ -52,8 +52,6 @@ library ArrayLib {
         }
     }
 
-    // uint256
-
     function inArray(uint256[] storage array, uint256 _item)
     internal view returns (bool) {
         uint len = array.length;
