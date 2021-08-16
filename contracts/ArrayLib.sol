@@ -23,14 +23,23 @@ library ArrayLib {
         array.push(_item);
     }
 
+    function removeByIndex(address[] storage array, uint256 index)
+    internal {
+        uint256 len_1 = array.length - 1;
+        require(index<=len_1, NOT_IN_ARRAY);
+        for (uint256 i = index; i < len_1; i++) {
+            array[i] = array[i + 1];
+        }
+        array.pop();
+    }
+
     function removeFirst(address[] storage array, address _item)
     internal {
         require(inArray(array, _item), NOT_IN_ARRAY);
         uint last = array.length-1;
         for (uint i=0; i<=last; i++) {
             if (array[i]==_item) {
-                array[i] = array[last]; // copy last address in array to removed element place
-                array.pop();
+                removeByIndex(array, i);
                 return;
             }
         }
@@ -67,14 +76,24 @@ library ArrayLib {
         array.push(_item);
     }
 
+
+    function removeByIndex(uint256[] storage array, uint256 index)
+    internal {
+        uint256 len_1 = array.length - 1;
+        require(index<=len_1, NOT_IN_ARRAY);
+        for (uint256 i = index; i < len_1; i++) {
+            array[i] = array[i + 1];
+        }
+        array.pop();
+    }
+
     function removeFirst(uint256[] storage array, uint256 _item)
     internal {
         require(inArray(array, _item), NOT_IN_ARRAY);
         uint last = array.length-1;
         for (uint i=0; i<=last; i++) {
             if (array[i]==_item) {
-                array[i] = array[last]; // copy last uint256 in array to removed element place
-                array.pop();
+                removeByIndex(array, i);
                 return;
             }
         }
