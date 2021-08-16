@@ -83,13 +83,13 @@ Details: [hardhat-etherscan-verify](https://hardhat.org/plugins/hardhat-deploy.h
 
 
 # Contract Registry
-###Testing
+### Testing
 ```hardhat test test/contract-registry.js```
 
-###Coverage
+### Coverage
 ```coverage --testfiles "test/contract-registry.js"```
 
-###Deploy
+### Deploy
 Deployed with proxy.
 
 ```hardhat deploy --tags Registry --network {mainnet|bsc|matic}```
