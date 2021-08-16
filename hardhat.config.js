@@ -20,7 +20,7 @@ const maticTestnetForkUrl = "https://matic-mumbai.chainstacklabs.com";
 let chainId = 1
 let forkUrl, blockNumber
 
-if (process.env.FORK_BSC || keys.fork==='mainnet') {
+if (process.env.FORK_MAINNET || keys.fork==='mainnet') {
   chainId = 1
   forkUrl = ethForkUrl
   // blockNumber = undefined // use last block number (no caching)

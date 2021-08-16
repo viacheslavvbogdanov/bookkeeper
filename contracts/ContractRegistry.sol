@@ -5,14 +5,25 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/proxy/Initializable.sol";
 
 import "./Governable.sol";
+import "./ArrayLib.sol";
 
 contract ContractRegistry is Governable, Initializable {
     using Address for address;
+    using ArrayLib for address[];
 
-    address[] public addresses;
+    uint public constant POOLS_FOLDER = 1;
+    uint public constant VAULTS_FOLDER = 2;
 
-    event AddressAdded(address _address);
-    event AddressRemoved(address _address);
+    mapping (uint => address[]) public addresses;
+
+    event AddressesAdded(address[] addresses);
+    event AddressesRemoved(address[] addresses);
+    event PoolsAdded(address[] addresses);
+    event PoolsRemoved(address[] addresses);
+    event VaultsAdded(address[] addresses);
+    event VaultsRemoved(address[] addresses);
+
+    address[] private singleAddress;
 
     constructor()
     public Governable(msg.sender) {
@@ -22,53 +33,95 @@ contract ContractRegistry is Governable, Initializable {
     function initialize()
     public onlyGovernance initializer {
         Governable.setGovernance(msg.sender);
+        singleAddress.push(address(0));
     }
 
-    function list() public view returns (address[] memory) {
-        return addresses;
+    function list(uint folder) public view returns (address[] memory) {
+        return addresses[folder];
     }
 
-    function inArray(address _address) public view returns (bool) {
-        uint len = addresses.length;
-        for (uint i=0; i<len; i++) {
-            if (addresses[i]==_address) return true;
-        }
-        return false;
+    function add(uint folder, address _address) public onlyGovernance {
+        addresses[folder].addUnique(_address);
+
+        singleAddress[0] = _address;
+        emit AddressesAdded(singleAddress);
     }
 
-    function add(address _address) public onlyGovernance {
-        require(_address!=address(0));
-        require(!inArray(_address), 'Already in list');
+    function remove(uint folder, address _address) public onlyGovernance {
+        addresses[folder].removeFirst(_address);
 
-        addresses.push(_address);
-        emit AddressAdded(_address);
+        singleAddress[0] = _address;
+        emit AddressesRemoved(singleAddress);
     }
 
-    function remove(address _address) public onlyGovernance {
-        require(inArray(_address), 'Not in list');
-        uint last = addresses.length-1;
-        for (uint i=0; i<=last; i++) {
-            if (addresses[i]==_address) {
-                addresses[i] = addresses[last]; // copy last address in array to removed element place
-                addresses.pop();
-                emit AddressRemoved(_address);
-                return;
-            }
-        }
+    function addArray(uint folder, address[] memory _addresses) public onlyGovernance {
+        addresses[folder].addArrayUnique(_addresses);
+        emit AddressesAdded(_addresses);
     }
 
-    function addArray(address[] memory _addresses) public onlyGovernance {
-        uint len = _addresses.length;
-        for (uint i=0; i<len; i++) {
-            add(_addresses[i]);
-        }
+    function removeArray(uint folder, address[] memory _addresses) public onlyGovernance {
+        addresses[folder].removeArrayFirst(_addresses);
+        emit AddressesRemoved(_addresses);
     }
 
-    function removeArray(address[] memory _addresses) public onlyGovernance {
-        uint len = _addresses.length;
-        for (uint i=0; i<len; i++) {
-            remove(_addresses[i]);
-        }
+    // Pools
+
+    function listPools() public view returns (address[] memory) {
+        return addresses[POOLS_FOLDER];
     }
 
+    function addPool(address _address) public onlyGovernance {
+        addresses[POOLS_FOLDER].addUnique(_address);
+
+        singleAddress[0] = _address;
+        emit PoolsAdded(singleAddress);
+    }
+
+    function removePool(address _address) public onlyGovernance {
+        addresses[POOLS_FOLDER].removeFirst(_address);
+
+        singleAddress[0] = _address;
+        emit PoolsRemoved(singleAddress);
+    }
+
+    function addPoolsArray(address[] memory _addresses) public onlyGovernance {
+        addresses[POOLS_FOLDER].addArrayUnique(_addresses);
+        emit PoolsAdded(_addresses);
+    }
+
+    function removePoolsArray(address[] memory _addresses) public onlyGovernance {
+        addresses[POOLS_FOLDER].removeArrayFirst(_addresses);
+        emit PoolsRemoved(_addresses);
+    }
+
+
+    // Vaults
+
+    function listVaults() public view returns (address[] memory) {
+        return addresses[VAULTS_FOLDER];
+    }
+
+    function addVault(address _address) public onlyGovernance {
+        addresses[VAULTS_FOLDER].addUnique(_address);
+
+        singleAddress[0] = _address;
+        emit VaultsAdded(singleAddress);
+    }
+
+    function removeVault(address _address) public onlyGovernance {
+        addresses[VAULTS_FOLDER].removeFirst(_address);
+
+        singleAddress[0] = _address;
+        emit VaultsRemoved(singleAddress);
+    }
+
+    function addVaultsArray(address[] memory _addresses) public onlyGovernance {
+        addresses[VAULTS_FOLDER].addArrayUnique(_addresses);
+        emit VaultsAdded(_addresses);
+    }
+
+    function removeVaultsArray(address[] memory _addresses) public onlyGovernance {
+        addresses[VAULTS_FOLDER].removeArrayFirst(_addresses);
+        emit VaultsRemoved(_addresses);
+    }
 }

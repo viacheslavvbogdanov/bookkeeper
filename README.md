@@ -92,6 +92,6 @@ Details: [hardhat-etherscan-verify](https://hardhat.org/plugins/hardhat-deploy.h
 ###Deploy
 Deployed with proxy.
 
-```hardhat deploy --tags Registry```
+```hardhat deploy --tags Registry --network {mainnet|bsc|matic}```
 
 Warning! Do not forget to commit deployments changes after deploy to save proxy state.
