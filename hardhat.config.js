@@ -23,8 +23,8 @@ let forkUrl, blockNumber
 if (process.env.FORK_MAINNET || keys.fork==='mainnet') {
   chainId = 1
   forkUrl = ethForkUrl
-  // blockNumber = undefined // use last block number (no caching)
-  let blockNumber = 12625928 //TODO update to latest from etherscan to test with caching
+  blockNumber = undefined // use last block number (no caching)
+  // let blockNumber = 12625928 //TODO update to latest from etherscan to test with caching
 
 } else if (process.env.FORK_BSC || keys.fork==='bsc') {
   chainId = 56

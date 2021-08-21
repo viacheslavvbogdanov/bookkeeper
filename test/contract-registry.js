@@ -1,4 +1,4 @@
-const {ethers, getNamedAccounts, artifacts} = require("hardhat");
+const {ethers, getNamedAccounts, artifacts, deployments} = require("hardhat");
 const {expect} = require('chai');
 const {BigNumber} = require("ethers");
 const assert = require('assert');
@@ -13,7 +13,6 @@ const address3 = "0xa98ea6356A316b44Bf710D5f9b6b4eA0081409Ef";
 const number1 = BigNumber.from(1);
 const number2 = BigNumber.from(2);
 const number3 = BigNumber.from(3);
-
 
 before(async function () {
     console.log("Setting up contract")
@@ -92,7 +91,6 @@ describe("ArrayLibTest: Addresses", function () {
 
 });
 
-
 describe("ArrayLibTest: Numbers", function () {
 
     it("Should return empty array", async function () {
@@ -154,7 +152,6 @@ describe("ArrayLibTest: Numbers", function () {
     })
 
 });
-
 
 describe("ContractRegistry: custom folder Addresses", function () {
 
