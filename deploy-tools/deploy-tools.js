@@ -31,4 +31,4 @@ const deploySwap = async ({getNamedAccounts, deployments, network}, contractName
     );
 }
 
-module.exports = {deploySwap, getAddressBookForNetwork, getNetworkOrForkName}
+module.exports = {deploySwap, getAddressBookForNetwork, getNetworkOrForkName }

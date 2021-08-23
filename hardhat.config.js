@@ -12,7 +12,9 @@ require("solidity-coverage");
 
 const keys = require('./dev-keys.json');
 const ethForkUrl = "https://eth-mainnet.alchemyapi.io/v2/" + keys.alchemyKeyMainnet;
-const bscForkUrl = "https://bsc-dataseed1.ninicoin.io/";
+// BSC JSON-RPC Endpoints: https://docs.binance.org/smart-chain/developer/rpc.html
+// const bscForkUrl = "https://bsc-dataseed1.ninicoin.io/";
+const bscForkUrl = "https://bsc-dataseed1.defibit.io/";
 // const maticForkUrl = "https://rpc-mainnet.maticvigil.com/";
 const maticForkUrl = "https://matic-mainnet.chainstacklabs.com";
 const maticTestnetForkUrl = "https://matic-mumbai.chainstacklabs.com";
@@ -23,8 +25,8 @@ let forkUrl, blockNumber
 if (process.env.FORK_MAINNET || keys.fork==='mainnet') {
   chainId = 1
   forkUrl = ethForkUrl
-  // blockNumber = undefined // use last block number (no caching)
-  let blockNumber = 12625928 //TODO update to latest from etherscan to test with caching
+  blockNumber = undefined // use last block number (no caching)
+  // let blockNumber = 12625928 //TODO update to latest from etherscan to test with caching
 
 } else if (process.env.FORK_BSC || keys.fork==='bsc') {
   chainId = 56
