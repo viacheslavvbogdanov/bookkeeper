@@ -1,4 +1,4 @@
-const {ethers, getNamedAccounts, artifacts, deployments} = require("hardhat");
+const {ethers, getNamedAccounts } = require("hardhat");
 const {expect} = require('chai');
 const {BigNumber} = require("ethers");
 const assert = require('assert');
@@ -433,6 +433,5 @@ describe("ContractRegistry: Vaults", function () {
         await expect(registry.connect(account2).removeVaultsArray([address1,address2]))
             .to.be.revertedWith('Not governance');
     })
-
 
 });
