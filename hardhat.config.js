@@ -12,7 +12,9 @@ require("solidity-coverage");
 
 const keys = require('./dev-keys.json');
 const ethForkUrl = "https://eth-mainnet.alchemyapi.io/v2/" + keys.alchemyKeyMainnet;
-const bscForkUrl = "https://bsc-dataseed1.ninicoin.io/";
+// BSC JSON-RPC Endpoints: https://docs.binance.org/smart-chain/developer/rpc.html
+// const bscForkUrl = "https://bsc-dataseed1.ninicoin.io/";
+const bscForkUrl = "https://bsc-dataseed1.defibit.io/";
 // const maticForkUrl = "https://rpc-mainnet.maticvigil.com/";
 const maticForkUrl = "https://matic-mainnet.chainstacklabs.com";
 const maticTestnetForkUrl = "https://matic-mumbai.chainstacklabs.com";
