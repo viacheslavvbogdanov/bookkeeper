@@ -5,8 +5,6 @@ module.exports = async ({getNamedAccounts, deployments, network}) => {
     // console.log('AddressBook', a);
     console.log('+ Setting up ContractRegistry for ');
 
-
-    console.log('+ Updating Contract Registry ');
     async function getSwapAddress(swapName) {
         const contract = await deployments.get(swapName);
         return contract.address;
