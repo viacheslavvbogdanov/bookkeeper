@@ -69,10 +69,10 @@ module.exports = {
       forking: forking,
       accounts: [{
         privateKey:account1,
-        balance:(10**18).toString()
+        balance:(5*10**18).toString()
       },{
         privateKey:account2,
-        balance:(10**18).toString()
+        balance:(5*10**18).toString()
       }]
     },
     ropsten: {

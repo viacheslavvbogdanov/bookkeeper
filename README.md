@@ -84,14 +84,19 @@ Details: [hardhat-etherscan-verify](https://hardhat.org/plugins/hardhat-deploy.h
 
 # Contract Registry
 ###Testing
-```hardhat test test/contract-registry.js```
+`hardhat test test/contract-registry.js`
 
 ###Coverage
-```coverage --testfiles "test/contract-registry.js"```
+`coverage --testfiles "test/contract-registry.js"`
 
 ###Deploy
 Deployed with proxy.
 
-```hardhat deploy --tags Registry --network {mainnet|bsc|matic}```
+##Registry Only
+`hardhat deploy --tags Registry --network {mainnet|bsc|matic}`
+
+##Registry with default addresses
+`hardhat deploy --tags RegistryUpdate --network {mainnet|bsc|matic}`
+
 
 Warning! Do not forget to commit deployments changes after deploy to save proxy state.

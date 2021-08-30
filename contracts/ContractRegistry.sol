@@ -25,15 +25,18 @@ contract ContractRegistry is Governable, Initializable {
 
     address[] private singleAddress;
 
-    constructor()
+    constructor(address[] memory _pools, address[] memory _vaults)
     public Governable(msg.sender) {
-        initialize();
+        singleAddress.push(address(0));
     }
 
-    function initialize()
+    function initialize(address[] memory _pools, address[] memory _vaults)
     public onlyGovernance initializer {
         Governable.setGovernance(msg.sender);
         singleAddress.push(address(0));
+
+        addPoolsArray(_pools);
+        addVaultsArray(_vaults);
     }
 
     function list(uint folder) public view returns (address[] memory) {

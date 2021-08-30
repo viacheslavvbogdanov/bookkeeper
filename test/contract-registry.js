@@ -20,7 +20,7 @@ before(async function () {
     governance = deployer;
 
     const Registry = await ethers.getContractFactory("ContractRegistry");
-    registry = await Registry.deploy();
+    registry = await Registry.deploy([],[]);
     await registry.deployed();
 
     const LibTest = await ethers.getContractFactory("ArrayLibTest");
