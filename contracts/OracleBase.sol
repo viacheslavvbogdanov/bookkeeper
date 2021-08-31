@@ -59,11 +59,12 @@ contract OracleBase is Governable, Initializable  {
   event DefinedOutputChanged(address newOutputToken, address oldOutputToken);
 
   // This contract is deployed with proxy, but also can be deployed without proxy
-  // When it deployed witout proxy - then constructor only is used
+  // When it deployed witout proxy - then constructor only is used, so you have to add tokens later
+  // Adding tokens in constructor removed due gas optimisation for deploy to mainnet
   // When with proxy - then initialze() called by deploy script (../deploy/01_Oracle.js)
   constructor(address[] memory _keyTokens, address[] memory _pricingTokens, address _outputToken)
   public Governable(msg.sender) {
-    initialize( _keyTokens, _pricingTokens, _outputToken);
+    Governable.setGovernance(msg.sender);
   }
 
   function initialize(address[] memory _keyTokens, address[] memory _pricingTokens, address _outputToken)
