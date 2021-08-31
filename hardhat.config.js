@@ -15,29 +15,33 @@ const ethForkUrl = "https://eth-mainnet.alchemyapi.io/v2/" + keys.alchemyKeyMain
 // BSC JSON-RPC Endpoints: https://docs.binance.org/smart-chain/developer/rpc.html
 // const bscForkUrl = "https://bsc-dataseed1.ninicoin.io/";
 const bscForkUrl = "https://bsc-dataseed1.defibit.io/";
-// const maticForkUrl = "https://rpc-mainnet.maticvigil.com/";
-const maticForkUrl = "https://matic-mainnet.chainstacklabs.com";
+const maticForkUrl = "https://polygon-mainnet.g.alchemy.com/v2/" + keys.alchemyKeyPolygon;
+// const maticForkUrl = "https://matic-mainnet.chainstacklabs.com";
 const maticTestnetForkUrl = "https://matic-mumbai.chainstacklabs.com";
 
 let chainId = 1
-let forkUrl, blockNumber
+let forkUrl, blockNumber, scanApiKey
 
 if (process.env.FORK_MAINNET || keys.fork==='mainnet') {
   chainId = 1
   forkUrl = ethForkUrl
   blockNumber = undefined // use last block number (no caching)
   // let blockNumber = 12625928 //TODO update to latest from etherscan to test with caching
+  scanApiKey = keys.etherscanAPI
 
 } else if (process.env.FORK_BSC || keys.fork==='bsc') {
   chainId = 56
   forkUrl = bscForkUrl
   blockNumber = undefined // use last block number (no caching)
   // blockNumber = 8857941 //TODO update to latest from bscscan to test with caching
+  scanApiKey = keys.bscscanAPI
 
 } else if (process.env.FORK_MATIC || keys.fork==='matic') {
   chainId = 137
   forkUrl = maticForkUrl
   blockNumber = undefined // use last block number (no caching)
+  scanApiKey = keys.polygonscanAPI
+
 }
 
 let forking;
@@ -82,7 +86,9 @@ module.exports = {
     },
     mainnet: {
       url: "https://eth-mainnet.alchemyapi.io/v2/" + keys.alchemyKeyMainnet,
-      accounts
+      accounts,
+      gasPrice: 50,
+      gas: 17500000
     },
     bsc: {
       // url: "https://bsc-dataseed.binance.org/",
@@ -95,7 +101,8 @@ module.exports = {
     matic: {
       url: maticForkUrl,
       chainId: 137,
-      accounts
+      accounts,
+      gas: 17500000
     },
     maticTestnet: {
       url: maticTestnetForkUrl,
@@ -113,7 +120,7 @@ module.exports = {
 
   },
   etherscan: {
-    apiKey: (process.env.BSC) ? keys.bscscanAPI : (process.env.ETH)?  keys.etherscanAPI : keys.polygonscanAPI
+    apiKey: scanApiKey
   },
   solidity: {
     compilers: [

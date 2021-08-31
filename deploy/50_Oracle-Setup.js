@@ -45,7 +45,7 @@ module.exports = async ({getNamedAccounts, deployments, network}) => {
     const {execute} = deployments;
     const {deployer} = await getNamedAccounts();
     const contractName = 'OracleBase';
-    const options = {from: deployer}
+    const options = {from: deployer, log: true, gasLimit: 18000000}
 
     console.log( 'setSwaps', swaps );
     await execute(contractName, options, 'setSwaps', swaps);

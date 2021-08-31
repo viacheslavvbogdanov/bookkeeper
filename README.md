@@ -95,8 +95,5 @@ Deployed with proxy.
 ##Registry Only
 `hardhat deploy --tags Registry --network {mainnet|bsc|matic}`
 
-##Registry with default addresses
-`hardhat deploy --tags RegistryUpdate --network {mainnet|bsc|matic}`
-
 
 Warning! Do not forget to commit deployments changes after deploy to save proxy state.
