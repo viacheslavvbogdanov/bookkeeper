@@ -96,7 +96,8 @@ module.exports = {
       url: "https://bsc-dataseed1.ninicoin.io/",
       // url: "wss://bsc-ws-node.nariox.org:443",
       chainId: 56,
-      accounts
+      accounts,
+      gas: 17500000
     },
     matic: {
       url: maticForkUrl,

@@ -75,7 +75,7 @@ or for Mumbai Testnet
 ### Verification
 
 Run
-```npx hardhat --network mainnet etherscan-verify```
+```npx hardhat --network mainnet etherscan-verify --api-key {ether/bsc/polygon-scan API key}```
 
 Deploy plugin executes etherscan-verify command - 
 it will automatically verify all deployed contracts with their proxy.
