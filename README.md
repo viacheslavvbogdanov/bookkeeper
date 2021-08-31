@@ -92,8 +92,22 @@ Details: [hardhat-etherscan-verify](https://hardhat.org/plugins/hardhat-deploy.h
 ###Deploy
 Deployed with proxy.
 
-##Registry Only
 `hardhat deploy --tags Registry --network {mainnet|bsc|matic}`
 
+Warning! Do not forget to commit deployments changes after deploy 
+to save proxy state / addresses.
 
-Warning! Do not forget to commit deployments changes after deploy to save proxy state.
+# Contract Addresses
+## Mainnet
+- Oracle: 0x1358c91D5b25D3eDAc2b7B26A619163d78f1717d
+- Registry: TODO
+
+## BSC
+- Oracle: 0x0E74303d0D18884Ce2CEb3670e72686645c4f38B
+- Registry: 0x6703Dc4bf8a7a116e6e5D212EF693b363368524a
+
+## Matic / Polygon
+- Oracle: 0x0E74303d0D18884Ce2CEb3670e72686645c4f38B
+- Registry: 0xf7261ED2f7cc6C85f245962961Ef2A8A3a263634
+
+
