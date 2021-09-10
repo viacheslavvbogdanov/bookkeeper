@@ -2,9 +2,9 @@ require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-etherscan");
 require("@nomiclabs/hardhat-truffle5");
 require("@nomiclabs/hardhat-ethers");
+require("@nomiclabs/hardhat-web3");
 require("hardhat-gas-reporter");
 require("hardhat-deploy");
-require("@nomiclabs/hardhat-ethers");
 require("@typechain/hardhat");
 require('@openzeppelin/hardhat-upgrades');
 require('hardhat-contract-sizer');
@@ -87,7 +87,7 @@ module.exports = {
     mainnet: {
       url: "https://eth-mainnet.alchemyapi.io/v2/" + keys.alchemyKeyMainnet,
       accounts,
-      gasPrice: 50,
+      gasPrice: 40000000000, //50 gwei
       gas: 17500000
     },
     bsc: {
