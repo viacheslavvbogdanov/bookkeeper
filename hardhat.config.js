@@ -87,7 +87,7 @@ module.exports = {
     mainnet: {
       url: "https://eth-mainnet.alchemyapi.io/v2/" + keys.alchemyKeyMainnet,
       accounts,
-      gasPrice: 40000000000, //50 gwei
+      gasPrice: 70000000000, //50 gwei
       gas: 17500000
     },
     bsc: {

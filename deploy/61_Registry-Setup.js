@@ -34,7 +34,7 @@ module.exports = async ({getNamedAccounts, deployments, network}) => {
             // apiPools  = await downloadAddresses(poolsUrl +net);
             // apiVaults = await downloadAddresses(vaultsUrl+net);
             apiPools  = [
-/*                "0xb5f7fd6fc1a0f0b606d6f65f656af79e12c310b7",
+                "0xb5f7fd6fc1a0f0b606d6f65f656af79e12c310b7",
                 "0x11301b7c82cd953734440aaf0d5dd0b36e2ab1d8",
                 "0x95d2e18c069175523f56b617f96be7575e381547",
                 "0x1997e59399bad38068b07d20d64bbdbc6882501b",
@@ -210,10 +210,10 @@ module.exports = async ({getNamedAccounts, deployments, network}) => {
                 "0x5bd997039fff16f653ef15d1428f2c791519f58d",
                 "0xe1f9a3ee001a2ecc906e8de637dbf20bb2d44633",
                 "0xf9e5f9024c2f3f2908a1d0e7272861a767c9484b",
-                "0xae024f29c26d6f71ec71658b1980189956b0546d"*/
+                "0xae024f29c26d6f71ec71658b1980189956b0546d"
             ]
             apiVaults = [
-/*                "0x7674622c63bee7f46e86a4a5a18976693d54441b",
+                "0x7674622c63bee7f46e86a4a5a18976693d54441b",
                 "0xe438c0fffba2a81094b6623e5191866d32814c22",
                 "0x7ddc3fff0612e75ea5ddc0d6bd4e268f70362cff",
                 "0xb19ebfb37a936cce783142955d39ca70aa29d43c",
@@ -328,7 +328,7 @@ module.exports = async ({getNamedAccounts, deployments, network}) => {
                 "0xf0358e8c3cd5fa238a29301d0bea3d63a17bedbe",
                 "0xc3f7ffb5d5869b3ade9448d094d81b0521e8326f",
                 "0x25550cccbd68533fa04bfd3e3ac4d09f9e00fc50",
-                "0x59258f4e15a5fc74a7284055a8094f58108dbd4f"*/
+                "0x59258f4e15a5fc74a7284055a8094f58108dbd4f"
             ]
             break
 
@@ -444,22 +444,23 @@ module.exports = async ({getNamedAccounts, deployments, network}) => {
     console.log('Pools  length:', apiPools.length)
     console.log('Vaults length:', apiVaults.length)
 
-    const {deploy, catchUnknownSigner} = deployments;
     const {deployer} = await getNamedAccounts();
+    const {execute} = deployments;
+
     const networkName = network.name;
     const contractName = 'ContractRegistry';
-    console.log('+', contractName, 'for network:', networkName);
-    await catchUnknownSigner(
-        deploy(contractName, {
-            from: deployer,
-            args: [apiPools, apiVaults],
-            proxy: {
-                owner: deployer,
-                methodName: 'initialize',
-            },
-            log: true,
-        })
-    );
+    console.log('+', contractName, 'Setup for network:', networkName);
+
+    const options = {
+        from: deployer,
+        log: true,
+        gasLimit: 18000000,
+        gasPrice: 40000000000 // trying to do not spend alot ETH
+    }
+
+    await execute(contractName, options, 'addPoolsArray', apiPools);
+    await execute(contractName, options, 'addVaultsArray', apiVaults);
+
 };
-module.exports.tags = ['Registry'];
-module.exports.dependencies = [];
+module.exports.tags = ['RegistrySetup'];
+module.exports.dependencies = ['Registry'];
