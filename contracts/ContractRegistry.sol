@@ -35,8 +35,28 @@ contract ContractRegistry is Governable, Initializable {
         Governable.setGovernance(msg.sender);
         singleAddress.push(address(0));
 
-        addPoolsArray(_pools);
-        addVaultsArray(_vaults);
+        initPoolsAndVaults(_pools, _vaults);
+    }
+
+    function initPoolsAndVaults(address[] memory _pools, address[] memory _vaults)
+    public onlyGovernance {
+        address[] storage pools  = addresses[POOLS_FOLDER];
+        address[] storage vaults = addresses[VAULTS_FOLDER];
+
+        require(pools.length==0 && vaults.length==0);
+
+        uint _poolsLen = _pools.length;
+        uint _vaultsLen = _vaults.length;
+
+        for (uint i=0; i< _poolsLen; i++) {
+            pools.push(_pools[i]);
+        }
+        emit PoolsAdded(_pools);
+
+        for (uint i=0; i< _vaultsLen; i++) {
+            vaults.push(_vaults[i]);
+        }
+        emit VaultsAdded(_vaults);
     }
 
     function list(uint folder) public view returns (address[] memory) {

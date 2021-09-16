@@ -454,12 +454,11 @@ module.exports = async ({getNamedAccounts, deployments, network}) => {
     const options = {
         from: deployer,
         log: true,
-        gasLimit: 18000000,
-        gasPrice: 40000000000 // trying to do not spend alot ETH
+        gasLimit: 12800000, // increase it when needed
+        gasPrice: 50000000000 // wei
     }
 
-    await execute(contractName, options, 'addPoolsArray', apiPools);
-    await execute(contractName, options, 'addVaultsArray', apiVaults);
+    await execute(contractName, options, 'initPoolsAndVaults', apiPools, apiVaults);
 
 };
 module.exports.tags = ['RegistrySetup'];
