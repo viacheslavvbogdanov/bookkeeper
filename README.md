@@ -100,7 +100,7 @@ to save proxy state / addresses.
 # Contract Addresses
 ## Mainnet
 - Oracle: 0x1358c91D5b25D3eDAc2b7B26A619163d78f1717d
-- Registry: TODO
+- Registry: 0x917C638631AE4A59DE55B536319a103355439d81
 
 ## BSC
 - Oracle: 0x0E74303d0D18884Ce2CEb3670e72686645c4f38B
